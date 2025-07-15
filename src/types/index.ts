@@ -13,11 +13,10 @@ export interface Contact {
   address: string;
   type: 'contractor' | 'supplier' | 'serviceProvider' | 'resident' | 'government' | 'others';
   notes?: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface Contract {
-  id: string;
   title: string;
   contact_id: string;
   start_date: string;
@@ -33,9 +32,9 @@ export interface License {
   name: string;
   type: string;
   issuer: string;
-  issue_date: string;
-  expiration_date: string;
-  license_number: string;
+  issueDate: string;
+  expirationDate: string;
+  licenseNumber: string;
   status: 'active' | 'expired' | 'expiring';
   contact_id?: string;
 }
@@ -46,10 +45,9 @@ export interface Complaint {
   description: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
-  contactId?: string;
   propertyUnit?: string;
   createdAt: string;
   resolvedAt?: string;
 }
 
-export type ViewType = 'dashboard' | 'contacts' | 'contracts' | 'licenses' | 'complaints';
+export type View = 'dashboard' | 'contacts' | 'contracts' | 'licenses' | 'complaints';

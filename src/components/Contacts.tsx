@@ -14,6 +14,9 @@ interface Contact {
   notes?: string;
 }
 
+
+
+
 const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,17 +25,36 @@ const Contacts: React.FC = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10); // You can change this to any number
+  const [totalContacts, setTotalContacts] = useState(0);
 
   const fetchContacts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from("contacts").select("*");
-    if (!error && data) setContacts(data);
-    setLoading(false);
-  };
+  setLoading(true);
 
-  useEffect(() => {
-    fetchContacts();
-  }, []);
+  const from = (currentPage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from("contacts")
+    .select("*", { count: "exact" }) // important: include count
+    .range(from, to);
+
+  if (!error && data) {
+    setContacts(data);
+    setTotalContacts(count ?? 0);
+  } else {
+    setErrorMsg(error?.message || "Failed to load contacts.");
+  }
+
+  setLoading(false);
+};
+
+
+useEffect(() => {
+  fetchContacts();
+}, [currentPage]);
+
 
   const handleAdd = () => {
     setModalType("add");
@@ -214,6 +236,30 @@ const Contacts: React.FC = () => {
       </tbody>
     </table>
   </div>
+  <div className="flex justify-between items-center mt-4">
+  <p className="text-sm text-gray-600">
+    Page {currentPage} of {Math.ceil(totalContacts / pageSize)}
+  </p>
+  <div className="flex gap-2">
+    <button
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+    >
+      Prev
+    </button>
+    <button
+      onClick={() =>
+        setCurrentPage((p) => p < Math.ceil(totalContacts / pageSize) ? p + 1 : p)
+      }
+      disabled={currentPage === Math.ceil(totalContacts / pageSize)}
+      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+</div>
+
 
   {/* Modal */}
   {showModal && (

@@ -1,69 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X } from 'lucide-react';
-import { Complaint, Contact } from '../types';
+import { Complaint} from '../types';
 import { supabase } from '../utils/supabaseClient';
 
 const Complaints: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const [newComplaint, setNewComplaint] = useState<Omit<Complaint, 'id' | 'createdAt'>>({
     title: '',
     description: '',
     priority: 'medium',
     status: 'open',
-    contactId: '',
     propertyUnit: ''
   });
-  const [editForm, setEditForm] = useState<{
-    title: string;
-    description: string;
-    priority: Complaint['priority'];
-    status: Complaint['status'];
-    contactId: string;
-    propertyUnit: string;
-  }>({
+
+  const [editForm, setEditForm] = useState<Omit<Complaint, 'id' | 'createdAt' | 'resolvedAt'>>({
     title: '',
     description: '',
     priority: 'medium',
     status: 'open',
-    contactId: '',
     propertyUnit: ''
   });
 
-  // Always fetch complaints and contacts from Supabase on mount and after changes
   const fetchData = async () => {
-    setLoading(true);
-    const [{ data: complaintsData }, { data: contactsData }] = await Promise.all([
-      supabase.from('complaints').select('*').order('createdAt', { ascending: false }),
-      supabase.from('contacts').select('*').order('createdAt', { ascending: false })
-    ]);
-    setComplaints(complaintsData || []);
-    setContacts(contactsData || []);
+  setLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    setComplaints(data || []);
+  } catch (error) {
+    console.error('Fetch error:', error);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   useEffect(() => {
     fetchData();
   }, []);
-
 
   const filteredComplaints = complaints.filter(complaint => {
     const matchesStatus = selectedStatus === 'all' || complaint.status === selectedStatus;
     const matchesPriority = selectedPriority === 'all' || complaint.priority === selectedPriority;
     return matchesStatus && matchesPriority;
   });
-
-  const getContactName = (contactId?: string) => {
-    if (!contactId) return 'Unassigned';
-    const contact = contacts.find(c => c.id === contactId);
-    return contact ? contact.name : 'Unknown Contact';
-  };
-
   const getPriorityColor = (priority: Complaint['priority']) => {
     const colors = {
       low: 'bg-green-100 text-green-800',
@@ -100,15 +91,23 @@ const Complaints: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase
-      .from('complaints')
-      .insert([
-        {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      if (!newComplaint.title.trim() || !newComplaint.description.trim()) {
+        throw new Error('Title and description are required');
+      }
+
+      const { error } = await supabase
+        .from('complaints')
+        .insert([{
           ...newComplaint,
           createdAt: new Date().toISOString()
-        }
-      ]);
-    if (!error) {
+        }]);
+
+      if (error) throw error;
+
       await fetchData();
       setShowAddForm(false);
       setNewComplaint({
@@ -116,11 +115,14 @@ const Complaints: React.FC = () => {
         description: '',
         priority: 'medium',
         status: 'open',
-        contactId: '',
         propertyUnit: ''
       });
+    } catch (error) {
+      console.error('Error adding complaint:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Failed to add complaint');
+    } finally {
+      setIsSubmitting(false);
     }
-    // Optionally handle error
   };
 
   const handleEdit = (complaint: Complaint) => {
@@ -128,34 +130,51 @@ const Complaints: React.FC = () => {
     setEditForm({
       title: complaint.title,
       description: complaint.description,
-      priority: complaint.priority as Complaint['priority'],
-      status: complaint.status as Complaint['status'],
-      contactId: complaint.contactId || '',
+      priority: complaint.priority,
+      status: complaint.status,
       propertyUnit: complaint.propertyUnit || ''
     });
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingComplaint) {
-      // Ensure priority and status are correct types
+    if (!editingComplaint) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      if (!editForm.title.trim() || !editForm.description.trim()) {
+        throw new Error('Title and description are required');
+      }
+
       const updatedComplaint: Partial<Complaint> = {
         ...editForm,
-        priority: editForm.priority,
-        status: editForm.status,
         resolvedAt: (editForm.status === 'resolved' || editForm.status === 'closed')
           ? new Date().toISOString()
           : undefined
       };
+
       const { error } = await supabase
-        .from('complaints')
-        .update(updatedComplaint)
-        .eq('id', editingComplaint.id);
-      if (!error) {
-        await fetchData();
-        setEditingComplaint(null);
-      }
-      // Optionally handle error
+  .from('complaints')
+  .insert([{
+    title: newComplaint.title,
+    description: newComplaint.description,
+    priority: newComplaint.priority,
+    status: newComplaint.status,
+    propertyUnit: newComplaint.propertyUnit || null,
+    createdAt: new Date().toISOString()
+  }]);
+
+      if (error) throw error;
+
+      await fetchData();
+      setEditingComplaint(null);
+    } catch (error) {
+      console.error('Error updating complaint:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Failed to update complaint');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -209,59 +228,65 @@ const Complaints: React.FC = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading complaints...</p>
+        </div>
+      )}
+
       {/* Complaints List */}
-      <div className="space-y-4">
-        {filteredComplaints.map(complaint => (
-          <div key={complaint.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-start space-x-3">
-                <div className={`p-2 rounded-lg ${getPriorityColor(complaint.priority)}`}>
-                  {getStatusIcon(complaint.status)}
+      {!loading && (
+        <div className="space-y-4">
+          {filteredComplaints.map(complaint => (
+            <div key={complaint.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start space-x-3">
+                  <div className={`p-2 rounded-lg ${getPriorityColor(complaint.priority)}`}>
+                    {getStatusIcon(complaint.status)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
+                    <p className="text-sm text-gray-600">{complaint.propertyUnit}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
-                  <p className="text-sm text-gray-600">{complaint.propertyUnit}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(complaint.priority)}`}>
-                  {complaint.priority}
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
-                  {complaint.status}
-                </span>
-                <button
-                  onClick={() => handleEdit(complaint)}
-                  className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
-                  title="Edit complaint"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-sm text-gray-600">{complaint.description}</p>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-              <div className="text-sm text-gray-500">
-                Assigned to: {getContactName(complaint.contactId)}
-              </div>
-              <div className="text-sm text-gray-500">
-                Created: {new Date(complaint.createdAt).toLocaleDateString()}
-                {complaint.resolvedAt && (
-                  <span className="ml-2">
-                    • Resolved: {new Date(complaint.resolvedAt).toLocaleDateString()}
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(complaint.priority)}`}>
+                    {complaint.priority}
                   </span>
-                )}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
+                    {complaint.status}
+                  </span>
+                  <button
+                    onClick={() => handleEdit(complaint)}
+                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                    title="Edit complaint"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">{complaint.description}</p>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="text-sm text-gray-500">
+                  Created: {new Date(complaint.createdAt).toLocaleDateString()}
+                  {complaint.resolvedAt && (
+                    <span className="ml-2">
+                      • Resolved: {new Date(complaint.resolvedAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredComplaints.length === 0 && (
+      {!loading && filteredComplaints.length === 0 && (
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
           <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No complaints found</p>
@@ -273,11 +298,28 @@ const Complaints: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Complaint</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Add New Complaint</h2>
+                <button
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setSubmitError(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
               
+              {submitError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                  {submitError}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                   <input
                     type="text"
                     required
@@ -288,7 +330,7 @@ const Complaints: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                   <textarea
                     rows={4}
                     required
@@ -308,44 +350,54 @@ const Complaints: React.FC = () => {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                  <select
-                    value={newComplaint.priority}
-                    onChange={(e) => setNewComplaint({ ...newComplaint, priority: e.target.value as Complaint['priority'] })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select
+                      value={newComplaint.priority}
+                      onChange={(e) => setNewComplaint({ ...newComplaint, priority: e.target.value as Complaint['priority'] })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={newComplaint.status}
+                      onChange={(e) => setNewComplaint({ ...newComplaint, status: e.target.value as Complaint['status'] })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="open">Open</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Contact</label>
-                  <select
-                    value={newComplaint.contactId}
-                    onChange={(e) => setNewComplaint({ ...newComplaint, contactId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Unassigned</option>
-                    {contacts.map(contact => (
-                      <option key={contact.id} value={contact.id}>{contact.name}</option>
-                    ))}
-                  </select>
-                </div>
+
                 
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                    disabled={isSubmitting}
+                    className={`flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 ${
+                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Add Complaint
+                    {isSubmitting ? 'Adding...' : 'Add Complaint'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddForm(false)}
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setSubmitError(null);
+                    }}
+                    disabled={isSubmitting}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors duration-200"
                   >
                     Cancel
@@ -365,16 +417,25 @@ const Complaints: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Edit Complaint</h2>
                 <button
-                  onClick={() => setEditingComplaint(null)}
+                  onClick={() => {
+                    setEditingComplaint(null);
+                    setSubmitError(null);
+                  }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
               
+              {submitError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                  {submitError}
+                </div>
+              )}
+
               <form onSubmit={handleUpdateSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                   <input
                     type="text"
                     required
@@ -385,7 +446,7 @@ const Complaints: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                   <textarea
                     rows={4}
                     required
@@ -434,31 +495,24 @@ const Complaints: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Contact</label>
-                  <select
-                    value={editForm.contactId}
-                    onChange={(e) => setEditForm({ ...editForm, contactId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Unassigned</option>
-                    {contacts.map(contact => (
-                      <option key={contact.id} value={contact.id}>{contact.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
+                                
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                    disabled={isSubmitting}
+                    className={`flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 ${
+                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Update Complaint
+                    {isSubmitting ? 'Updating...' : 'Update Complaint'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditingComplaint(null)}
+                    onClick={() => {
+                      setEditingComplaint(null);
+                      setSubmitError(null);
+                    }}
+                    disabled={isSubmitting}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors duration-200"
                   >
                     Cancel

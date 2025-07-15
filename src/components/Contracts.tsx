@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import {
   FileText,
-  AlertCircle,
   Plus,
   Mail,
   Phone,
@@ -120,7 +119,7 @@ const Contracts: React.FC = () => {
         const { error } = await supabase
           .from("contracts")
           .update(contractData)
-          .eq("id", selectedContract.id);
+          // .eq("id", selectedContract.id);
         if (error) throw error;
       }
       setShowModal(false);
@@ -265,7 +264,7 @@ const Contracts: React.FC = () => {
               </tr>
             ) : (
               filteredContracts.map((contract, idx) => {
-                const days = getDaysUntilExpiration(contract.end_date);
+                // const days = getDaysUntilExpiration(contract.end_date);
                 return (
                   <tr
                     key={contract.id}
@@ -423,7 +422,7 @@ const Contracts: React.FC = () => {
                       Member Since
                     </p>
                     <p className="text-sm text-gray-900">
-                      {new Date(selectedVendor.created_at).toLocaleDateString()}
+                      {new Date(selectedVendor.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
