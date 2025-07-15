@@ -11,21 +11,22 @@ export interface Contact {
   email: string;
   phone: string;
   address: string;
-  type: 'contractor' | 'supplier' | 'service provider' | 'resident' | 'government' | 'others';
+  type: 'contractor' | 'supplier' | 'serviceProvider' | 'resident' | 'government' | 'others';
   notes?: string;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface Contract {
+  expiration_date: string;
   id: string;
   title: string;
-  contactId: string;
-  startDate: string;
-  endDate: string;
+  contact_id: string;
+  start_date: string;
+  end_date: string;
   value: number;
   status: 'active' | 'expired' | 'pending';
   description: string;
-  renewalNotice: number; // days before expiration to notify
+  renewal_notice: number; // days before expiration to notify
 }
 
 export interface License {
@@ -33,11 +34,11 @@ export interface License {
   name: string;
   type: string;
   issuer: string;
-  issueDate: string;
-  expirationDate: string;
-  licenseNumber: string;
+  issue_date: string;
+  expiration_date: string;
+  license_number: string;
   status: 'active' | 'expired' | 'expiring';
-  contactId?: string;
+  contact_id?: string;
 }
 
 export interface Complaint {
