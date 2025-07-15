@@ -1,27 +1,58 @@
-import React from 'react';
-import { FileText, Calendar, DollarSign, AlertCircle, Plus, Mail, Phone, Building, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, AlertCircle, Plus, Mail, Phone, Building, X } from 'lucide-react';
 import { Contract, Contact } from '../types';
-import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from '../utils/dateUtils';
+import { getDaysUntilExpiration, getStatusColor, getStatusText } from '../utils/dateUtils';
+import { supabase } from '../utils/supabaseClient';
 
-interface ContractsProps {
-  contracts: Contract[];
-  contacts: Contact[];
-  onAddContract: (contract: Omit<Contract, 'id'>) => void;
-}
-
-const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContract }) => {
-  const [showAddForm, setShowAddForm] = React.useState(false);
-  const [selectedVendor, setSelectedVendor] = React.useState<Contact | null>(null);
-  const [newContract, setNewContract] = React.useState({
+const Contracts: React.FC = () => {
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
+  const [newContract, setNewContract] = useState<Omit<Contract, 'id'>>({
     title: '',
     contactId: '',
     startDate: '',
     endDate: '',
     value: 0,
-    status: 'active' as Contract['status'],
+    status: 'active',
     description: '',
     renewalNotice: 30
   });
+
+  useEffect(() => {
+    // Always fetch contracts from Supabase on mount
+    const fetchContracts = async () => {
+      const { data } = await supabase.from('contracts').select('*').order('createdAt', { ascending: false });
+      setContracts(data || []);
+    };
+    fetchContracts();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data, error } = await supabase
+      .from('contracts')
+      .insert([
+        newContract
+      ])
+      .select();
+    if (!error && data) {
+      setContracts(prev => [data[0], ...prev]);
+      setShowAddForm(false);
+      setNewContract({
+        title: '',
+        contactId: '',
+        startDate: '',
+        endDate: '',
+        value: 0,
+        status: 'active',
+        description: '',
+        renewalNotice: 30
+      });
+    }
+    // Optionally handle error
+  };
 
   const getContactName = (contactId: string) => {
     const contact = contacts.find(c => c.id === contactId);
@@ -42,40 +73,24 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
   const getTypeColor = (type: Contact['type']) => {
     const colors = {
       contractor: 'bg-blue-100 text-blue-800',
-      vendor: 'bg-green-100 text-green-800',
-      maintenance: 'bg-yellow-100 text-yellow-800',
-      legal: 'bg-purple-100 text-purple-800',
-      other: 'bg-gray-100 text-gray-800'
+      supplier: 'bg-green-100 text-green-800',
+      serviceprovider: 'bg-green-100 text-green-800',
+      government: 'bg-yellow-100 text-yellow-800',
+      resident: 'bg-purple-100 text-purple-800',
+      other: 'bg-gray-100 text-gray-800',
     };
-    return colors[type];
+    // Normalize type to match keys (remove spaces and lowercase)
+    const normalizedType = type.replace(/\s+/g, '').toLowerCase();
+    return colors[normalizedType as keyof typeof colors] || colors.other;
   };
 
   const getStatusBadge = (contract: Contract) => {
     const days = getDaysUntilExpiration(contract.endDate);
     const statusText = getStatusText(days);
     const colorClass = getStatusColor(days);
-    
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
-        {statusText}
-      </span>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>{statusText}</span>
     );
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAddContract(newContract);
-    setNewContract({
-      title: '',
-      contactId: '',
-      startDate: '',
-      endDate: '',
-      value: 0,
-      status: 'active',
-      description: '',
-      renewalNotice: 30
-    });
-    setShowAddForm(false);
   };
 
   return (
@@ -93,13 +108,11 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
           <span>Add Contract</span>
         </button>
       </div>
-
       {/* Contracts List */}
       <div className="space-y-4">
-        {contracts.map(contract => {
+        {contracts.length > 0 ? contracts.map(contract => {
           const days = getDaysUntilExpiration(contract.endDate);
           const isExpiringSoon = days <= 30 && days >= 0;
-          
           return (
             <div
               key={contract.id}
@@ -132,35 +145,9 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                   {getStatusBadge(contract)}
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Start Date</p>
-                    <p className="text-sm font-medium text-gray-900">{formatDate(contract.startDate)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">End Date</p>
-                    <p className="text-sm font-medium text-gray-900">{formatDate(contract.endDate)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Contract Value</p>
-                    <p className="text-sm font-medium text-gray-900">${contract.value.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="mb-4">
                 <p className="text-sm text-gray-600">{contract.description}</p>
               </div>
-
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="text-sm text-gray-500">
                   Renewal notice: {contract.renewalNotice} days before expiration
@@ -179,16 +166,13 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
               </div>
             </div>
           );
-        })}
+        }) : (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No contracts found</p>
+          </div>
+        )}
       </div>
-
-      {contracts.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No contracts found</p>
-        </div>
-      )}
-
       {/* Vendor Details Modal */}
       {selectedVendor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -203,18 +187,14 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{selectedVendor.name}</h3>
                     <p className="text-sm text-gray-600">{selectedVendor.company}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(selectedVendor.type)}`}>
-                    {selectedVendor.type}
-                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(selectedVendor.type)}`}>{selectedVendor.type}</span>
                 </div>
-                
                 <div className="space-y-3">
                   <div className="flex items-center text-sm text-gray-600">
                     <Mail className="w-4 h-4 mr-3 text-gray-400" />
@@ -225,7 +205,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                       </a>
                     </div>
                   </div>
-                  
                   <div className="flex items-center text-sm text-gray-600">
                     <Phone className="w-4 h-4 mr-3 text-gray-400" />
                     <div>
@@ -235,7 +214,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                       </a>
                     </div>
                   </div>
-                  
                   {selectedVendor.address && (
                     <div className="flex items-start text-sm text-gray-600">
                       <Building className="w-4 h-4 mr-3 text-gray-400 mt-0.5 flex-shrink-0" />
@@ -245,7 +223,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                       </div>
                     </div>
                   )}
-                  
                   <div className="flex items-center text-sm text-gray-600">
                     <Building className="w-4 h-4 mr-3 text-gray-400" />
                     <div>
@@ -254,14 +231,12 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     </div>
                   </div>
                 </div>
-                
                 {selectedVendor.notes && (
                   <div className="pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Notes</p>
                     <p className="text-sm text-gray-600">{selectedVendor.notes}</p>
                   </div>
                 )}
-                
                 <div className="pt-4 border-t border-gray-100">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Member Since</p>
                   <p className="text-sm text-gray-900">{new Date(selectedVendor.createdAt).toLocaleDateString()}</p>
@@ -277,7 +252,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Contract</h2>
-              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contract Title</label>
@@ -290,7 +264,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     placeholder="e.g., Annual HVAC Maintenance"
                   />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Service Provider</label>
                   <select
@@ -300,14 +273,13 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select a contact</option>
-                    {contacts.map(contact => (
+                    {contacts.map((contact: Contact) => (
                       <option key={contact.id} value={contact.id}>
                         {contact.name} - {contact.company}
                       </option>
                     ))}
                   </select>
                 </div>
-                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -330,7 +302,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     />
                   </div>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contract Value ($)</label>
                   <input
@@ -344,7 +315,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     placeholder="0.00"
                   />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
@@ -357,7 +327,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     <option value="expired">Expired</option>
                   </select>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Renewal Notice (days)</label>
                   <input
@@ -370,7 +339,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     placeholder="30"
                   />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea
@@ -382,7 +350,6 @@ const Contracts: React.FC<ContractsProps> = ({ contracts, contacts, onAddContrac
                     placeholder="Describe the services covered by this contract..."
                   />
                 </div>
-                
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"

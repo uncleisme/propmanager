@@ -1,36 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X } from 'lucide-react';
 import { Complaint, Contact } from '../types';
+import { supabase } from '../utils/supabaseClient';
 
-interface ComplaintsProps {
-  complaints: Complaint[];
-  contacts: Contact[];
-  onAddComplaint: (complaint: Omit<Complaint, 'id'>) => void;
-  onUpdateComplaint: (id: string, complaint: Partial<Complaint>) => void;
-}
-
-const Complaints: React.FC<ComplaintsProps> = ({ complaints, contacts, onAddComplaint, onUpdateComplaint }) => {
+const Complaints: React.FC = () => {
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
-  const [newComplaint, setNewComplaint] = useState({
+  const [newComplaint, setNewComplaint] = useState<Omit<Complaint, 'id' | 'createdAt'>>({
     title: '',
     description: '',
-    priority: 'medium' as Complaint['priority'],
-    status: 'open' as Complaint['status'],
+    priority: 'medium',
+    status: 'open',
+    contactId: '',
+    propertyUnit: ''
+  });
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    description: string;
+    priority: Complaint['priority'];
+    status: Complaint['status'];
+    contactId: string;
+    propertyUnit: string;
+  }>({
+    title: '',
+    description: '',
+    priority: 'medium',
+    status: 'open',
     contactId: '',
     propertyUnit: ''
   });
 
-  const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    priority: 'medium' as Complaint['priority'],
-    status: 'open' as Complaint['status'],
-    contactId: '',
-    propertyUnit: ''
-  });
+  // Always fetch complaints and contacts from Supabase on mount and after changes
+  const fetchData = async () => {
+    setLoading(true);
+    const [{ data: complaintsData }, { data: contactsData }] = await Promise.all([
+      supabase.from('complaints').select('*').order('createdAt', { ascending: false }),
+      supabase.from('contacts').select('*').order('createdAt', { ascending: false })
+    ]);
+    setComplaints(complaintsData || []);
+    setContacts(contactsData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
 
   const filteredComplaints = complaints.filter(complaint => {
     const matchesStatus = selectedStatus === 'all' || complaint.status === selectedStatus;
@@ -78,21 +98,29 @@ const Complaints: React.FC<ComplaintsProps> = ({ complaints, contacts, onAddComp
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAddComplaint({
-      ...newComplaint,
-      createdAt: new Date().toISOString()
-    });
-    setNewComplaint({
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'open',
-      contactId: '',
-      propertyUnit: ''
-    });
-    setShowAddForm(false);
+    const { error } = await supabase
+      .from('complaints')
+      .insert([
+        {
+          ...newComplaint,
+          createdAt: new Date().toISOString()
+        }
+      ]);
+    if (!error) {
+      await fetchData();
+      setShowAddForm(false);
+      setNewComplaint({
+        title: '',
+        description: '',
+        priority: 'medium',
+        status: 'open',
+        contactId: '',
+        propertyUnit: ''
+      });
+    }
+    // Optionally handle error
   };
 
   const handleEdit = (complaint: Complaint) => {
@@ -100,24 +128,34 @@ const Complaints: React.FC<ComplaintsProps> = ({ complaints, contacts, onAddComp
     setEditForm({
       title: complaint.title,
       description: complaint.description,
-      priority: complaint.priority,
-      status: complaint.status,
+      priority: complaint.priority as Complaint['priority'],
+      status: complaint.status as Complaint['status'],
       contactId: complaint.contactId || '',
       propertyUnit: complaint.propertyUnit || ''
     });
   };
 
-  const handleUpdateSubmit = (e: React.FormEvent) => {
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingComplaint) {
+      // Ensure priority and status are correct types
       const updatedComplaint: Partial<Complaint> = {
         ...editForm,
-        resolvedAt: editForm.status === 'resolved' || editForm.status === 'closed' 
-          ? new Date().toISOString() 
+        priority: editForm.priority,
+        status: editForm.status,
+        resolvedAt: (editForm.status === 'resolved' || editForm.status === 'closed')
+          ? new Date().toISOString()
           : undefined
       };
-      onUpdateComplaint(editingComplaint.id, updatedComplaint);
-      setEditingComplaint(null);
+      const { error } = await supabase
+        .from('complaints')
+        .update(updatedComplaint)
+        .eq('id', editingComplaint.id);
+      if (!error) {
+        await fetchData();
+        setEditingComplaint(null);
+      }
+      // Optionally handle error
     }
   };
 

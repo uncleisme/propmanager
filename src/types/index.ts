@@ -11,7 +11,7 @@ export interface Contact {
   email: string;
   phone: string;
   address: string;
-  type: 'contractor' | 'vendor' | 'maintenance' | 'legal' | 'other';
+  type: 'contractor' | 'supplier' | 'service provider' | 'resident' | 'government' | 'others';
   notes?: string;
   createdAt: string;
 }

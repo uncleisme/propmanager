@@ -1,24 +1,40 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp } from 'lucide-react';
-import { Contract, License, Complaint, Contact } from '../types';
+import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 
-interface DashboardProps {
-  contacts: Contact[];
-  contracts: Contract[];
-  licenses: License[];
-  complaints: Complaint[];
-}
+const Dashboard: React.FC = () => {
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [licenses, setLicenses] = useState<any[]>([]);
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const Dashboard: React.FC<DashboardProps> = ({ contacts, contracts, licenses, complaints }) => {
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      const [{ data: contactsData }, { data: contractsData }, { data: licensesData }, { data: complaintsData }] = await Promise.all([
+        supabase.from('contacts').select('*'),
+        supabase.from('contracts').select('*'),
+        supabase.from('licenses').select('*'),
+        supabase.from('complaints').select('*')
+      ]);
+      setContacts(contactsData || []);
+      setContracts(contractsData || []);
+      setLicenses(licensesData || []);
+      setComplaints(complaintsData || []);
+      setLoading(false);
+    };
+    fetchAll();
+  }, []);
+
   const activeComplaints = complaints.filter(c => c.status === 'open' || c.status === 'in-progress');
   const criticalComplaints = complaints.filter(c => c.priority === 'critical' || c.priority === 'high');
-  
   const expiringContracts = contracts.filter(contract => {
     const days = getDaysUntilExpiration(contract.endDate);
     return days <= 30 && days >= 0;
   });
-  
   const expiringLicenses = licenses.filter(license => {
     const days = getDaysUntilExpiration(license.expirationDate);
     return days <= 30 && days >= 0;
@@ -54,6 +70,14 @@ const Dashboard: React.FC<DashboardProps> = ({ contacts, contracts, licenses, co
       trend: '-8%'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="text-gray-500 text-lg">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
