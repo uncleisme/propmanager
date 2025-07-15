@@ -66,7 +66,6 @@ const Contracts: React.FC = () => {
       status: "active",
       description: "",
       renewal_notice: 30,
-      //expiration_date: "", // This will be calculated from end_date
     });
     setShowModal(true);
   };
