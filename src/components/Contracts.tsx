@@ -109,7 +109,6 @@ const Contracts: React.FC = () => {
       status: formData.get("status") as Contract["status"],
       description: formData.get("description") as string,
       renewal_notice: parseInt(formData.get("renewal_notice") as string) || 30,
-      expiration_date: formData.get("end_date") as string, // expiration_date is the same as end_date for contracts
     };
 
     try {

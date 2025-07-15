@@ -17,7 +17,6 @@ export interface Contact {
 }
 
 export interface Contract {
-  expiration_date: string;
   id: string;
   title: string;
   contact_id: string;
