@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
@@ -31,12 +30,20 @@ const Dashboard: React.FC = () => {
 
   const activeComplaints = complaints.filter(c => c.status === 'open' || c.status === 'in-progress');
   const criticalComplaints = complaints.filter(c => c.priority === 'critical' || c.priority === 'high');
+  
+  // Fixed: Ensure we're using the correct field name for contract end date
   const expiringContracts = contracts.filter(contract => {
-    const days = getDaysUntilExpiration(contract.endDate);
+    const endDate = contract.end_date || contract.endDate; // Try both possible field names
+    if (!endDate) return false;
+    const days = getDaysUntilExpiration(endDate);
     return days <= 30 && days >= 0;
   });
+
+  // Fixed: Ensure we're using the correct field name for license expiration
   const expiringLicenses = licenses.filter(license => {
-    const days = getDaysUntilExpiration(license.expirationDate);
+    const expirationDate = license.expiration_date || license.expirationDate; // Try both possible field names
+    if (!expirationDate) return false;
+    const days = getDaysUntilExpiration(expirationDate);
     return days <= 30 && days >= 0;
   });
 
@@ -124,12 +131,13 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-500 text-sm">No contracts expiring in the next 30 days</p>
             ) : (
               expiringContracts.map(contract => {
-                const days = getDaysUntilExpiration(contract.end_date);
+                const endDate = contract.end_date || contract.endDate;
+                const days = getDaysUntilExpiration(endDate);
                 return (
                   <div key={contract.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{contract.title}</p>
-                      <p className="text-sm text-gray-600">Expires: {formatDate(contract.end_date)}</p>
+                      <p className="text-sm text-gray-600">Expires: {formatDate(endDate)}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(days)}`}>
                       {days} days
@@ -152,12 +160,13 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-500 text-sm">No licenses expiring in the next 30 days</p>
             ) : (
               expiringLicenses.map(license => {
-                const days = getDaysUntilExpiration(license.expiration_date);
+                const expirationDate = license.expiration_date || license.expirationDate;
+                const days = getDaysUntilExpiration(expirationDate);
                 return (
                   <div key={license.id} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{license.name}</p>
-                      <p className="text-sm text-gray-600">Expires: {formatDate(license.expiration_date)}</p>
+                      <p className="text-sm text-gray-600">Expires: {formatDate(expirationDate)}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(days)}`}>
                       {days} days

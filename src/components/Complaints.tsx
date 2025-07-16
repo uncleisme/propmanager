@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X } from 'lucide-react';
-import { Complaint} from '../types';
+import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X, Eye } from 'lucide-react';
+import { Complaint } from '../types';
 import { supabase } from '../utils/supabaseClient';
 
 const Complaints: React.FC = () => {
@@ -10,6 +10,7 @@ const Complaints: React.FC = () => {
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
+  const [viewingComplaint, setViewingComplaint] = useState<Complaint | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -30,21 +31,21 @@ const Complaints: React.FC = () => {
   });
 
   const fetchData = async () => {
-  setLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from('complaints')
-      .select('*')
-      .order('createdAt', { ascending: false });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('complaints')
+        .select('*')
+        .order('createdAt', { ascending: false });
 
-    if (error) throw error;
-    setComplaints(data || []);
-  } catch (error) {
-    console.error('Fetch error:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (error) throw error;
+      setComplaints(data || []);
+    } catch (error) {
+      console.error('Fetch error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -55,6 +56,7 @@ const Complaints: React.FC = () => {
     const matchesPriority = selectedPriority === 'all' || complaint.priority === selectedPriority;
     return matchesStatus && matchesPriority;
   });
+
   const getPriorityColor = (priority: Complaint['priority']) => {
     const colors = {
       low: 'bg-green-100 text-green-800',
@@ -102,7 +104,11 @@ const Complaints: React.FC = () => {
       const { error } = await supabase
         .from('complaints')
         .insert([{
-          ...newComplaint,
+          title: newComplaint.title,
+          description: newComplaint.description,
+          priority: newComplaint.priority,
+          status: newComplaint.status,
+          propertyUnit: newComplaint.propertyUnit || null,
           createdAt: new Date().toISOString()
         }]);
 
@@ -136,6 +142,10 @@ const Complaints: React.FC = () => {
     });
   };
 
+  const handleView = (complaint: Complaint) => {
+    setViewingComplaint(complaint);
+  };
+
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingComplaint) return;
@@ -156,15 +166,9 @@ const Complaints: React.FC = () => {
       };
 
       const { error } = await supabase
-  .from('complaints')
-  .insert([{
-    title: newComplaint.title,
-    description: newComplaint.description,
-    priority: newComplaint.priority,
-    status: newComplaint.status,
-    propertyUnit: newComplaint.propertyUnit || null,
-    createdAt: new Date().toISOString()
-  }]);
+        .from('complaints')
+        .update(updatedComplaint)
+        .eq('id', editingComplaint.id);
 
       if (error) throw error;
 
@@ -240,7 +244,7 @@ const Complaints: React.FC = () => {
         <div className="space-y-4">
           {filteredComplaints.map(complaint => (
             <div key={complaint.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-2">
                 <div className="flex items-start space-x-3">
                   <div className={`p-2 rounded-lg ${getPriorityColor(complaint.priority)}`}>
                     {getStatusIcon(complaint.status)}
@@ -258,6 +262,13 @@ const Complaints: React.FC = () => {
                     {complaint.status}
                   </span>
                   <button
+                    onClick={() => handleView(complaint)}
+                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                    title="View complaint"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleEdit(complaint)}
                     className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                     title="Edit complaint"
@@ -265,10 +276,6 @@ const Complaints: React.FC = () => {
                     <Edit className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">{complaint.description}</p>
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -380,7 +387,6 @@ const Complaints: React.FC = () => {
                   </div>
                 </div>
 
-                
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
@@ -404,6 +410,57 @@ const Complaints: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Complaint Modal */}
+      {viewingComplaint && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Complaint Details</h2>
+                <button
+                  onClick={() => setViewingComplaint(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{viewingComplaint.title}</h3>
+                  <p className="text-sm text-gray-600">{viewingComplaint.propertyUnit}</p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(viewingComplaint.priority)}`}>
+                    {viewingComplaint.priority}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(viewingComplaint.status)}`}>
+                    {viewingComplaint.status}
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
+                  <p className="text-sm text-gray-600 whitespace-pre-line">{viewingComplaint.description}</p>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-500">
+                    <span className="font-medium">Created:</span> {new Date(viewingComplaint.createdAt).toLocaleString()}
+                  </p>
+                  {viewingComplaint.resolvedAt && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      <span className="font-medium">Resolved:</span> {new Date(viewingComplaint.resolvedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
