@@ -131,12 +131,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       <div>
-        <div className="flex items-center space-x-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          {buildingInfo && (
-            <span className="text-lg text-gray-600">- {buildingInfo.building_name}</span>
-          )}
-        </div>
+        <div className="flex justify-between items-center mb-2">
+  <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+  {buildingInfo && (
+    <span className="text-1xl font-bold text-blue-400">{buildingInfo.building_name}</span>
+  )}
+</div>
         <p className="text-gray-600">Overview of your property management activities</p>
       </div>
 

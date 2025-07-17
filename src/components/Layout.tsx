@@ -1,6 +1,8 @@
 import React from 'react';
 import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X, MapPin, Package, UserCheck, Truck } from 'lucide-react';
 import { ViewType } from '../types';
+import { Clock, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface LayoutProps {
   currentView: ViewType;
@@ -30,6 +32,48 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
     setSidebarOpen(false); // Close sidebar on mobile after selection
   };
 
+  const CurrentDateTimeCard = () => {
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = currentDateTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const formattedTime = currentDateTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+      <div className="flex items-center space-x-4">
+        <div className="p-3 bg-blue-50 rounded-lg">
+          <Calendar className="w-6 h-6 text-blue-600" />
+        </div>
+        <div className="p-3 bg-blue-50 rounded-lg">
+          <Clock className="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h3 className="text-sm font-medium text-gray-500">Current Date & Time</h3>
+          <p className="text-lg font-semibold text-gray-900">{formattedDate}</p>
+          <p className="text-lg font-semibold text-gray-900">{formattedTime}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile overlay */}
@@ -59,27 +103,43 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
           <X className="w-5 h-5 text-gray-600" />
         </button>
         
+
+        
         <nav className="mt-6">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleViewChange(item.id)}
-                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+  <div className="px-6 py-3 border-b border-gray-200">
+    <div className="flex items-center justify-between text-m text-black font-bold">
+      <div className="flex items-center space-x-2">
+        <Calendar className="w-4 h-4" />
+        <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Clock className="w-4 h-4" />
+        <span>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+    </div>
+  </div>
+
+  {/* Existing menu items mapping */}
+  {menuItems.map((item) => {
+    const Icon = item.icon;
+    const isActive = currentView === item.id;
+    
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleViewChange(item.id)}
+        className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
+          isActive
+            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+        }`}
+      >
+        <Icon className="w-5 h-5" />
+        <span className="font-medium">{item.label}</span>
+      </button>
+    );
+  })}
+</nav>
         
         <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
           <button
@@ -91,6 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
           </button>
         </div>
       </div>
+      
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto lg:ml-0">

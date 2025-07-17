@@ -24,9 +24,7 @@ const BuildingInfoComponent: React.FC = () => {
     property_manager_phone: '',
     property_manager_email: '',
     jmb_name: '',
-    jmb_chairman: '',
-    jmb_secretary: '',
-    jmb_treasurer: '',
+    jmbMembers: [],
     jmb_phone: '',
     jmb_email: '',
     maintenance_fee: 0,
@@ -67,9 +65,7 @@ const BuildingInfoComponent: React.FC = () => {
           property_manager_phone: data.property_manager_phone || '',
           property_manager_email: data.property_manager_email || '',
           jmb_name: data.jmb_name || '',
-          jmb_chairman: data.jmb_chairman || '',
-          jmb_secretary: data.jmb_secretary || '',
-          jmb_treasurer: data.jmb_treasurer || '',
+          jmbMembers: data.jmbMembers || [],
           jmb_phone: data.jmb_phone || '',
           jmb_email: data.jmb_email || '',
           maintenance_fee: data.maintenance_fee || 0,
@@ -98,56 +94,73 @@ const BuildingInfoComponent: React.FC = () => {
     fetchBuildingInfo();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitError(null);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmitError(null);
 
-    try {
-      if (!formData.building_name.trim() || !formData.building_address.trim()) {
-        throw new Error('Building name and address are required');
-      }
-
-      const dataToSave = {
-        ...formData,
-        jmb_name: formData.jmb_name || null,
-        jmb_chairman: formData.jmb_chairman || null,
-        jmb_secretary: formData.jmb_secretary || null,
-        jmb_treasurer: formData.jmb_treasurer || null,
-        jmb_phone: formData.jmb_phone || null,
-        jmb_email: formData.jmb_email || null,
-        insurance_company: formData.insurance_company || null,
-        insurance_policy_number: formData.insurance_policy_number || null,
-        insurance_expiry: formData.insurance_expiry || null,
-        notes: formData.notes || null
-      };
-
-      if (buildingInfo) {
-        // Update existing record
-        const { error } = await supabase
-          .from('building_info')
-          .update(dataToSave)
-          .eq('id', buildingInfo.id);
-
-        if (error) throw error;
-      } else {
-        // Create new record
-        const { error } = await supabase
-          .from('building_info')
-          .insert([dataToSave]);
-
-        if (error) throw error;
-      }
-
-      await fetchBuildingInfo();
-      setEditing(false);
-    } catch (error) {
-      console.error('Error saving building info:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Failed to save building information');
-    } finally {
-      setIsSubmitting(false);
+  try {
+    if (!formData.building_name.trim() || !formData.building_address.trim()) {
+      throw new Error('Building name and address are required');
     }
-  };
+
+    const dataToSave = {
+      ...formData,
+      updated_at: new Date().toISOString(), // Add this line
+      jmb_name: formData.jmb_name || null,
+      jmb_phone: formData.jmb_phone || null,
+      jmb_email: formData.jmb_email || null,
+      jmbMembers: formData.jmbMembers || null,
+      insurance_company: formData.insurance_company || null,
+      insurance_policy_number: formData.insurance_policy_number || null,
+      insurance_expiry: formData.insurance_expiry || null,
+      notes: formData.notes || null
+    };
+
+    if (buildingInfo) {
+      const { error } = await supabase
+        .from('building_info')
+        .update(dataToSave)
+        .eq('id', buildingInfo.id);
+
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('building_info')
+        .insert([{ ...dataToSave, created_at: new Date().toISOString() }]);
+
+      if (error) throw error;
+    }
+
+    await fetchBuildingInfo();
+    setEditing(false);
+  } catch (error) {
+    console.error('Error saving building info:', error);
+    setSubmitError(error instanceof Error ? error.message : 'Failed to save building information');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+const handleMemberChange = (index: number, updatedMember: { name: string; phone: string; email: string }) => {
+  const updatedMembers = [...formData.jmbMembers];
+  updatedMembers[index] = updatedMember;
+  setFormData({ ...formData, jmbMembers: updatedMembers });
+};
+
+const removeMember = (index: number) => {
+  const updatedMembers = formData.jmbMembers.filter((_, i) => i !== index);
+  setFormData({ ...formData, jmbMembers: updatedMembers });
+};
+
+const addNewMember = () => {
+  setFormData({ 
+    ...formData,
+    jmbMembers: [...formData.jmbMembers, { name: '', phone: '', email: '' }]
+  });
+};
+
+
 
   const addFacility = () => {
     if (newFacility.trim() && !formData.facilities.includes(newFacility.trim())) {
@@ -363,33 +376,71 @@ const BuildingInfoComponent: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chairman</label>
-                <input
-                  type="text"
-                  value={formData.jmb_chairman}
-                  onChange={(e) => setFormData({ ...formData, jmb_chairman: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Secretary</label>
-                <input
-                  type="text"
-                  value={formData.jmb_secretary}
-                  onChange={(e) => setFormData({ ...formData, jmb_secretary: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Treasurer</label>
-                <input
-                  type="text"
-                  value={formData.jmb_treasurer}
-                  onChange={(e) => setFormData({ ...formData, jmb_treasurer: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+                     {/* JMB Members Section */}
+// JMB Members Section - Updated to include phone and email for each member
+<div className="md:col-span-2">
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    JMB Members
+  </label>
+  
+  <div className="space-y-4">
+    {/* Current Members List */}
+    {formData.jmbMembers.map((member, index) => (
+      <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+          <input
+            type="text"
+            value={member.name || ''}
+            onChange={(e) => handleMemberChange(index, { ...member, name: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            placeholder="Member name"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+          <input
+            type="tel"
+            value={member.phone || ''}
+            onChange={(e) => handleMemberChange(index, { ...member, phone: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            placeholder="Phone number"
+          />
+        </div>
+        <div className="flex items-end space-x-2">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+            <input
+              type="email"
+              value={member.email || ''}
+              onChange={(e) => handleMemberChange(index, { ...member, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Email address"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => removeMember(index)}
+            className="p-2 text-red-600 hover:text-red-800 transition-colors mb-[9px]"
+            aria-label="Remove member"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    ))}
+
+    {/* Add Member Button */}
+    <button
+      type="button"
+      onClick={addNewMember}
+      className="mt-2 flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+    >
+      <Plus className="w-4 h-4 mr-1" />
+      Add Member
+    </button>
+  </div>
+</div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">JMB Phone</label>
                 <input
@@ -676,49 +727,68 @@ const BuildingInfoComponent: React.FC = () => {
             </div>
 
             {/* JMB Information */}
-            {(buildingInfo.jmb_name || buildingInfo.jmb_chairman || buildingInfo.jmb_secretary) && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Joint Management Body (JMB)</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {buildingInfo.jmb_name && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm font-medium text-gray-500">JMB Name</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_name}</p>
-                    </div>
-                  )}
-                  {buildingInfo.jmb_chairman && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Chairman</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_chairman}</p>
-                    </div>
-                  )}
-                  {buildingInfo.jmb_secretary && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Secretary</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_secretary}</p>
-                    </div>
-                  )}
-                  {buildingInfo.jmb_treasurer && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Treasurer</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_treasurer}</p>
-                    </div>
-                  )}
-                  {buildingInfo.jmb_phone && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Phone</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_phone}</p>
-                    </div>
-                  )}
-                  {buildingInfo.jmb_email && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Email</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.jmb_email}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+{(buildingInfo.jmb_name || buildingInfo.jmbMembers?.length > 0) && (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">Joint Management Body (JMB)</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {buildingInfo.jmb_name && (
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium text-gray-500">JMB Name</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmb_name}</p>
+        </div>
+      )}
+      {buildingInfo.jmb_phone && (
+        <div>
+          <p className="text-sm font-medium text-gray-500">Phone</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmb_phone}</p>
+        </div>
+      )}
+      {buildingInfo.jmb_email && (
+        <div>
+          <p className="text-sm font-medium text-gray-500">Email</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmb_email}</p>
+        </div>
+      )}
+      {buildingInfo?.jmbMembers?.length > 0 && (
+  <div className="md:col-span-2">
+    <p className="text-sm font-medium text-gray-500 mb-2">JMB Members</p>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+              Name
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+              Phone
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+              Email
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {buildingInfo.jmbMembers.map((member, index) => (
+            <tr key={index}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {member.name}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {member.phone || '-'}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {member.email || '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+    </div>
+  </div>
+)}
 
             {/* Financial Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -811,11 +881,13 @@ const BuildingInfoComponent: React.FC = () => {
             )}
 
             {/* Last Updated */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600">
-                Last updated: {new Date(buildingInfo.updated_at).toLocaleString()}
-              </p>
-            </div>
+            {buildingInfo && (
+  <div className="bg-gray-50 rounded-lg p-4">
+    <p className="text-sm text-gray-600">
+      Last updated: {new Date(buildingInfo.updated_at).toLocaleString()}
+    </p>
+  </div>
+)}
           </div>
         ) : (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">

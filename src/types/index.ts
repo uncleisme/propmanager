@@ -156,11 +156,9 @@ export interface BuildingInfo {
   property_manager_phone: string;
   property_manager_email: string;
   jmb_name?: string;
-  jmb_chairman?: string;
-  jmb_secretary?: string;
-  jmb_treasurer?: string;
   jmb_phone?: string;
   jmb_email?: string;
+  jmbMembers: JmbMember[];
   maintenance_fee: number;
   sinking_fund: number;
   insurance_company?: string;
@@ -174,4 +172,9 @@ export interface BuildingInfo {
   updated_at: string;
 }
 
+interface JmbMember {
+  name: string;
+  phone: string;
+  email: string;
+}
 export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests';
