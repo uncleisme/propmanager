@@ -14,8 +14,13 @@ import {
 } from "lucide-react";
 import { Contract, Contact } from "../types";
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
+import { User } from '@supabase/supabase-js';
 
-const Contracts: React.FC = () => {
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
+
+const Contracts: React.FC<DashboardProps> = ({ user }) => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);

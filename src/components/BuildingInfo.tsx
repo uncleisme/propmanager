@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Edit, Save, X, Plus, Trash2, MapPin, Users, Shield, DollarSign } from 'lucide-react';
 import { BuildingInfo } from '../types';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-const BuildingInfoComponent: React.FC = () => {
+interface DashboardProps {
+  user: User | null;
+}
+
+const BuildingInfoComponent: React.FC<DashboardProps> = ({user}) => {
   const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);

@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Award, Eye, Edit, Trash2, Plus, X, Search, } from "lucide-react";
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
+import { User } from '@supabase/supabase-js';
+
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
 
 interface License {
   id?: number;
@@ -16,7 +21,7 @@ interface License {
   notes?: string;
 }
 
-const Licenses: React.FC = () => {
+const Licenses: React.FC<DashboardProps> = ({ user }) => {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);

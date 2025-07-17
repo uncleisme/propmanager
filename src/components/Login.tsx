@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Lock, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
 interface LoginProps {
   onSwitchToRegister: () => void;

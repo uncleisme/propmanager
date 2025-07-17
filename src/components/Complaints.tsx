@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X, Eye } from 'lucide-react';
 import { Complaint } from '../types';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-const Complaints: React.FC = () => {
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
+
+const Complaints: React.FC<DashboardProps> = ({ user }) => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');

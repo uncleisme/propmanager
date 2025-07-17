@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, Plus, Search, Eye, Edit, X, CheckCircle, XCircle, Clock, Calendar } from 'lucide-react';
 import { Guest } from '../types';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-const Guests: React.FC = () => {
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
+
+const Guests: React.FC<DashboardProps> = ({ user }) => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Users, DollarSign, X, AlertCircle } from 'lucide-react';
 import { Amenity, Booking } from '../types';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-const Amenities: React.FC = () => {
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
+
+const Amenities: React.FC<DashboardProps> = ({ user }) => {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);

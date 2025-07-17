@@ -4,7 +4,7 @@ import {
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
 } from 'lucide-react';
 import { ViewType } from '../types';
-import { User } from '@supabase/supabase-js';
+import { User as User } from '@supabase/supabase-js';
 
 interface LayoutProps {
   currentView: ViewType;

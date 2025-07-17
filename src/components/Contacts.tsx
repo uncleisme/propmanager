@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
+import { User } from '@supabase/supabase-js';
+
+interface DashboardProps {
+  user: User | null; // ✅ Declare the prop
+}
 
 interface Contact {
   id: number;
@@ -13,7 +18,7 @@ interface Contact {
   notes?: string;
 }
 
-const Contacts: React.FC = () => {
+const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
