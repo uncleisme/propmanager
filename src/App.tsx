@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './utils/supabaseClient';
+
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -14,95 +16,105 @@ import Guests from './components/Guests';
 import MoveRequests from './components/MoveRequests';
 import UserSettings from './components/UserSettings';
 import SystemSettings from './components/SystemSettings';
-import { ViewType } from './types';
-import { login, register, logout, isAuthenticated } from './utils/auth';
 
-function App() {
+import { ViewType } from './types';
+
+const App: React.FC = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
+  // Handle authentication state
   useEffect(() => {
-    setAuthenticated(isAuthenticated());
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setAuthenticated(!!session);
+      setUser(session?.user ?? null);
+    };
+
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthenticated(!!session);
+      setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_OUT') {
+        setCurrentView('dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Handle login
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const success = await login(email, password);
-      if (success) {
-        setAuthenticated(true);
-      } else {
-        throw new Error('Login failed');
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle registration
   const handleRegister = async (full_name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const success = await register(full_name, email, password);
-      if (success) {
-        setAuthenticated(true);
-      } else {
-        throw new Error('Registration failed');
-      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name } }
+      });
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    setAuthenticated(false);
-    setCurrentView('dashboard');
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
+  // Dynamically render view
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'building-info':
-        return <BuildingInfo />;
-      case 'contacts':
-        return <Contacts />;
-      case 'contracts':
-        return <Contracts />;
-      case 'licenses':
-        return <Licenses />;
-      case 'complaints':
-        return <Complaints />;
-      case 'amenities':
-        return <Amenities />;
-      case 'packages':
-        return <Packages />;
-      case 'guests':
-        return <Guests />;
-      case 'move-requests':
-        return <MoveRequests />;
-      case 'user-settings':
-        return <UserSettings />;
-      case 'system-settings':
-        return <SystemSettings />;
-      default:
-        return <Dashboard />;
+      case 'dashboard': return <Dashboard user={user} />;
+      case 'building-info': return <BuildingInfo user={user} />;
+      case 'contacts': return <Contacts user={user} />;
+      case 'contracts': return <Contracts user={user} />;
+      case 'licenses': return <Licenses user={user} />;
+      case 'complaints': return <Complaints user={user} />;
+      case 'amenities': return <Amenities user={user} />;
+      case 'packages': return <Packages user={user} />;
+      case 'guests': return <Guests user={user} />;
+      case 'move-requests': return <MoveRequests user={user} />;
+      case 'user-settings': return <UserSettings user={user} />;
+      case 'system-settings': return <SystemSettings user={user} />;
+      default: return <Dashboard user={user} />;
     }
   };
 
+  // Render authentication views
   if (!authenticated) {
-    if (showRegister) {
-      return (
-        <Register
-          onRegister={handleRegister}
-          onSwitchToLogin={() => setShowRegister(false)}
-          isLoading={isLoading}
-        />
-      );
-    }
-    return (
+    return showRegister ? (
+      <Register
+        onRegister={handleRegister}
+        onSwitchToLogin={() => setShowRegister(false)}
+        isLoading={isLoading}
+      />
+    ) : (
       <Login
         onLogin={handleLogin}
         onSwitchToRegister={() => setShowRegister(true)}
@@ -111,15 +123,17 @@ function App() {
     );
   }
 
+  // Render main app layout
   return (
     <Layout
       currentView={currentView}
       onViewChange={setCurrentView}
       onLogout={handleLogout}
+      user={user}
     >
       {renderCurrentView()}
     </Layout>
   );
-}
+};
 
 export default App;

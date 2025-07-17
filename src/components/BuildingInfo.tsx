@@ -160,8 +160,6 @@ const addNewMember = () => {
   });
 };
 
-
-
   const addFacility = () => {
     if (newFacility.trim() && !formData.facilities.includes(newFacility.trim())) {
       setFormData({

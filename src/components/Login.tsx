@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Lock, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../utils/supabaseClient';
 
 interface LoginProps {
-  onLogin: (email: string, password: string) => Promise<void>;
   onSwitchToRegister: () => void;
-  isLoading: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading }) => {
+const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/dashboard');
+      }
+    };
+    checkSession();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,11 +34,31 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading })
     }
     
     try {
-      await onLogin(email, password);
-    } catch {
-      setError('Invalid email or password');
+      setIsLoading(true);
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -56,6 +88,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading })
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="Enter your email"
                 disabled={isLoading}
+                required
               />
             </div>
           </div>
@@ -74,6 +107,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading })
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="Enter your password"
                 disabled={isLoading}
+                required
+                minLength={6}
               />
             </div>
           </div>

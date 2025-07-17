@@ -1,16 +1,26 @@
 import React from 'react';
-import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X, MapPin, Package, UserCheck, Truck, Settings, User } from 'lucide-react';
+import { 
+  Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, 
+  Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
+} from 'lucide-react';
 import { ViewType } from '../types';
-import { Clock, Calendar } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
 interface LayoutProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   onLogout: () => void;
   children: React.ReactNode;
+  user: User | null;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, children }) => {
+const Layout: React.FC<LayoutProps> = ({ 
+  currentView, 
+  onViewChange, 
+  onLogout, 
+  children,
+  user 
+}) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const menuItems = [
@@ -24,13 +34,13 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
     { id: 'packages' as ViewType, icon: Package, label: 'Packages' },
     { id: 'guests' as ViewType, icon: UserCheck, label: 'Guests' },
     { id: 'move-requests' as ViewType, icon: Truck, label: 'Move Requests' },
-    { id: 'user-settings' as ViewType, icon: User, label: 'User Settings' },
+    { id: 'user-settings' as ViewType, icon: UserIcon, label: 'User Settings' },
     { id: 'system-settings' as ViewType, icon: Settings, label: 'System Settings' },
   ];
 
   const handleViewChange = (view: ViewType) => {
     onViewChange(view);
-    setSidebarOpen(false); // Close sidebar on mobile after selection
+    setSidebarOpen(false);
   };
 
   return (
@@ -50,7 +60,14 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-2">
             <Building2 className="w-8 h-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">PropManager</h1>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">PropManager</h1>
+              {user && (
+                <p className="text-xs text-gray-500 truncate">
+                  {user.email}
+                </p>
+              )}
+            </div>
           </div>
         </div>
         
@@ -62,43 +79,47 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
           <X className="w-5 h-5 text-gray-600" />
         </button>
         
-
-        
         <nav className="mt-6">
-  <div className="px-6 py-3 border-b border-gray-200">
-    <div className="flex items-center justify-between text-m text-black font-bold">
-      <div className="flex items-center space-x-2">
-        <Calendar className="w-4 h-4" />
-        <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Clock className="w-4 h-4" />
-        <span>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-      </div>
-    </div>
-  </div>
+          <div className="px-6 py-3 border-b border-gray-200">
+            <div className="flex items-center justify-between text-m text-black font-bold">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4" />
+                <span>{new Date().toLocaleDateString('en-US', { 
+                  weekday: 'short', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4" />
+                <span>{new Date().toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}</span>
+              </div>
+            </div>
+          </div>
 
-  {/* Existing menu items mapping */}
-  {menuItems.map((item) => {
-    const Icon = item.icon;
-    const isActive = currentView === item.id;
-    
-    return (
-      <button
-        key={item.id}
-        onClick={() => handleViewChange(item.id)}
-        className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
-          isActive
-            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-        }`}
-      >
-        <Icon className="w-5 h-5" />
-        <span className="font-medium">{item.label}</span>
-      </button>
-    );
-  })}
-</nav>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleViewChange(item.id)}
+                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
         
         <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
           <button
@@ -111,7 +132,6 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
         </div>
       </div>
       
-      
       {/* Main Content */}
       <div className="flex-1 overflow-auto lg:ml-0">
         {/* Mobile header */}
@@ -123,10 +143,18 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
             >
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">PropManager</h1>
-            <div className="w-10" /> {/* Spacer for centering */}
+            <div className="flex items-center space-x-2">
+              <h1 className="text-lg font-semibold text-gray-900">PropManager</h1>
+              {user && (
+                <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                  ({user.email})
+                </span>
+              )}
+            </div>
+            <div className="w-10" />
           </div>
         </div>
+        
         <main className="p-4 lg:p-8">
           {children}
         </main>

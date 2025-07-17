@@ -1,46 +1,31 @@
-export const login = (email: string, password: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Mock authentication - accept any email/password for demo
-      if (email && password) {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', email);
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    }, 1000);
+import { supabase } from '../utils/supabaseClient';
+
+export const login = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
+  return !error;
 };
 
-export const register = (name: string, email: string, password: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Mock registration - accept any valid inputs for demo
-      if (name && email && password) {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('userName', name);
-        resolve(true);
-      } else {
-        resolve(false);
+export const register = async (full_name: string, email: string, password: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name,
       }
-    }, 1000);
+    }
   });
+  return !error;
 };
 
-export const logout = (): void => {
-  localStorage.removeItem('isAuthenticated');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userName');
+export const logout = async () => {
+  await supabase.auth.signOut();
 };
 
-export const isAuthenticated = (): boolean => {
-  return localStorage.getItem('isAuthenticated') === 'true';
-};
-
-export const getCurrentUser = (): { email: string; name?: string } | null => {
-  const email = localStorage.getItem('userEmail');
-  const name = localStorage.getItem('userName');
-  return email ? { email, name: name || undefined } : null;
+export const isAuthenticated = () => {
+  const session = supabase.auth.getSession();
+  return !!session;
 };

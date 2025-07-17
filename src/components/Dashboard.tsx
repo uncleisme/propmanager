@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
+
+import { User } from '@supabase/supabase-js';import React, { useEffect, useState } from 'react';
 import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
 
-const Dashboard: React.FC = () => {
+
+interface DashboardProps {
+  user: User | null;
+}
+
+
+const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
