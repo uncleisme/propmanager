@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X } from 'lucide-react';
+import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X, MapPin, Package, UserCheck, Truck } from 'lucide-react';
 import { ViewType } from '../types';
 
 interface LayoutProps {
@@ -18,6 +18,10 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
     { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
     { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
     { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Complaints' },
+    { id: 'amenities' as ViewType, icon: MapPin, label: 'Amenities' },
+    { id: 'packages' as ViewType, icon: Package, label: 'Packages' },
+    { id: 'guests' as ViewType, icon: UserCheck, label: 'Guests' },
+    { id: 'move-requests' as ViewType, icon: Truck, label: 'Move Requests' },
   ];
 
   const handleViewChange = (view: ViewType) => {

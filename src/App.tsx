@@ -7,6 +7,10 @@ import Contacts from './components/Contacts';
 import Contracts from './components/Contracts';
 import Licenses from './components/Licenses';
 import Complaints from './components/Complaints';
+import Amenities from './components/Amenities';
+import Packages from './components/Packages';
+import Guests from './components/Guests';
+import MoveRequests from './components/MoveRequests';
 import { ViewType } from './types';
 import { login, register, logout, isAuthenticated } from './utils/auth';
 
@@ -66,6 +70,14 @@ function App() {
         return <Licenses />;
       case 'complaints':
         return <Complaints />;
+      case 'amenities':
+        return <Amenities />;
+      case 'packages':
+        return <Packages />;
+      case 'guests':
+        return <Guests />;
+      case 'move-requests':
+        return <MoveRequests />;
       default:
         return <Dashboard />;
     }

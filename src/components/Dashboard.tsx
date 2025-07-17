@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp } from 'lucide-react';
+import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, MapPin, Package, UserCheck, Truck } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 
@@ -8,21 +8,38 @@ const Dashboard: React.FC = () => {
   const [contracts, setContracts] = useState<any[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
   const [complaints, setComplaints] = useState<any[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
+  const [guests, setGuests] = useState<any[]>([]);
+  const [moveRequests, setMoveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      const [{ data: contactsData }, { data: contractsData }, { data: licensesData }, { data: complaintsData }] = await Promise.all([
+      const [
+        { data: contactsData }, 
+        { data: contractsData }, 
+        { data: licensesData }, 
+        { data: complaintsData },
+        { data: packagesData },
+        { data: guestsData },
+        { data: moveRequestsData }
+      ] = await Promise.all([
         supabase.from('contacts').select('*'),
         supabase.from('contracts').select('*'),
         supabase.from('licenses').select('*'),
-        supabase.from('complaints').select('*')
+        supabase.from('complaints').select('*'),
+        supabase.from('packages').select('*'),
+        supabase.from('guests').select('*'),
+        supabase.from('move_requests').select('*')
       ]);
       setContacts(contactsData || []);
       setContracts(contractsData || []);
       setLicenses(licensesData || []);
       setComplaints(complaintsData || []);
+      setPackages(packagesData || []);
+      setGuests(guestsData || []);
+      setMoveRequests(moveRequestsData || []);
       setLoading(false);
     };
     fetchAll();
@@ -75,6 +92,27 @@ const Dashboard: React.FC = () => {
       icon: AlertTriangle,
       color: 'bg-red-500',
       trend: '-8%'
+    },
+    {
+      title: 'Pending Packages',
+      value: packages.filter(p => p.status === 'received' || p.status === 'notified').length,
+      icon: Package,
+      color: 'bg-orange-500',
+      trend: '+3%'
+    },
+    {
+      title: 'Pending Guests',
+      value: guests.filter(g => g.status === 'pending').length,
+      icon: UserCheck,
+      color: 'bg-indigo-500',
+      trend: '+15%'
+    },
+    {
+      title: 'Move Requests',
+      value: moveRequests.filter(m => m.status === 'pending' || m.status === 'approved').length,
+      icon: Truck,
+      color: 'bg-teal-500',
+      trend: '+7%'
     }
   ];
 
@@ -94,7 +132,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
