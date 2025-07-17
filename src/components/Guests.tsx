@@ -14,21 +14,21 @@ const Guests: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [newGuest, setNewGuest] = useState<Omit<Guest, 'id' | 'created_at' | 'updated_at'>>({
-    visitor_name: '',
-    visitor_phone: '',
-    visitor_email: '',
-    host_name: '',
-    host_unit: '',
-    host_phone: '',
-    visit_date: '',
-    visit_time_start: '',
-    visit_time_end: '',
+  const [newGuest, setNewGuest] = useState<Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>>({
+    visitorName: '',
+    visitorPhone: '',
+    visitorEmail: '',
+    hostName: '',
+    hostUnit: '',
+    hostPhone: '',
+    visitDate: '',
+    visitTimeStart: '',
+    visitTimeEnd: '',
     purpose: '',
-    vehicle_info: '',
+    vehicleInfo: '',
     status: 'pending',
-    approved_by: '',
-    approved_at: '',
+    approvedBy: '',
+    approvedAt: '',
     notes: ''
   });
 
@@ -79,20 +79,20 @@ const Guests: React.FC = () => {
     setModalType('add');
     setSelectedGuest(null);
     setNewGuest({
-      visitor_name: '',
-      visitor_phone: '',
-      visitor_email: '',
-      host_name: '',
-      host_unit: '',
-      host_phone: '',
-      visit_date: '',
-      visit_time_start: '',
-      visit_time_end: '',
+      visitorName: '',
+      visitorPhone: '',
+      visitorEmail: '',
+      hostName: '',
+      hostUnit: '',
+      hostPhone: '',
+      visitDate: '',
+      visitTimeStart: '',
+      visitTimeEnd: '',
       purpose: '',
-      vehicle_info: '',
+      vehicleInfo: '',
       status: 'pending',
-      approved_by: '',
-      approved_at: '',
+      approvedBy: '',
+      approvedAt: '',
       notes: ''
     });
     setShowModal(true);
@@ -108,20 +108,20 @@ const Guests: React.FC = () => {
     setModalType('edit');
     setSelectedGuest(guest);
     setNewGuest({
-      visitor_name: guest.visitor_name,
-      visitor_phone: guest.visitor_phone || '',
-      visitor_email: guest.visitor_email || '',
-      host_name: guest.host_name,
-      host_unit: guest.host_unit,
-      host_phone: guest.host_phone,
-      visit_date: guest.visit_date,
-      visit_time_start: guest.visit_time_start || '',
-      visit_time_end: guest.visit_time_end || '',
+      visitorName: guest.visitorName,
+      visitorPhone: guest.visitorPhone || '',
+      visitorEmail: guest.visitorEmail || '',
+      hostName: guest.hostName,
+      hostUnit: guest.hostUnit,
+      hostPhone: guest.hostPhone,
+      visitDate: guest.visitDate,
+      visitTimeStart: guest.visitTimeStart || '',
+      visitTimeEnd: guest.visitTimeEnd || '',
       purpose: guest.purpose || '',
-      vehicle_info: guest.vehicle_info || '',
+      vehicleInfo: guest.vehicleInfo || '',
       status: guest.status,
-      approved_by: guest.approved_by || '',
-      approved_at: guest.approved_at || '',
+      approvedBy: guest.approvedBy || '',
+      approvedAt: guest.approvedAt || '',
       notes: guest.notes || ''
     });
     setShowModal(true);
@@ -133,22 +133,22 @@ const Guests: React.FC = () => {
     setSubmitError(null);
 
     try {
-      if (!newGuest.visitor_name.trim() || !newGuest.host_name.trim() || !newGuest.host_unit.trim()) {
+      if (!newGuest.visitorName.trim() || !newGuest.hostName.trim() || !newGuest.hostUnit.trim()) {
         throw new Error('Please fill in all required fields');
       }
 
       const guestData = {
         ...newGuest,
-        visitor_phone: newGuest.visitor_phone || null,
-        visitor_email: newGuest.visitor_email || null,
-        visit_time_start: newGuest.visit_time_start || null,
-        visit_time_end: newGuest.visit_time_end || null,
+        visitorPhone: newGuest.visitorPhone || null,
+        visitorEmail: newGuest.visitorEmail || null,
+        visitTimeStart: newGuest.visitTimeStart || null,
+        visitTimeEnd: newGuest.visitTimeEnd || null,
         purpose: newGuest.purpose || null,
-        vehicle_info: newGuest.vehicle_info || null,
-        approved_by: newGuest.approved_by || null,
-        approved_at: newGuest.status === 'approved' && !newGuest.approved_at 
-          ? new Date().toISOString() 
-          : newGuest.approved_at || null,
+        vehicleInfo: newGuest.vehicleInfo || null,
+        approvedBy: newGuest.approvedBy || null,
+        approvedAt: newGuest.status === 'approved' && !newGuest.approvedAt
+          ? new Date().toISOString()
+          : newGuest.approvedAt || null,
         notes: newGuest.notes || null
       };
 
@@ -216,10 +216,10 @@ const Guests: React.FC = () => {
 
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = 
-      guest.visitor_name.toLowerCase().includes(search.toLowerCase()) ||
-      guest.host_name.toLowerCase().includes(search.toLowerCase()) ||
-      guest.host_unit.toLowerCase().includes(search.toLowerCase()) ||
-      (guest.visitor_phone && guest.visitor_phone.toLowerCase().includes(search.toLowerCase()));
+      guest.visitorName.toLowerCase().includes(search.toLowerCase()) ||
+      guest.hostName.toLowerCase().includes(search.toLowerCase()) ||
+      guest.hostUnit.toLowerCase().includes(search.toLowerCase()) ||
+      (guest.visitorPhone && guest.visitorPhone.toLowerCase().includes(search.toLowerCase()));
     
     const matchesStatus = statusFilter === 'all' || guest.status === statusFilter;
     
@@ -228,7 +228,7 @@ const Guests: React.FC = () => {
 
   const pendingGuests = guests.filter(guest => guest.status === 'pending');
   const todayGuests = guests.filter(guest => 
-    guest.visit_date === new Date().toISOString().split('T')[0] && 
+    guest.visitDate === new Date().toISOString().split('T')[0] && 
     (guest.status === 'approved' || guest.status === 'completed')
   );
 
@@ -337,7 +337,7 @@ const Guests: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{guest.visitor_name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{guest.visitorName}</h3>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(guest.status)}`}>
                     {getStatusIcon(guest.status)}
                     <span className="capitalize">{guest.status}</span>
@@ -345,25 +345,25 @@ const Guests: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
-                    <p><strong>Host:</strong> {guest.host_name} • Unit {guest.host_unit}</p>
-                    <p><strong>Host Phone:</strong> {guest.host_phone}</p>
-                    {guest.visitor_phone && (
-                      <p><strong>Visitor Phone:</strong> {guest.visitor_phone}</p>
+                    <p><strong>Host:</strong> {guest.hostName} • Unit {guest.hostUnit}</p>
+                    <p><strong>Host Phone:</strong> {guest.hostPhone}</p>
+                    {guest.visitorPhone && (
+                      <p><strong>Visitor Phone:</strong> {guest.visitorPhone}</p>
                     )}
                   </div>
                   <div>
-                    <p><strong>Visit Date:</strong> {new Date(guest.visit_date).toLocaleDateString()}</p>
-                    {guest.visit_time_start && guest.visit_time_end && (
-                      <p><strong>Time:</strong> {guest.visit_time_start} - {guest.visit_time_end}</p>
+                    <p><strong>Visit Date:</strong> {new Date(guest.visitDate).toLocaleDateString()}</p>
+                    {guest.visitTimeStart && guest.visitTimeEnd && (
+                      <p><strong>Time:</strong> {guest.visitTimeStart} - {guest.visitTimeEnd}</p>
                     )}
                     {guest.purpose && (
                       <p><strong>Purpose:</strong> {guest.purpose}</p>
                     )}
                   </div>
                 </div>
-                {guest.vehicle_info && (
+                {guest.vehicleInfo && (
                   <p className="text-sm text-gray-600 mt-2">
-                    <strong>Vehicle:</strong> {guest.vehicle_info}
+                    <strong>Vehicle:</strong> {guest.vehicleInfo}
                   </p>
                 )}
               </div>
@@ -437,7 +437,7 @@ const Guests: React.FC = () => {
               {modalType === 'view' && selectedGuest && (
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{selectedGuest.visitor_name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{selectedGuest.visitorName}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedGuest.status)}`}>
                       {selectedGuest.status}
                     </span>
@@ -446,40 +446,40 @@ const Guests: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Visitor Name</p>
-                      <p className="text-sm text-gray-900">{selectedGuest.visitor_name}</p>
+                      <p className="text-sm text-gray-900">{selectedGuest.visitorName}</p>
                     </div>
-                    {selectedGuest.visitor_phone && (
+                    {selectedGuest.visitorPhone && (
                       <div>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Visitor Phone</p>
-                        <p className="text-sm text-gray-900">{selectedGuest.visitor_phone}</p>
+                        <p className="text-sm text-gray-900">{selectedGuest.visitorPhone}</p>
                       </div>
                     )}
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Host</p>
-                      <p className="text-sm text-gray-900">{selectedGuest.host_name}</p>
+                      <p className="text-sm text-gray-900">{selectedGuest.hostName}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Unit</p>
-                      <p className="text-sm text-gray-900">{selectedGuest.host_unit}</p>
+                      <p className="text-sm text-gray-900">{selectedGuest.hostUnit}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Host Phone</p>
-                      <p className="text-sm text-gray-900">{selectedGuest.host_phone}</p>
+                      <p className="text-sm text-gray-900">{selectedGuest.hostPhone}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Visit Date</p>
-                      <p className="text-sm text-gray-900">{new Date(selectedGuest.visit_date).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-900">{new Date(selectedGuest.visitDate).toLocaleDateString()}</p>
                     </div>
-                    {selectedGuest.visit_time_start && (
+                    {selectedGuest.visitTimeStart && (
                       <div>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Start Time</p>
-                        <p className="text-sm text-gray-900">{selectedGuest.visit_time_start}</p>
+                        <p className="text-sm text-gray-900">{selectedGuest.visitTimeStart}</p>
                       </div>
                     )}
-                    {selectedGuest.visit_time_end && (
+                    {selectedGuest.visitTimeEnd && (
                       <div>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">End Time</p>
-                        <p className="text-sm text-gray-900">{selectedGuest.visit_time_end}</p>
+                        <p className="text-sm text-gray-900">{selectedGuest.visitTimeEnd}</p>
                       </div>
                     )}
                   </div>
@@ -491,19 +491,19 @@ const Guests: React.FC = () => {
                     </div>
                   )}
 
-                  {selectedGuest.vehicle_info && (
+                  {selectedGuest.vehicleInfo && (
                     <div className="pt-4 border-t border-gray-100">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Vehicle Info</p>
-                      <p className="text-sm text-gray-600">{selectedGuest.vehicle_info}</p>
+                      <p className="text-sm text-gray-600">{selectedGuest.vehicleInfo}</p>
                     </div>
                   )}
 
-                  {selectedGuest.approved_by && selectedGuest.approved_at && (
+                  {selectedGuest.approvedBy && selectedGuest.approvedAt && (
                     <div className="pt-4 border-t border-gray-100">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Approved By</p>
-                      <p className="text-sm text-gray-900">{selectedGuest.approved_by}</p>
+                      <p className="text-sm text-gray-900">{selectedGuest.approvedBy}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(selectedGuest.approved_at).toLocaleString()}
+                        {new Date(selectedGuest.approvedAt).toLocaleString()}
                       </p>
                     </div>
                   )}
@@ -530,8 +530,8 @@ const Guests: React.FC = () => {
                     <input
                       type="text"
                       required
-                      value={newGuest.visitor_name}
-                      onChange={(e) => setNewGuest({ ...newGuest, visitor_name: e.target.value })}
+                      value={newGuest.visitorName}
+                      onChange={(e) => setNewGuest({ ...newGuest, visitorName: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -541,8 +541,8 @@ const Guests: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Phone</label>
                       <input
                         type="tel"
-                        value={newGuest.visitor_phone}
-                        onChange={(e) => setNewGuest({ ...newGuest, visitor_phone: e.target.value })}
+                        value={newGuest.visitorPhone}
+                        onChange={(e) => setNewGuest({ ...newGuest, visitorPhone: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -550,8 +550,8 @@ const Guests: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Email</label>
                       <input
                         type="email"
-                        value={newGuest.visitor_email}
-                        onChange={(e) => setNewGuest({ ...newGuest, visitor_email: e.target.value })}
+                        value={newGuest.visitorEmail}
+                        onChange={(e) => setNewGuest({ ...newGuest, visitorEmail: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -563,8 +563,8 @@ const Guests: React.FC = () => {
                       <input
                         type="text"
                         required
-                        value={newGuest.host_name}
-                        onChange={(e) => setNewGuest({ ...newGuest, host_name: e.target.value })}
+                        value={newGuest.hostName}
+                        onChange={(e) => setNewGuest({ ...newGuest, hostName: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -573,8 +573,8 @@ const Guests: React.FC = () => {
                       <input
                         type="text"
                         required
-                        value={newGuest.host_unit}
-                        onChange={(e) => setNewGuest({ ...newGuest, host_unit: e.target.value })}
+                        value={newGuest.hostUnit}
+                        onChange={(e) => setNewGuest({ ...newGuest, hostUnit: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -585,8 +585,8 @@ const Guests: React.FC = () => {
                     <input
                       type="tel"
                       required
-                      value={newGuest.host_phone}
-                      onChange={(e) => setNewGuest({ ...newGuest, host_phone: e.target.value })}
+                      value={newGuest.hostPhone}
+                      onChange={(e) => setNewGuest({ ...newGuest, hostPhone: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -597,8 +597,8 @@ const Guests: React.FC = () => {
                       type="date"
                       required
                       min={new Date().toISOString().split('T')[0]}
-                      value={newGuest.visit_date}
-                      onChange={(e) => setNewGuest({ ...newGuest, visit_date: e.target.value })}
+                      value={newGuest.visitDate}
+                      onChange={(e) => setNewGuest({ ...newGuest, visitDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -608,8 +608,8 @@ const Guests: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                       <input
                         type="time"
-                        value={newGuest.visit_time_start}
-                        onChange={(e) => setNewGuest({ ...newGuest, visit_time_start: e.target.value })}
+                        value={newGuest.visitTimeStart}
+                        onChange={(e) => setNewGuest({ ...newGuest, visitTimeStart: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -617,8 +617,8 @@ const Guests: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                       <input
                         type="time"
-                        value={newGuest.visit_time_end}
-                        onChange={(e) => setNewGuest({ ...newGuest, visit_time_end: e.target.value })}
+                        value={newGuest.visitTimeEnd}
+                        onChange={(e) => setNewGuest({ ...newGuest, visitTimeEnd: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -639,8 +639,8 @@ const Guests: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Information</label>
                     <input
                       type="text"
-                      value={newGuest.vehicle_info}
-                      onChange={(e) => setNewGuest({ ...newGuest, vehicle_info: e.target.value })}
+                      value={newGuest.vehicleInfo}
+                      onChange={(e) => setNewGuest({ ...newGuest, vehicleInfo: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., Red Toyota Camry - ABC123"
                     />
