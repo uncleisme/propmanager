@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
@@ -13,9 +12,6 @@ interface Contact {
   email: string;
   notes?: string;
 }
-
-
-
 
 const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -172,7 +168,7 @@ useEffect(() => {
   </div>
 
   {/* Contacts Table */}
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
     <table className="min-w-full divide-y divide-gray-200">
       <thead className="bg-gray-50">
         <tr>
