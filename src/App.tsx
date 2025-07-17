@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import BuildingInfo from './components/BuildingInfo';
 import Contacts from './components/Contacts';
 import Contracts from './components/Contracts';
 import Licenses from './components/Licenses';
@@ -62,6 +63,8 @@ function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
+      case 'building-info':
+        return <BuildingInfo />;
       case 'contacts':
         return <Contacts />;
       case 'contracts':

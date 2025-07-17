@@ -14,6 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
 
   const menuItems = [
     { id: 'dashboard' as ViewType, icon: BarChart3, label: 'Dashboard' },
+    { id: 'building-info' as ViewType, icon: Building2, label: 'Building Info' },
     { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
     { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
     { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },

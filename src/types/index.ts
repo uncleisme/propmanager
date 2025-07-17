@@ -143,4 +143,35 @@ export interface MoveRequest {
   updated_at: string;
 }
 
-export type ViewType = 'dashboard' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests';
+export interface BuildingInfo {
+  id: string;
+  building_name: string;
+  building_address: string;
+  building_type: 'condominium' | 'apartment' | 'townhouse' | 'commercial' | 'mixed_use';
+  total_units: number;
+  total_floors: number;
+  year_built: number;
+  property_manager_name: string;
+  property_manager_company: string;
+  property_manager_phone: string;
+  property_manager_email: string;
+  jmb_name?: string;
+  jmb_chairman?: string;
+  jmb_secretary?: string;
+  jmb_treasurer?: string;
+  jmb_phone?: string;
+  jmb_email?: string;
+  maintenance_fee: number;
+  sinking_fund: number;
+  insurance_company?: string;
+  insurance_policy_number?: string;
+  insurance_expiry?: string;
+  facilities: string[];
+  parking_spaces: number;
+  security_features: string[];
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests';

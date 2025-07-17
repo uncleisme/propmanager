@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, MapPin, Package, UserCheck, Truck } from 'lucide-react';
+import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, MapPin, Package, UserCheck, Truck, Building2 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 
 const Dashboard: React.FC = () => {
+  const [buildingInfo, setBuildingInfo] = useState<any>(null);
   const [contacts, setContacts] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
@@ -17,6 +18,7 @@ const Dashboard: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
       const [
+        { data: buildingData },
         { data: contactsData }, 
         { data: contractsData }, 
         { data: licensesData }, 
@@ -25,6 +27,7 @@ const Dashboard: React.FC = () => {
         { data: guestsData },
         { data: moveRequestsData }
       ] = await Promise.all([
+        supabase.from('building_info').select('*').limit(1).single(),
         supabase.from('contacts').select('*'),
         supabase.from('contracts').select('*'),
         supabase.from('licenses').select('*'),
@@ -33,6 +36,7 @@ const Dashboard: React.FC = () => {
         supabase.from('guests').select('*'),
         supabase.from('move_requests').select('*')
       ]);
+      setBuildingInfo(buildingData);
       setContacts(contactsData || []);
       setContracts(contractsData || []);
       setLicenses(licensesData || []);
@@ -127,7 +131,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <div className="flex items-center space-x-3 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          {buildingInfo && (
+            <span className="text-lg text-gray-600">- {buildingInfo.building_name}</span>
+          )}
+        </div>
         <p className="text-gray-600">Overview of your property management activities</p>
       </div>
 
@@ -155,6 +164,40 @@ const Dashboard: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Building Overview */}
+      {buildingInfo && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <Building2 className="w-5 h-5 mr-2" />
+            Building Overview
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-600">{buildingInfo.total_units}</p>
+              <p className="text-sm text-gray-600">Total Units</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">{buildingInfo.total_floors}</p>
+              <p className="text-sm text-gray-600">Floors</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-purple-600">{buildingInfo.parking_spaces}</p>
+              <p className="text-sm text-gray-600">Parking Spaces</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">{buildingInfo.year_built}</p>
+              <p className="text-sm text-gray-600">Year Built</p>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              <strong>Type:</strong> {buildingInfo.building_type?.replace('_', ' ') || 'Not specified'} • 
+              <strong> Manager:</strong> {buildingInfo.property_manager_name || 'Not specified'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Alerts and Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
