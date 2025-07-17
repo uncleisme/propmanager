@@ -1,8 +1,7 @@
 import React from 'react';
-import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X, MapPin, Package, UserCheck, Truck } from 'lucide-react';
+import { Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, Menu, X, MapPin, Package, UserCheck, Truck, Settings, User } from 'lucide-react';
 import { ViewType } from '../types';
 import { Clock, Calendar } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 interface LayoutProps {
   currentView: ViewType;
@@ -25,6 +24,8 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
     { id: 'packages' as ViewType, icon: Package, label: 'Packages' },
     { id: 'guests' as ViewType, icon: UserCheck, label: 'Guests' },
     { id: 'move-requests' as ViewType, icon: Truck, label: 'Move Requests' },
+    { id: 'user-settings' as ViewType, icon: User, label: 'User Settings' },
+    { id: 'system-settings' as ViewType, icon: Settings, label: 'System Settings' },
   ];
 
   const handleViewChange = (view: ViewType) => {
@@ -32,48 +33,6 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onLogout, ch
     setSidebarOpen(false); // Close sidebar on mobile after selection
   };
 
-  const CurrentDateTimeCard = () => {
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000); // Update every second
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = currentDateTime.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const formattedTime = currentDateTime.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-      <div className="flex items-center space-x-4">
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <Calendar className="w-6 h-6 text-blue-600" />
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <Clock className="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-500">Current Date & Time</h3>
-          <p className="text-lg font-semibold text-gray-900">{formattedDate}</p>
-          <p className="text-lg font-semibold text-gray-900">{formattedTime}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile overlay */}

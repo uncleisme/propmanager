@@ -30,7 +30,7 @@ const Contracts: React.FC = () => {
     const { data: contractsData, error: contractsError } = await supabase
       .from("contracts")
       .select("*")
-      .order("end_date", { ascending: true });
+      .order("endDate", { ascending: true });
 
     const { data: contactsData, error: contactsError } = await supabase
       .from("contacts")
@@ -57,14 +57,15 @@ const Contracts: React.FC = () => {
   const handleAdd = () => {
     setModalType("add");
     setSelectedContract({
+      id: "",
       title: "",
-      contact_id: "",
-      start_date: "",
-      end_date: "",
+      contactId: "",
+      startDate: "",
+      endDate: "",
       value: 0,
       status: "active",
       description: "",
-      renewal_notice: 30,
+      renewalNotice: 30,
     });
     setShowModal(true);
   };
@@ -81,7 +82,7 @@ const Contracts: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     setErrorMsg("");
     if (window.confirm("Delete this contract?")) {
       const { error } = await supabase.from("contracts").delete().eq("id", id);
@@ -101,13 +102,13 @@ const Contracts: React.FC = () => {
 
     const contractData: Omit<Contract, "id"> = {
       title: formData.get("title") as string,
-      contact_id: formData.get("contact_id") as string,
-      start_date: formData.get("start_date") as string,
-      end_date: formData.get("end_date") as string,
+      contactId: formData.get("contactId") as string,
+      startDate: formData.get("startDate") as string,
+      endDate: formData.get("endDate") as string,
       value: parseFloat(formData.get("value") as string) || 0,
       status: formData.get("status") as Contract["status"],
       description: formData.get("description") as string,
-      renewal_notice: parseInt(formData.get("renewal_notice") as string) || 30,
+      renewalNotice: parseInt(formData.get("renewalNotice") as string) || 30,
     };
 
     try {
@@ -119,13 +120,17 @@ const Contracts: React.FC = () => {
         const { error } = await supabase
           .from("contracts")
           .update(contractData)
-          // .eq("id", selectedContract.id);
+          .eq("id", selectedContract.id);
         if (error) throw error;
       }
       setShowModal(false);
       fetchContracts(); // Re-fetch to ensure data is up-to-date and sorted
-    } catch (error: any) {
-      setErrorMsg(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMsg(error.message);
+      } else {
+        setErrorMsg("An unknown error occurred");
+      }
     }
   };
 
@@ -162,7 +167,7 @@ const Contracts: React.FC = () => {
   };
 
   const getStatusBadge = (contract: Contract) => {
-    const days = getDaysUntilExpiration(contract.end_date);
+    const days = getDaysUntilExpiration(contract.endDate);
     const statusText = getStatusText(days);
     const colorClass = getStatusColor(days);
     return (
@@ -176,7 +181,7 @@ const Contracts: React.FC = () => {
   const filteredContracts = contracts.filter(
     (c) =>
       c.title.toLowerCase().includes(search.toLowerCase()) ||
-      getContactName(c.contact_id).toLowerCase().includes(search.toLowerCase()) ||
+      getContactName(c.contactId).toLowerCase().includes(search.toLowerCase()) ||
       c.description.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -284,17 +289,17 @@ const Contracts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
-                        onClick={() => handleVendorClick(contract.contact_id)}
+                        onClick={() => handleVendorClick(contract.contactId)}
                         className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200"
                       >
-                        {getContactName(contract.contact_id)}
+                        {getContactName(contract.contactId)}
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       ${contract.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(contract.end_date)}
+                      {formatDate(contract.endDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(contract)}
@@ -441,22 +446,22 @@ const Contracts: React.FC = () => {
                         Service Provider
                       </p>
                       <button
-                        onClick={() => handleVendorClick(selectedContract.contact_id)}
+                        onClick={() => handleVendorClick(selectedContract.contactId)}
                         className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors duration-200"
                       >
-                        {getContactName(selectedContract.contact_id)}
+                        {getContactName(selectedContract.contactId)}
                       </button>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Start Date</p>
                       <p className="text-sm text-gray-900">
-                        {formatDate(selectedContract.start_date)}
+                        {formatDate(selectedContract.startDate)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">End Date</p>
                       <p className="text-sm text-gray-900">
-                        {formatDate(selectedContract.end_date)}
+                        {formatDate(selectedContract.endDate)}
                       </p>
                     </div>
                     <div>
@@ -468,7 +473,7 @@ const Contracts: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Status</p>
                       <p className="text-sm text-gray-900">
-                        {getStatusText(getDaysUntilExpiration(selectedContract.end_date))}
+                        {getStatusText(getDaysUntilExpiration(selectedContract.endDate))}
                       </p>
                     </div>
                     <div>
@@ -476,7 +481,7 @@ const Contracts: React.FC = () => {
                         Renewal Notice
                       </p>
                       <p className="text-sm text-gray-900">
-                        {selectedContract.renewal_notice} days
+                        {selectedContract.renewalNotice} days
                       </p>
                     </div>
                   </div>
@@ -510,8 +515,8 @@ const Contracts: React.FC = () => {
                       Service Provider*
                     </label>
                     <select
-                      name="contact_id"
-                      defaultValue={selectedContract?.contact_id || ""}
+                      name="contactId"
+                      defaultValue={selectedContract?.contactId || ""}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
@@ -530,8 +535,8 @@ const Contracts: React.FC = () => {
                       </label>
                       <input
                         type="date"
-                        name="start_date"
-                        defaultValue={selectedContract?.start_date || ""}
+                        name="startDate"
+                        defaultValue={selectedContract?.startDate || ""}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -542,8 +547,8 @@ const Contracts: React.FC = () => {
                       </label>
                       <input
                         type="date"
-                        name="end_date"
-                        defaultValue={selectedContract?.end_date || ""}
+                        name="endDate"
+                        defaultValue={selectedContract?.endDate || ""}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -582,8 +587,8 @@ const Contracts: React.FC = () => {
                     </label>
                     <input
                       type="number"
-                      name="renewal_notice"
-                      defaultValue={selectedContract?.renewal_notice || 30}
+                      name="renewalNotice"
+                      defaultValue={selectedContract?.renewalNotice || 30}
                       required
                       min="1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

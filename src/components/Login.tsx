@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading })
     
     try {
       await onLogin(email, password);
-    } catch (err) {
+    } catch {
       setError('Invalid email or password');
     }
   };

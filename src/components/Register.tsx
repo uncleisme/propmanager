@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Building2, Lock, Mail, User } from 'lucide-react';
 
 interface RegisterProps {
-  onRegister: (name: string, email: string, password: string) => Promise<void>;
+  onRegister: (fullName: string, email: string, password: string) => Promise<void>;
   onSwitchToLogin: () => void;
   isLoading: boolean;
 }
 
 const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin, isLoading }) => {
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,7 +18,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin, isLoad
     e.preventDefault();
     setError('');
     
-    if (!name || !email || !password || !confirmPassword) {
+    if (!fullName || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -34,8 +34,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin, isLoad
     }
     
     try {
-      await onRegister(name, email, password);
-    } catch (err) {
+      await onRegister(fullName, email, password);
+    } catch {
       setError('Registration failed. Please try again.');
     }
   };
@@ -63,8 +63,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin, isLoad
               <input
                 id="name"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="Enter your full name"
                 disabled={isLoading}

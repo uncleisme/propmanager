@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
 
@@ -25,31 +25,31 @@ const Contacts: React.FC = () => {
   const [pageSize] = useState(10); // You can change this to any number
   const [totalContacts, setTotalContacts] = useState(0);
 
-  const fetchContacts = async () => {
-  setLoading(true);
+  const fetchContacts = useCallback(async () => {
+    setLoading(true);
 
-  const from = (currentPage - 1) * pageSize;
-  const to = from + pageSize - 1;
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
-    .from("contacts")
-    .select("*", { count: "exact" }) // important: include count
-    .range(from, to);
+    const { data, error, count } = await supabase
+      .from("contacts")
+      .select("*", { count: "exact" }) // important: include count
+      .range(from, to);
 
-  if (!error && data) {
-    setContacts(data);
-    setTotalContacts(count ?? 0);
-  } else {
-    setErrorMsg(error?.message || "Failed to load contacts.");
-  }
+    if (!error && data) {
+      setContacts(data);
+      setTotalContacts(count ?? 0);
+    } else {
+      setErrorMsg(error?.message || "Failed to load contacts.");
+    }
 
-  setLoading(false);
-};
+    setLoading(false);
+  }, [currentPage, pageSize]);
 
 
 useEffect(() => {
   fetchContacts();
-}, [currentPage]);
+}, [fetchContacts]);
 
 
   const handleAdd = () => {

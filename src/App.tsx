@@ -12,6 +12,8 @@ import Amenities from './components/Amenities';
 import Packages from './components/Packages';
 import Guests from './components/Guests';
 import MoveRequests from './components/MoveRequests';
+import UserSettings from './components/UserSettings';
+import SystemSettings from './components/SystemSettings';
 import { ViewType } from './types';
 import { login, register, logout, isAuthenticated } from './utils/auth';
 
@@ -39,10 +41,10 @@ function App() {
     }
   };
 
-  const handleRegister = async (name: string, email: string, password: string) => {
+  const handleRegister = async (full_name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const success = await register(name, email, password);
+      const success = await register(full_name, email, password);
       if (success) {
         setAuthenticated(true);
       } else {
@@ -81,6 +83,10 @@ function App() {
         return <Guests />;
       case 'move-requests':
         return <MoveRequests />;
+      case 'user-settings':
+        return <UserSettings />;
+      case 'system-settings':
+        return <SystemSettings />;
       default:
         return <Dashboard />;
     }

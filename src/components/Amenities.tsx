@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, DollarSign, Plus, Eye, Edit, X, MapPin, AlertCircle } from 'lucide-react';
+import { Clock, Users, DollarSign, X, AlertCircle } from 'lucide-react';
 import { Amenity, Booking } from '../types';
 import { supabase } from '../utils/supabaseClient';
 
@@ -12,16 +12,18 @@ const Amenities: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [newBooking, setNewBooking] = useState<Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'amenity_id' | 'total_cost'>>({
-    resident_name: '',
-    resident_unit: '',
-    resident_email: '',
-    booking_date: '',
-    start_time: '',
-    end_time: '',
-    guests_count: 1,
+  const [newBooking, setNewBooking] = useState<Omit<Booking, 'id' | 'createdAt' | 'updatedAt' | 'amenityId' | 'totalCost'>>({
+    residentName: '',
+    residentUnit: '',
+    residentEmail: '',
+    bookingDate: '',
+    startTime: '',
+    endTime: '',
+    guestsCount: 1,
     status: 'pending',
-    notes: ''
+    notes: '',
+    createdAt: '',
+    updatedAt: ''
   });
 
   const fetchData = async () => {
@@ -29,7 +31,7 @@ const Amenities: React.FC = () => {
     try {
       const [amenitiesResponse, bookingsResponse] = await Promise.all([
         supabase.from('amenities').select('*').order('name'),
-        supabase.from('bookings').select('*').order('booking_date', { ascending: false })
+        supabase.from('bookings').select('*').order('bookingDate', { ascending: false })
       ]);
 
       if (amenitiesResponse.error) throw amenitiesResponse.error;
@@ -52,9 +54,9 @@ const Amenities: React.FC = () => {
     switch (type) {
       case 'gym': return '🏋️';
       case 'pool': return '🏊';
-      case 'bbq_area': return '🔥';
+      case 'bbqArea': return '🔥';
       case 'clubhouse': return '🏛️';
-      case 'tennis_court': return '🎾';
+      case 'tennisCourt': return '🎾';
       case 'playground': return '🛝';
       case 'parking': return '🚗';
       default: return '🏢';
@@ -84,26 +86,26 @@ const Amenities: React.FC = () => {
     setSelectedAmenity(amenity);
     setShowBookingModal(true);
     setNewBooking({
-      resident_name: '',
-      resident_unit: '',
-      resident_email: '',
-      booking_date: '',
-      start_time: '',
-      end_time: '',
-      guests_count: 1,
+      residentName: '',
+      residentUnit: '',
+      residentEmail: '',
+      bookingDate: '',
+      startTime: '',
+      endTime: '',
+      guestsCount: 1,
       status: 'pending',
       notes: ''
     });
   };
 
   const calculateTotalCost = () => {
-    if (!selectedAmenity || !newBooking.start_time || !newBooking.end_time) return 0;
+    if (!selectedAmenity || !newBooking.startTime || !newBooking.endTime) return 0;
     
-    const start = new Date(`2000-01-01T${newBooking.start_time}`);
-    const end = new Date(`2000-01-01T${newBooking.end_time}`);
+    const start = new Date(`2000-01-01T${newBooking.startTime}`);
+    const end = new Date(`2000-01-01T${newBooking.endTime}`);
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
     
-    return Math.max(0, hours * selectedAmenity.hourly_rate);
+    return Math.max(0, hours * selectedAmenity.hourlyRate);
   };
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
@@ -114,7 +116,7 @@ const Amenities: React.FC = () => {
     setSubmitError(null);
 
     try {
-      if (!newBooking.resident_name.trim() || !newBooking.resident_unit.trim() || !newBooking.resident_email.trim()) {
+      if (!newBooking.residentName.trim() || !newBooking.residentUnit.trim() || !newBooking.residentEmail.trim()) {
         throw new Error('Please fill in all required fields');
       }
 
@@ -123,15 +125,15 @@ const Amenities: React.FC = () => {
       const { error } = await supabase
         .from('bookings')
         .insert([{
-          amenity_id: selectedAmenity.id,
-          resident_name: newBooking.resident_name,
-          resident_unit: newBooking.resident_unit,
-          resident_email: newBooking.resident_email,
-          booking_date: newBooking.booking_date,
-          start_time: newBooking.start_time,
-          end_time: newBooking.end_time,
-          guests_count: newBooking.guests_count,
-          total_cost: totalCost,
+          amenityId: selectedAmenity.id,
+          residentName: newBooking.residentName,
+          residentUnit: newBooking.residentUnit,
+          residentEmail: newBooking.residentEmail,
+          bookingDate: newBooking.bookingDate,
+          startTime: newBooking.startTime,
+          endTime: newBooking.endTime,
+          guestsCount: newBooking.guestsCount,
+          totalCost: totalCost,
           status: 'pending',
           notes: newBooking.notes || null
         }]);
@@ -179,7 +181,7 @@ const Amenities: React.FC = () => {
                   <span className="text-3xl">{getAmenityIcon(amenity.type)}</span>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{amenity.name}</h3>
-                    <p className="text-sm text-gray-600 capitalize">{amenity.type.replace('_', ' ')}</p>
+                    <p className="text-sm text-gray-600 capitalize">{amenity.type.replace(/([A-Z])/g, ' $1').trim()}</p>
                   </div>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(amenity.status)}`}>
@@ -198,12 +200,12 @@ const Amenities: React.FC = () => {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Clock className="w-4 h-4 mr-2" />
-                  <span>Hours: {amenity.available_hours}</span>
+                  <span>Hours: {amenity.availableHours}</span>
                 </div>
-                {amenity.hourly_rate > 0 && (
+                {amenity.hourlyRate > 0 && (
                   <div className="flex items-center text-sm text-gray-600">
                     <DollarSign className="w-4 h-4 mr-2" />
-                    <span>${amenity.hourly_rate}/hour</span>
+                    <span>${amenity.hourlyRate}/hour</span>
                   </div>
                 )}
               </div>
@@ -232,24 +234,24 @@ const Amenities: React.FC = () => {
             <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
-                  <h4 className="font-medium text-gray-900">{getAmenityName(booking.amenity_id)}</h4>
+                  <h4 className="font-medium text-gray-900">{getAmenityName(booking.amenityId)}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBookingStatusColor(booking.status)}`}>
                     {booking.status}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  {booking.resident_name} • Unit {booking.resident_unit}
+                  {booking.residentName} • Unit {booking.residentUnit}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {new Date(booking.booking_date).toLocaleDateString()} • {booking.start_time} - {booking.end_time}
+                  {new Date(booking.bookingDate).toLocaleDateString()} • {booking.startTime} - {booking.endTime}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">
-                  ${booking.total_cost.toFixed(2)}
+                  ${booking.totalCost.toFixed(2)}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {booking.guests_count} guest{booking.guests_count !== 1 ? 's' : ''}
+                  {booking.guestsCount} guest{booking.guestsCount !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
@@ -285,9 +287,9 @@ const Amenities: React.FC = () => {
                     <p className="text-sm text-gray-600">Capacity: {selectedAmenity.capacity} people</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">Available: {selectedAmenity.available_hours}</p>
-                {selectedAmenity.hourly_rate > 0 && (
-                  <p className="text-sm font-medium text-blue-700">${selectedAmenity.hourly_rate}/hour</p>
+                <p className="text-sm text-gray-600 mb-2">Available: {selectedAmenity.availableHours}</p>
+                {selectedAmenity.hourlyRate > 0 && (
+                  <p className="text-sm font-medium text-blue-700">${selectedAmenity.hourlyRate}/hour</p>
                 )}
               </div>
 
@@ -316,8 +318,8 @@ const Amenities: React.FC = () => {
                     <input
                       type="text"
                       required
-                      value={newBooking.resident_name}
-                      onChange={(e) => setNewBooking({ ...newBooking, resident_name: e.target.value })}
+                      value={newBooking.residentName}
+                      onChange={(e) => setNewBooking({ ...newBooking, residentName: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -326,8 +328,8 @@ const Amenities: React.FC = () => {
                     <input
                       type="text"
                       required
-                      value={newBooking.resident_unit}
-                      onChange={(e) => setNewBooking({ ...newBooking, resident_unit: e.target.value })}
+                      value={newBooking.residentUnit}
+                      onChange={(e) => setNewBooking({ ...newBooking, residentUnit: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -338,8 +340,8 @@ const Amenities: React.FC = () => {
                   <input
                     type="email"
                     required
-                    value={newBooking.resident_email}
-                    onChange={(e) => setNewBooking({ ...newBooking, resident_email: e.target.value })}
+                    value={newBooking.residentEmail}
+                    onChange={(e) => setNewBooking({ ...newBooking, residentEmail: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -350,8 +352,8 @@ const Amenities: React.FC = () => {
                     type="date"
                     required
                     min={new Date().toISOString().split('T')[0]}
-                    value={newBooking.booking_date}
-                    onChange={(e) => setNewBooking({ ...newBooking, booking_date: e.target.value })}
+                    value={newBooking.bookingDate}
+                    onChange={(e) => setNewBooking({ ...newBooking, bookingDate: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -362,8 +364,8 @@ const Amenities: React.FC = () => {
                     <input
                       type="time"
                       required
-                      value={newBooking.start_time}
-                      onChange={(e) => setNewBooking({ ...newBooking, start_time: e.target.value })}
+                      value={newBooking.startTime}
+                      onChange={(e) => setNewBooking({ ...newBooking, startTime: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -372,8 +374,8 @@ const Amenities: React.FC = () => {
                     <input
                       type="time"
                       required
-                      value={newBooking.end_time}
-                      onChange={(e) => setNewBooking({ ...newBooking, end_time: e.target.value })}
+                      value={newBooking.endTime}
+                      onChange={(e) => setNewBooking({ ...newBooking, endTime: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -385,8 +387,8 @@ const Amenities: React.FC = () => {
                     type="number"
                     min="1"
                     max={selectedAmenity.capacity}
-                    value={newBooking.guests_count}
-                    onChange={(e) => setNewBooking({ ...newBooking, guests_count: parseInt(e.target.value) || 1 })}
+                    value={newBooking.guestsCount}
+                    onChange={(e) => setNewBooking({ ...newBooking, guestsCount: parseInt(e.target.value) || 1 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -402,7 +404,7 @@ const Amenities: React.FC = () => {
                   />
                 </div>
 
-                {selectedAmenity.hourly_rate > 0 && newBooking.start_time && newBooking.end_time && (
+                {selectedAmenity.hourlyRate > 0 && newBooking.startTime && newBooking.endTime && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Total Cost:</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Edit, Save, X, Plus, Trash2, MapPin, Users, Shield, Car, Calendar, DollarSign } from 'lucide-react';
+import { Building2, Edit, Save, X, Plus, Trash2, MapPin, Users, Shield, DollarSign } from 'lucide-react';
 import { BuildingInfo } from '../types';
 import { supabase } from '../utils/supabaseClient';
 
@@ -12,29 +12,29 @@ const BuildingInfoComponent: React.FC = () => {
   const [newFacility, setNewFacility] = useState('');
   const [newSecurityFeature, setNewSecurityFeature] = useState('');
 
-  const [formData, setFormData] = useState<Omit<BuildingInfo, 'id' | 'created_at' | 'updated_at'>>({
-    building_name: '',
-    building_address: '',
-    building_type: 'condominium',
-    total_units: 0,
-    total_floors: 0,
-    year_built: new Date().getFullYear(),
-    property_manager_name: '',
-    property_manager_company: '',
-    property_manager_phone: '',
-    property_manager_email: '',
-    jmb_name: '',
+  const [formData, setFormData] = useState<Omit<BuildingInfo, 'id' | 'createdAt' | 'updatedAt'>>({
+    buildingName: '',
+    buildingAddress: '',
+    buildingType: 'condominium',
+    totalUnits: 0,
+    totalFloors: 0,
+    yearBuilt: new Date().getFullYear(),
+    propertyManagerName: '',
+    propertyManagerCompany: '',
+    propertyManagerPhone: '',
+    propertyManagerEmail: '',
+    jmbName: '',
     jmbMembers: [],
-    jmb_phone: '',
-    jmb_email: '',
-    maintenance_fee: 0,
-    sinking_fund: 0,
-    insurance_company: '',
-    insurance_policy_number: '',
-    insurance_expiry: '',
+    jmbPhone: '',
+    jmbEmail: '',
+    maintenanceFee: 0,
+    sinkingFund: 0,
+    insuranceCompany: '',
+    insurancePolicyNumber: '',
+    insuranceExpiry: '',
     facilities: [],
-    parking_spaces: 0,
-    security_features: [],
+    parkingSpaces: 0,
+    securityFeatures: [],
     notes: ''
   });
 
@@ -42,7 +42,7 @@ const BuildingInfoComponent: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('building_info')
+        .from('buildingInfo')
         .select('*')
         .limit(1)
         .single();
@@ -54,28 +54,28 @@ const BuildingInfoComponent: React.FC = () => {
       if (data) {
         setBuildingInfo(data);
         setFormData({
-          building_name: data.building_name || '',
-          building_address: data.building_address || '',
-          building_type: data.building_type || 'condominium',
-          total_units: data.total_units || 0,
-          total_floors: data.total_floors || 0,
-          year_built: data.year_built || new Date().getFullYear(),
-          property_manager_name: data.property_manager_name || '',
-          property_manager_company: data.property_manager_company || '',
-          property_manager_phone: data.property_manager_phone || '',
-          property_manager_email: data.property_manager_email || '',
-          jmb_name: data.jmb_name || '',
+          buildingName: data.buildingName || '',
+          buildingAddress: data.buildingAddress || '',
+          buildingType: data.buildingType || 'condominium',
+          totalUnits: data.totalUnits || 0,
+          totalFloors: data.totalFloors || 0,
+          yearBuilt: data.yearBuilt || new Date().getFullYear(),
+          propertyManagerName: data.propertyManagerName || '',
+          propertyManagerCompany: data.propertyManagerCompany || '',
+          propertyManagerPhone: data.propertyManagerPhone || '',
+          propertyManagerEmail: data.propertyManagerEmail || '',
+          jmbName: data.jmbName || '',
           jmbMembers: data.jmbMembers || [],
-          jmb_phone: data.jmb_phone || '',
-          jmb_email: data.jmb_email || '',
-          maintenance_fee: data.maintenance_fee || 0,
-          sinking_fund: data.sinking_fund || 0,
-          insurance_company: data.insurance_company || '',
-          insurance_policy_number: data.insurance_policy_number || '',
-          insurance_expiry: data.insurance_expiry || '',
+          jmbPhone: data.jmbPhone || '',
+          jmbEmail: data.jmbEmail || '',
+          maintenanceFee: data.maintenanceFee || 0,
+          sinkingFund: data.sinkingFund || 0,
+          insuranceCompany: data.insuranceCompany || '',
+          insurancePolicyNumber: data.insurancePolicyNumber || '',
+          insuranceExpiry: data.insuranceExpiry || '',
           facilities: data.facilities || [],
-          parking_spaces: data.parking_spaces || 0,
-          security_features: data.security_features || [],
+          parkingSpaces: data.parkingSpaces || 0,
+          securityFeatures: data.securityFeatures || [],
           notes: data.notes || ''
         });
       } else {
@@ -100,34 +100,34 @@ const BuildingInfoComponent: React.FC = () => {
   setSubmitError(null);
 
   try {
-    if (!formData.building_name.trim() || !formData.building_address.trim()) {
+    if (!formData.buildingName.trim() || !formData.buildingAddress.trim()) {
       throw new Error('Building name and address are required');
     }
 
     const dataToSave = {
       ...formData,
-      updated_at: new Date().toISOString(), // Add this line
-      jmb_name: formData.jmb_name || null,
-      jmb_phone: formData.jmb_phone || null,
-      jmb_email: formData.jmb_email || null,
+      updatedAt: new Date().toISOString(), // Add this line
+      jmbName: formData.jmbName || null,
+      jmbPhone: formData.jmbPhone || null,
+      jmbEmail: formData.jmbEmail || null,
       jmbMembers: formData.jmbMembers || null,
-      insurance_company: formData.insurance_company || null,
-      insurance_policy_number: formData.insurance_policy_number || null,
-      insurance_expiry: formData.insurance_expiry || null,
+      insuranceCompany: formData.insuranceCompany || null,
+      insurancePolicyNumber: formData.insurancePolicyNumber || null,
+      insuranceExpiry: formData.insuranceExpiry || null,
       notes: formData.notes || null
     };
 
     if (buildingInfo) {
       const { error } = await supabase
-        .from('building_info')
+        .from('buildingInfo')
         .update(dataToSave)
         .eq('id', buildingInfo.id);
 
       if (error) throw error;
     } else {
       const { error } = await supabase
-        .from('building_info')
-        .insert([{ ...dataToSave, created_at: new Date().toISOString() }]);
+        .from('buildingInfo')
+        .insert([{ ...dataToSave, createdAt: new Date().toISOString() }]);
 
       if (error) throw error;
     }
@@ -142,7 +142,7 @@ const BuildingInfoComponent: React.FC = () => {
   }
 };
 
-const handleMemberChange = (index: number, updatedMember: { name: string; phone: string; email: string }) => {
+const handleMemberChange = (index: number, updatedMember: { name: string; phone: string; email: string; position: string }) => {
   const updatedMembers = [...formData.jmbMembers];
   updatedMembers[index] = updatedMember;
   setFormData({ ...formData, jmbMembers: updatedMembers });
@@ -156,7 +156,7 @@ const removeMember = (index: number) => {
 const addNewMember = () => {
   setFormData({ 
     ...formData,
-    jmbMembers: [...formData.jmbMembers, { name: '', phone: '', email: '' }]
+    jmbMembers: [...formData.jmbMembers, { name: '', phone: '', email: '', position: '' }]
   });
 };
 
@@ -180,10 +180,10 @@ const addNewMember = () => {
   };
 
   const addSecurityFeature = () => {
-    if (newSecurityFeature.trim() && !formData.security_features.includes(newSecurityFeature.trim())) {
+    if (newSecurityFeature.trim() && !formData.securityFeatures.includes(newSecurityFeature.trim())) {
       setFormData({
         ...formData,
-        security_features: [...formData.security_features, newSecurityFeature.trim()]
+        securityFeatures: [...formData.securityFeatures, newSecurityFeature.trim()]
       });
       setNewSecurityFeature('');
     }
@@ -192,7 +192,7 @@ const addNewMember = () => {
   const removeSecurityFeature = (feature: string) => {
     setFormData({
       ...formData,
-      security_features: formData.security_features.filter(f => f !== feature)
+      securityFeatures: formData.securityFeatures.filter(f => f !== feature)
     });
   };
 
@@ -244,16 +244,16 @@ const addNewMember = () => {
                 <input
                   type="text"
                   required
-                  value={formData.building_name}
-                  onChange={(e) => setFormData({ ...formData, building_name: e.target.value })}
+                  value={formData.buildingName}
+                  onChange={(e) => setFormData({ ...formData, buildingName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Building Type</label>
                 <select
-                  value={formData.building_type}
-                  onChange={(e) => setFormData({ ...formData, building_type: e.target.value as BuildingInfo['building_type'] })}
+                  value={formData.buildingType}
+                  onChange={(e) => setFormData({ ...formData, buildingType: e.target.value as BuildingInfo['buildingType'] })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="condominium">Condominium</option>
@@ -268,8 +268,8 @@ const addNewMember = () => {
                 <textarea
                   rows={3}
                   required
-                  value={formData.building_address}
-                  onChange={(e) => setFormData({ ...formData, building_address: e.target.value })}
+                  value={formData.buildingAddress}
+                  onChange={(e) => setFormData({ ...formData, buildingAddress: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -278,8 +278,8 @@ const addNewMember = () => {
                 <input
                   type="number"
                   min="1"
-                  value={formData.total_units}
-                  onChange={(e) => setFormData({ ...formData, total_units: parseInt(e.target.value) || 0 })}
+                  value={formData.totalUnits}
+                  onChange={(e) => setFormData({ ...formData, totalUnits: parseInt(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -288,8 +288,8 @@ const addNewMember = () => {
                 <input
                   type="number"
                   min="1"
-                  value={formData.total_floors}
-                  onChange={(e) => setFormData({ ...formData, total_floors: parseInt(e.target.value) || 0 })}
+                  value={formData.totalFloors}
+                  onChange={(e) => setFormData({ ...formData, totalFloors: parseInt(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -299,8 +299,8 @@ const addNewMember = () => {
                   type="number"
                   min="1900"
                   max={new Date().getFullYear()}
-                  value={formData.year_built}
-                  onChange={(e) => setFormData({ ...formData, year_built: parseInt(e.target.value) || new Date().getFullYear() })}
+                  value={formData.yearBuilt}
+                  onChange={(e) => setFormData({ ...formData, yearBuilt: parseInt(e.target.value) || new Date().getFullYear() })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -309,8 +309,8 @@ const addNewMember = () => {
                 <input
                   type="number"
                   min="0"
-                  value={formData.parking_spaces}
-                  onChange={(e) => setFormData({ ...formData, parking_spaces: parseInt(e.target.value) || 0 })}
+                  value={formData.parkingSpaces}
+                  onChange={(e) => setFormData({ ...formData, parkingSpaces: parseInt(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -328,8 +328,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
                 <input
                   type="text"
-                  value={formData.property_manager_name}
-                  onChange={(e) => setFormData({ ...formData, property_manager_name: e.target.value })}
+                  value={formData.propertyManagerName}
+                  onChange={(e) => setFormData({ ...formData, propertyManagerName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -337,8 +337,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Management Company</label>
                 <input
                   type="text"
-                  value={formData.property_manager_company}
-                  onChange={(e) => setFormData({ ...formData, property_manager_company: e.target.value })}
+                  value={formData.propertyManagerCompany}
+                  onChange={(e) => setFormData({ ...formData, propertyManagerCompany: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -346,8 +346,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Manager Phone</label>
                 <input
                   type="tel"
-                  value={formData.property_manager_phone}
-                  onChange={(e) => setFormData({ ...formData, property_manager_phone: e.target.value })}
+                  value={formData.propertyManagerPhone}
+                  onChange={(e) => setFormData({ ...formData, propertyManagerPhone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -355,8 +355,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Manager Email</label>
                 <input
                   type="email"
-                  value={formData.property_manager_email}
-                  onChange={(e) => setFormData({ ...formData, property_manager_email: e.target.value })}
+                  value={formData.propertyManagerEmail}
+                  onChange={(e) => setFormData({ ...formData, propertyManagerEmail: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -371,13 +371,12 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">JMB Name</label>
                 <input
                   type="text"
-                  value={formData.jmb_name}
-                  onChange={(e) => setFormData({ ...formData, jmb_name: e.target.value })}
+                  value={formData.jmbName}
+                  onChange={(e) => setFormData({ ...formData, jmbName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-                     {/* JMB Members Section */}
-// JMB Members Section - Updated to include phone and email for each member
+        {/* JMB Members Section */}
 <div className="md:col-span-2">
   <label className="block text-sm font-medium text-gray-700 mb-2">
     JMB Members
@@ -445,8 +444,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">JMB Phone</label>
                 <input
                   type="tel"
-                  value={formData.jmb_phone}
-                  onChange={(e) => setFormData({ ...formData, jmb_phone: e.target.value })}
+                  value={formData.jmbPhone}
+                  onChange={(e) => setFormData({ ...formData, jmbPhone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -454,8 +453,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">JMB Email</label>
                 <input
                   type="email"
-                  value={formData.jmb_email}
-                  onChange={(e) => setFormData({ ...formData, jmb_email: e.target.value })}
+                  value={formData.jmbEmail}
+                  onChange={(e) => setFormData({ ...formData, jmbEmail: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -475,8 +474,8 @@ const addNewMember = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.maintenance_fee}
-                  onChange={(e) => setFormData({ ...formData, maintenance_fee: parseFloat(e.target.value) || 0 })}
+                  value={formData.maintenanceFee}
+                  onChange={(e) => setFormData({ ...formData, maintenanceFee: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -486,8 +485,8 @@ const addNewMember = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.sinking_fund}
-                  onChange={(e) => setFormData({ ...formData, sinking_fund: parseFloat(e.target.value) || 0 })}
+                  value={formData.sinkingFund}
+                  onChange={(e) => setFormData({ ...formData, sinkingFund: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -505,8 +504,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Company</label>
                 <input
                   type="text"
-                  value={formData.insurance_company}
-                  onChange={(e) => setFormData({ ...formData, insurance_company: e.target.value })}
+                  value={formData.insuranceCompany}
+                  onChange={(e) => setFormData({ ...formData, insuranceCompany: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -514,8 +513,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Policy Number</label>
                 <input
                   type="text"
-                  value={formData.insurance_policy_number}
-                  onChange={(e) => setFormData({ ...formData, insurance_policy_number: e.target.value })}
+                  value={formData.insurancePolicyNumber}
+                  onChange={(e) => setFormData({ ...formData, insurancePolicyNumber: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -523,8 +522,8 @@ const addNewMember = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Expiry Date</label>
                 <input
                   type="date"
-                  value={formData.insurance_expiry}
-                  onChange={(e) => setFormData({ ...formData, insurance_expiry: e.target.value })}
+                  value={formData.insuranceExpiry}
+                  onChange={(e) => setFormData({ ...formData, insuranceExpiry: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -594,7 +593,7 @@ const addNewMember = () => {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {formData.security_features.map((feature, index) => (
+                {formData.securityFeatures.map((feature, index) => (
                   <span
                     key={index}
                     className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
@@ -668,34 +667,34 @@ const addNewMember = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Building Name</p>
-                  <p className="text-lg font-semibold text-gray-900">{buildingInfo.building_name}</p>
+                  <p className="text-lg font-semibold text-gray-900">{buildingInfo.buildingName}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Building Type</p>
-                  <p className="text-lg text-gray-900 capitalize">{buildingInfo.building_type.replace('_', ' ')}</p>
+                  <p className="text-lg text-gray-900 capitalize">{buildingInfo.buildingType.replace('_', ' ')}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Year Built</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.year_built}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.yearBuilt}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Units</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.total_units}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.totalUnits}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Floors</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.total_floors}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.totalFloors}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Parking Spaces</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.parking_spaces}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.parkingSpaces}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-500 mb-2">Address</p>
                 <div className="flex items-start space-x-2">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <p className="text-gray-900">{buildingInfo.building_address}</p>
+                  <p className="text-gray-900">{buildingInfo.buildingAddress}</p>
                 </div>
               </div>
             </div>
@@ -709,44 +708,44 @@ const addNewMember = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Manager Name</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.property_manager_name || 'Not specified'}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerName || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Management Company</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.property_manager_company || 'Not specified'}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerCompany || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Phone</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.property_manager_phone || 'Not specified'}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerPhone || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.property_manager_email || 'Not specified'}</p>
+                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerEmail || 'Not specified'}</p>
                 </div>
               </div>
             </div>
 
             {/* JMB Information */}
-{(buildingInfo.jmb_name || buildingInfo.jmbMembers?.length > 0) && (
+{(buildingInfo.jmbName || buildingInfo.jmbMembers?.length > 0) && (
   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <h2 className="text-xl font-semibold text-gray-900 mb-4">Joint Management Body (JMB)</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {buildingInfo.jmb_name && (
+      {buildingInfo.jmbName && (
         <div className="md:col-span-2">
           <p className="text-sm font-medium text-gray-500">JMB Name</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmb_name}</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmbName}</p>
         </div>
       )}
-      {buildingInfo.jmb_phone && (
+      {buildingInfo.jmbPhone && (
         <div>
           <p className="text-sm font-medium text-gray-500">Phone</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmb_phone}</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmbPhone}</p>
         </div>
       )}
-      {buildingInfo.jmb_email && (
+      {buildingInfo.jmbEmail && (
         <div>
           <p className="text-sm font-medium text-gray-500">Email</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmb_email}</p>
+          <p className="text-lg text-gray-900">{buildingInfo.jmbEmail}</p>
         </div>
       )}
       {buildingInfo?.jmbMembers?.length > 0 && (
@@ -799,39 +798,39 @@ const addNewMember = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Monthly Maintenance Fee</p>
-                  <p className="text-lg text-gray-900">RM {buildingInfo.maintenance_fee.toFixed(2)}</p>
+                  <p className="text-lg text-gray-900">RM {buildingInfo.maintenanceFee.toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Sinking Fund</p>
-                  <p className="text-lg text-gray-900">RM {buildingInfo.sinking_fund.toFixed(2)}</p>
+                  <p className="text-lg text-gray-900">RM {buildingInfo.sinkingFund.toFixed(2)}</p>
                 </div>
               </div>
             </div>
 
             {/* Insurance Information */}
-            {(buildingInfo.insurance_company || buildingInfo.insurance_policy_number) && (
+            {(buildingInfo.insuranceCompany || buildingInfo.insurancePolicyNumber) && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                   <Shield className="w-5 h-5 mr-2" />
                   Insurance Information
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {buildingInfo.insurance_company && (
+                  {buildingInfo.insuranceCompany && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Insurance Company</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.insurance_company}</p>
+                      <p className="text-lg text-gray-900">{buildingInfo.insuranceCompany}</p>
                     </div>
                   )}
-                  {buildingInfo.insurance_policy_number && (
+                  {buildingInfo.insurancePolicyNumber && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Policy Number</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.insurance_policy_number}</p>
+                      <p className="text-lg text-gray-900">{buildingInfo.insurancePolicyNumber}</p>
                     </div>
                   )}
-                  {buildingInfo.insurance_expiry && (
+                  {buildingInfo.insuranceExpiry && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Expiry Date</p>
-                      <p className="text-lg text-gray-900">{new Date(buildingInfo.insurance_expiry).toLocaleDateString()}</p>
+                      <p className="text-lg text-gray-900">{new Date(buildingInfo.insuranceExpiry).toLocaleDateString()}</p>
                     </div>
                   )}
                 </div>
@@ -856,11 +855,11 @@ const addNewMember = () => {
             )}
 
             {/* Security Features */}
-            {buildingInfo.security_features && buildingInfo.security_features.length > 0 && (
+            {buildingInfo.securityFeatures && buildingInfo.securityFeatures.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Features</h2>
                 <div className="flex flex-wrap gap-2">
-                  {buildingInfo.security_features.map((feature, index) => (
+                  {buildingInfo.securityFeatures.map((feature, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
@@ -884,7 +883,7 @@ const addNewMember = () => {
             {buildingInfo && (
   <div className="bg-gray-50 rounded-lg p-4">
     <p className="text-sm text-gray-600">
-      Last updated: {new Date(buildingInfo.updated_at).toLocaleString()}
+      Last updated: {new Date(buildingInfo.updatedAt).toLocaleString()}
     </p>
   </div>
 )}

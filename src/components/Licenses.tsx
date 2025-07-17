@@ -42,11 +42,11 @@ const Licenses: React.FC = () => {
       name: '',
       type: '',
       issuer: '',
-      issue_date: '',
-      expiration_date: '',
-      license_number: '',
+      issueDate: '',
+      expirationDate: '',
+      licenseNumber: '',
       status: 'active',
-      contact_id: '',
+      contactId: '',
       notes: ''
     });
     setShowModal(true);
@@ -203,7 +203,6 @@ const Licenses: React.FC = () => {
               </tr>
             ) : (
               filteredLicenses.map((license, idx) => {
-                const days = getDaysUntilExpiration(license.expirationDate);
                 return (
                   <tr key={license.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
                     <td className="px-6 py-4 whitespace-nowrap">

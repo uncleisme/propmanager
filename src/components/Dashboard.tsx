@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, MapPin, Package, UserCheck, Truck, Building2 } from 'lucide-react';
+import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
+import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
 
 const Dashboard: React.FC = () => {
-  const [buildingInfo, setBuildingInfo] = useState<any>(null);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [contracts, setContracts] = useState<any[]>([]);
-  const [licenses, setLicenses] = useState<any[]>([]);
-  const [complaints, setComplaints] = useState<any[]>([]);
-  const [packages, setPackages] = useState<any[]>([]);
-  const [guests, setGuests] = useState<any[]>([]);
-  const [moveRequests, setMoveRequests] = useState<any[]>([]);
+  const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,14 +28,14 @@ const Dashboard: React.FC = () => {
         { data: guestsData },
         { data: moveRequestsData }
       ] = await Promise.all([
-        supabase.from('building_info').select('*').limit(1).single(),
+        supabase.from('buildingInfo').select('*').limit(1).single(),
         supabase.from('contacts').select('*'),
         supabase.from('contracts').select('*'),
         supabase.from('licenses').select('*'),
         supabase.from('complaints').select('*'),
         supabase.from('packages').select('*'),
         supabase.from('guests').select('*'),
-        supabase.from('move_requests').select('*')
+        supabase.from('moveRequests').select('*')
       ]);
       setBuildingInfo(buildingData);
       setContacts(contactsData || []);
@@ -54,7 +55,7 @@ const Dashboard: React.FC = () => {
   
   // Fixed: Ensure we're using the correct field name for contract end date
   const expiringContracts = contracts.filter(contract => {
-    const endDate = contract.end_date || contract.endDate; // Try both possible field names
+    const endDate = contract.endDate;
     if (!endDate) return false;
     const days = getDaysUntilExpiration(endDate);
     return days <= 30 && days >= 0;
@@ -62,7 +63,7 @@ const Dashboard: React.FC = () => {
 
   // Fixed: Ensure we're using the correct field name for license expiration
   const expiringLicenses = licenses.filter(license => {
-    const expirationDate = license.expiration_date || license.expirationDate; // Try both possible field names
+    const expirationDate = license.expirationDate;
     if (!expirationDate) return false;
     const days = getDaysUntilExpiration(expirationDate);
     return days <= 30 && days >= 0;
@@ -100,7 +101,7 @@ const Dashboard: React.FC = () => {
     {
       title: 'Pending Packages',
       value: packages.filter(p => p.status === 'received' || p.status === 'notified').length,
-      icon: Package,
+      icon: Box,
       color: 'bg-orange-500',
       trend: '+3%'
     },
@@ -134,7 +135,7 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-2">
   <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
   {buildingInfo && (
-    <span className="text-1xl font-bold text-blue-400">{buildingInfo.building_name}</span>
+    <span className="text-1xl font-bold text-blue-400">{buildingInfo.buildingName}</span>
   )}
 </div>
         <p className="text-gray-600">Overview of your property management activities</p>
@@ -174,26 +175,26 @@ const Dashboard: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{buildingInfo.total_units}</p>
+              <p className="text-2xl font-bold text-blue-600">{buildingInfo.totalUnits}</p>
               <p className="text-sm text-gray-600">Total Units</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{buildingInfo.total_floors}</p>
+              <p className="text-2xl font-bold text-green-600">{buildingInfo.totalFloors}</p>
               <p className="text-sm text-gray-600">Floors</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">{buildingInfo.parking_spaces}</p>
+              <p className="text-2xl font-bold text-purple-600">{buildingInfo.parkingSpaces}</p>
               <p className="text-sm text-gray-600">Parking Spaces</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-orange-600">{buildingInfo.year_built}</p>
+              <p className="text-2xl font-bold text-orange-600">{buildingInfo.yearBuilt}</p>
               <p className="text-sm text-gray-600">Year Built</p>
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
-              <strong>Type:</strong> {buildingInfo.building_type?.replace('_', ' ') || 'Not specified'} • 
-              <strong> Manager:</strong> {buildingInfo.property_manager_name || 'Not specified'}
+              <strong>Type:</strong> {buildingInfo.buildingType?.replace('_', ' ') || 'Not specified'} •
+              <strong> Manager:</strong> {buildingInfo.propertyManagerName || 'Not specified'}
             </p>
           </div>
         </div>
@@ -212,7 +213,7 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-500 text-sm">No contracts expiring in the next 30 days</p>
             ) : (
               expiringContracts.map(contract => {
-                const endDate = contract.end_date || contract.endDate;
+                const endDate = contract.endDate;
                 const days = getDaysUntilExpiration(endDate);
                 return (
                   <div key={contract.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
@@ -241,7 +242,7 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-500 text-sm">No licenses expiring in the next 30 days</p>
             ) : (
               expiringLicenses.map(license => {
-                const expirationDate = license.expiration_date || license.expirationDate;
+                const expirationDate = license.expirationDate;
                 const days = getDaysUntilExpiration(expirationDate);
                 return (
                   <div key={license.id} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">

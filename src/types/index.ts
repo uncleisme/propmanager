@@ -1,7 +1,9 @@
 export interface User {
   id: string;
-  name: string;
+  fullName: string;
+  avatarUrl: string;
   email: string;
+  password?: string;
 }
 
 export interface Contact {
@@ -17,14 +19,15 @@ export interface Contact {
 }
 
 export interface Contract {
+  id: string;
   title: string;
-  contact_id: string;
-  start_date: string;
-  end_date: string;
+  contactId: string;
+  startDate: string;
+  endDate: string;
   value: number;
   status: 'active' | 'expired' | 'pending';
   description: string;
-  renewal_notice: number; // days before expiration to notify
+  renewalNotice: number; // days before expiration to notify
 }
 
 export interface License {
@@ -36,7 +39,7 @@ export interface License {
   expirationDate: string;
   licenseNumber: string;
   status: 'active' | 'expired' | 'expiring';
-  contact_id?: string;
+  contactId?: string;
 }
 
 export interface Complaint {
@@ -53,128 +56,129 @@ export interface Complaint {
 export interface Amenity {
   id: string;
   name: string;
-  type: 'gym' | 'pool' | 'bbq_area' | 'clubhouse' | 'tennis_court' | 'playground' | 'parking' | 'other';
+  type: 'gym' | 'pool' | 'bbqArea' | 'clubhouse' | 'tennisCourt' | 'playground' | 'parking' | 'other';
   description?: string;
   capacity: number;
-  hourly_rate: number;
-  available_hours: string;
+  hourlyRate: number;
+  availableHours: string;
   rules?: string;
   status: 'active' | 'maintenance' | 'closed';
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Booking {
   id: string;
-  amenity_id: string;
-  resident_name: string;
-  resident_unit: string;
-  resident_email: string;
-  booking_date: string;
-  start_time: string;
-  end_time: string;
-  guests_count: number;
-  total_cost: number;
+  amenityId: string;
+  residentName: string;
+  residentUnit: string;
+  residentEmail: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  guestsCount: number;
+  totalCost: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Package {
   id: string;
-  tracking_number: string;
-  recipient_name: string;
-  recipient_unit: string;
-  recipient_phone?: string;
+  trackingNumber: string;
+  recipientName: string;
+  recipientUnit: string;
+  recipientPhone?: string;
   sender: string;
-  package_type: 'standard' | 'fragile' | 'perishable' | 'large' | 'document';
-  delivery_date: string;
-  delivery_time?: string;
+  packageType: 'standard' | 'fragile' | 'perishable' | 'large' | 'document';
+  deliveryDate: string;
+  deliveryTime?: string;
   status: 'received' | 'notified' | 'picked_up' | 'returned';
   location: string;
   notes?: string;
-  received_by?: string;
-  picked_up_at?: string;
-  created_at: string;
-  updated_at: string;
+  receivedBy?: string;
+  pickedUpAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Guest {
   id: string;
-  visitor_name: string;
-  visitor_phone?: string;
-  visitor_email?: string;
-  host_name: string;
-  host_unit: string;
-  host_phone: string;
-  visit_date: string;
-  visit_time_start?: string;
-  visit_time_end?: string;
+  visitorName: string;
+  visitorPhone?: string;
+  visitorEmail?: string;
+  hostName: string;
+  hostUnit: string;
+  hostPhone: string;
+  visitDate: string;
+  visitTimeStart?: string;
+  visitTimeEnd?: string;
   purpose?: string;
-  vehicle_info?: string;
+  vehicleInfo?: string;
   status: 'pending' | 'approved' | 'denied' | 'completed' | 'cancelled';
-  approved_by?: string;
-  approved_at?: string;
+  approvedBy?: string;
+  approvedAt?: string;
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MoveRequest {
   id: string;
-  request_type: 'move_in' | 'move_out';
-  resident_name: string;
-  unit_number: string;
-  contact_phone: string;
-  contact_email: string;
-  requested_date: string;
-  preferred_time?: string;
-  elevator_needed: boolean;
-  moving_company?: string;
-  estimated_duration?: string;
-  special_requirements?: string;
+  requestType: 'move_in' | 'move_out';
+  residentName: string;
+  unitNumber: string;
+  contactPhone: string;
+  contactEmail: string;
+  requestedDate: string;
+  preferredTime?: string;
+  elevatorNeeded: boolean;
+  movingCompany?: string;
+  estimatedDuration?: string;
+  specialRequirements?: string;
   status: 'pending' | 'approved' | 'scheduled' | 'completed' | 'cancelled';
-  approved_by?: string;
-  approved_at?: string;
-  scheduled_time?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  scheduledTime?: string;
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BuildingInfo {
   id: string;
-  building_name: string;
-  building_address: string;
-  building_type: 'condominium' | 'apartment' | 'townhouse' | 'commercial' | 'mixed_use';
-  total_units: number;
-  total_floors: number;
-  year_built: number;
-  property_manager_name: string;
-  property_manager_company: string;
-  property_manager_phone: string;
-  property_manager_email: string;
-  jmb_name?: string;
-  jmb_phone?: string;
-  jmb_email?: string;
+  buildingName: string;
+  buildingAddress: string;
+  buildingType: 'condominium' | 'apartment' | 'townhouse' | 'commercial' | 'mixed_use';
+  totalUnits: number;
+  totalFloors: number;
+  yearBuilt: number;
+  propertyManagerName: string;
+  propertyManagerCompany: string;
+  propertyManagerPhone: string;
+  propertyManagerEmail: string;
+  jmbName?: string;
+  jmbPhone?: string;
+  jmbEmail?: string;
   jmbMembers: JmbMember[];
-  maintenance_fee: number;
-  sinking_fund: number;
-  insurance_company?: string;
-  insurance_policy_number?: string;
-  insurance_expiry?: string;
+  maintenanceFee: number;
+  sinkingFund: number;
+  insuranceCompany?: string;
+  insurancePolicyNumber?: string;
+  insuranceExpiry?: string;
   facilities: string[];
-  parking_spaces: number;
-  security_features: string[];
+  parkingSpaces: number;
+  securityFeatures: string[];
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface JmbMember {
   name: string;
   phone: string;
   email: string;
+  position: string;
 }
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests';
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings';
