@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Award, Eye, Edit, Trash2, Plus, X, Search, } from "lucide-react";
+import { Award, Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
+import Papa from 'papaparse';
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
 import { User } from '@supabase/supabase-js';
 
@@ -29,17 +30,27 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalLicenses, setTotalLicenses] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const [showImportInstructions, setShowImportInstructions] = useState(false);
 
   const fetchLicenses = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("licenses").select("*").order("expirationDate", { ascending: true });
-    if (!error && data) setLicenses(data);
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error, count } = await supabase.from("licenses").select("*", { count: "exact" }).order("expirationDate", { ascending: true }).range(from, to);
+    if (!error && data) {
+      setLicenses(data);
+      setTotalLicenses(count ?? 0);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchLicenses();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const handleAdd = () => {
     setModalType("add");
@@ -118,6 +129,77 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
+  const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      setErrorMsg('Please select a CSV file');
+      return;
+    }
+
+    setImporting(true);
+    setErrorMsg('');
+
+    try {
+      const text = await file.text();
+      const parseResult = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim().toLowerCase(),
+      });
+      if (parseResult.errors.length > 0) {
+        throw new Error(`CSV parsing error: ${parseResult.errors[0].message}`);
+      }
+      const data = parseResult.data as any[];
+      if (data.length === 0) {
+        throw new Error('CSV file is empty or contains no valid data');
+      }
+      const requiredHeaders = ['name', 'type', 'issuer', 'issuedate', 'expirationdate', 'licensenumber', 'status'];
+      const headers = Object.keys(data[0]);
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+      }
+      const licensesToImport: any[] = [];
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const licenseData: any = {
+          name: row.name?.trim() || '',
+          type: row.type?.trim() || '',
+          issuer: row.issuer?.trim() || '',
+          issueDate: row.issuedate?.trim() || '',
+          expirationDate: row.expirationdate?.trim() || '',
+          licenseNumber: row.licensenumber?.trim() || '',
+          status: row.status?.trim() || '',
+          contactId: row.contactid?.trim() || null,
+          notes: row.notes?.trim() || null,
+        };
+        if (!licenseData.name || !licenseData.type || !licenseData.issuer || !licenseData.issueDate || !licenseData.expirationDate || !licenseData.licenseNumber || !licenseData.status) {
+          throw new Error(`Row ${i + 2}: Missing required fields`);
+        }
+        licensesToImport.push(licenseData);
+      }
+      if (licensesToImport.length === 0) {
+        throw new Error('No valid licenses found in CSV');
+      }
+      const { data: insertedData, error } = await supabase
+        .from('licenses')
+        .insert(licensesToImport)
+        .select();
+      if (error) throw error;
+      if (insertedData) {
+        setLicenses(prev => [...insertedData, ...prev]);
+      }
+      alert(`Successfully imported ${licensesToImport.length} licenses`);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+      event.target.value = '';
+    }
+  };
+
   const getStatusBadge = (license: License) => {
     const days = getDaysUntilExpiration(license.expirationDate);
     const statusText = getStatusText(days);
@@ -155,13 +237,62 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
           <h1 className="text-3xl font-bold text-gray-900">Licenses</h1>
           <p className="text-gray-600">Manage all licenses and permits</p>
         </div>
+        <div className="flex items-center space-x-3">
+          {/* CSV Import Button */}
+          <div className="relative">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleCSVImport}
+              disabled={importing}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              id="csv-import-licenses"
+            />
+            <label
+              htmlFor="csv-import-licenses"
+              className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Upload className="w-4 h-4" />
+              <span>{importing ? 'Importing...' : 'Import CSV'}</span>
+            </label>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add License</span>
+          </button>
+        </div>
+      </div>
+      {/* CSV Import Instructions (collapsible, like Contacts) */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
         <button
-          onClick={handleAdd}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+          onClick={() => setShowImportInstructions(!showImportInstructions)}
+          className="flex items-center justify-between w-full text-left"
+          type="button"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add License</span>
+          <h3 className="text-sm font-medium text-blue-800">
+            CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
+          </h3>
+          <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
         </button>
+        <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
+          <div className="pt-2">
+            <p className="text-sm text-blue-700 mb-2">
+              Your CSV file should contain the following columns (in any order):
+            </p>
+            <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
+              name,type,issuer,issueDate,expirationDate,licenseNumber,status,contactId,notes
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              • <strong>Required:</strong> name, type, issuer, issueDate, expirationDate, licenseNumber, status<br/>
+              • <strong>Optional:</strong> contactId, notes<br/>
+              • <strong>Date format:</strong> YYYY-MM-DD (e.g., 2024-12-31)<br/>
+              • <strong>Example:</strong> Fire Safety,Fire,City Council,2023-01-01,2024-01-01,FS-123,active,123,Annual inspection
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -258,6 +389,28 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls and Total Count */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+        <div>
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="mx-2">Page {currentPage} of {Math.ceil(totalLicenses / pageSize) || 1}</span>
+          <button
+            onClick={() => setCurrentPage((p) => (p * pageSize < totalLicenses ? p + 1 : p))}
+            disabled={currentPage * pageSize >= totalLicenses}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-gray-600">Total: {totalLicenses} entries</div>
       </div>
 
       {/* Modal */}

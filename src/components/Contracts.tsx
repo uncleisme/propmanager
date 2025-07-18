@@ -16,7 +16,8 @@ import {
 import { Contract, Contact } from "../types";
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
 import { User } from '@supabase/supabase-js';
-import Papa from 'papaparse';
+// Remove Papa import
+// import Papa from 'papaparse';
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -31,14 +32,22 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string>("");
-  const [importing, setImporting] = useState(false);
+  // Remove importing state
+  // const [importing, setImporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalContracts, setTotalContracts] = useState(0);
+  const [showImportInstructions, setShowImportInstructions] = useState(false);
 
   const fetchContracts = async () => {
     setLoading(true);
-    const { data: contractsData, error: contractsError } = await supabase
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data: contractsData, error: contractsError, count } = await supabase
       .from("contracts")
-      .select("*")
-      .order("endDate", { ascending: true });
+      .select("*", { count: "exact" })
+      .order("endDate", { ascending: true })
+      .range(from, to);
 
     const { data: contactsData, error: contactsError } = await supabase
       .from("contacts")
@@ -48,6 +57,7 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
       setErrorMsg(contractsError.message);
     } else {
       setContracts(contractsData || []);
+      setTotalContracts(count ?? 0);
     }
 
     if (contactsError) {
@@ -60,7 +70,7 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
 
   useEffect(() => {
     fetchContracts();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const handleAdd = () => {
     setModalType("add");
@@ -142,95 +152,7 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
-// Key changes to the handleCSVImport function
-const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  setImporting(true);
-  setErrorMsg('');
-
-  try {
-    const text = await file.text();
-    const parseResult = Papa.parse(text, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim().toLowerCase(),
-    });
-
-    if (parseResult.errors.length > 0) {
-      throw new Error(`CSV parsing error: ${parseResult.errors[0].message}`);
-    }
-
-    const data = parseResult.data as any[];
-    const requiredHeaders = ['title', 'contactid', 'startdate', 'enddate', 'value'];
-    const headers = Object.keys(data[0] || {});
-    
-    // Validate required columns
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    if (missingHeaders.length > 0) {
-      throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
-    }
-
-    const contractsToImport = data.map((row, i) => {
-      // Parse and validate each row
-      const contractData: Omit<Contract, 'id'> = {
-        title: row.title?.trim() || '',
-        contactId: row.contactid?.trim() || '',
-        startDate: row.startdate?.trim() || '',
-        endDate: row.enddate?.trim() || '',
-        value: parseFloat(row.value) || 0,
-        status: ['active', 'pending', 'expired'].includes(row.status?.trim().toLowerCase()) 
-          ? row.status.trim().toLowerCase() as Contract['status'] 
-          : 'active',
-        description: row.description?.trim() || '',
-        renewalNotice: parseInt(row.renewalnotice) || 30,
-      };
-
-      // Validate required fields
-      if (!contractData.title || !contractData.contactId || !contractData.startDate || !contractData.endDate) {
-        throw new Error(`Row ${i + 2}: Missing required fields`);
-      }
-
-      // Validate dates
-      if (isNaN(new Date(contractData.startDate).getTime())) {
-        throw new Error(`Row ${i + 2}: Invalid start date`);
-      }
-      if (isNaN(new Date(contractData.endDate).getTime())) {
-        throw new Error(`Row ${i + 2}: Invalid end date`);
-      }
-
-      // Validate contact exists
-      const contactExists = contacts.some(c => c.id === contractData.contactId);
-      if (!contactExists) {
-        throw new Error(`Row ${i + 2}: Contact ID ${contractData.contactId} not found`);
-      }
-
-      return contractData;
-    });
-
-    // Import to Supabase (let it generate UUIDs)
-    const { data: insertedData, error } = await supabase
-      .from('contracts')
-      .insert(contractsToImport)
-      .select();
-
-    if (error) throw error;
-
-    // Update local state with new contracts
-    if (insertedData) {
-      setContracts(prev => [...insertedData, ...prev]);
-      alert(`Successfully imported ${insertedData.length} contracts`);
-    }
-
-  } catch (error) {
-    setErrorMsg(error instanceof Error ? error.message : 'Import failed');
-    console.error('Import error:', error);
-  } finally {
-    setImporting(false);
-    event.target.value = ''; // Reset input
-  }
-};
+  // Remove handleCSVImport function
 
   const getContactName = (contactId: string) => {
     const contact = contacts.find((c) => c.id === contactId);
@@ -303,26 +225,6 @@ const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
           <p className="text-gray-600">Monitor and manage service provider contracts</p>
         </div>
         <div className="flex items-center space-x-3">
-          {/* CSV Import Button */}
-          <div className="relative">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleCSVImport}
-              disabled={importing}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              id="csv-import"
-            />
-            <label
-              htmlFor="csv-import"
-              className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${
-                importing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Upload className="w-4 h-4" />
-              <span>{importing ? 'Importing...' : 'Import CSV'}</span>
-            </label>
-          </div>
           
           {/* Add Contract Button */}
           <button
@@ -347,24 +249,6 @@ const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-      </div>
-
-      {/* CSV Import Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">CSV Import Format</h3>
-        <p className="text-sm text-blue-700 mb-2">
-          Your CSV file should contain the following columns (in any order):
-        </p>
-        <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
-          title,contactid,startdate,enddate,value,status,description,renewalnotice
-        </div>
-        <p className="text-xs text-blue-600 mt-2">
-          • <strong>contactid</strong>: Must be a valid contact ID from your contacts list<br/>
-          • <strong>startdate/enddate</strong>: Format: YYYY-MM-DD<br/>
-          • <strong>value</strong>: Numeric value (e.g., 1500.00)<br/>
-          • <strong>status</strong>: active, pending, or expired<br/>
-          • <strong>renewalnotice</strong>: Number of days (e.g., 30)
-        </p>
       </div>
 
       {/* Contracts Table */}
@@ -475,6 +359,28 @@ const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls and Total Count */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+        <div>
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="mx-2">Page {currentPage} of {Math.ceil(totalContracts / pageSize) || 1}</span>
+          <button
+            onClick={() => setCurrentPage((p) => (p * pageSize < totalContracts ? p + 1 : p))}
+            disabled={currentPage * pageSize >= totalContracts}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-gray-600">Total: {totalContracts} entries</div>
       </div>
 
       {/* Modal for Add/Edit/View Contract or View Vendor Details */}

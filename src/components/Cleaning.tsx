@@ -18,13 +18,20 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
   const [search, setSearch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [importing, setImporting] = useState(false);
+  const [showImportInstructions, setShowImportInstructions] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalCleaning, setTotalCleaning] = useState(0);
 
   const fetchCleaningPersons = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error, count } = await supabase
       .from('cleaning_persons')
-      .select('*')
-      .order('createdAt', { ascending: false });
+      .select('*', { count: 'exact' })
+      .order('createdAt', { ascending: false })
+      .range(from, to);
 
     if (error) {
       setErrorMsg(error.message);
@@ -43,13 +50,14 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
         updatedAt: row.updatedAt || row.updated_at,
       }));
       setCleaningPersons(mapped);
+      setTotalCleaning(count ?? 0);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchCleaningPersons();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const handleAdd = () => {
     setModalType('add');
@@ -311,6 +319,36 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
         </div>
       </div>
 
+      {/* CSV Import Instructions (collapsible, like Contacts) */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+        <button
+          onClick={() => setShowImportInstructions(!showImportInstructions)}
+          className="flex items-center justify-between w-full text-left"
+          type="button"
+        >
+          <h3 className="text-sm font-medium text-blue-800">
+            CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
+          </h3>
+          <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+        </button>
+        <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
+          <div className="pt-2">
+            <p className="text-sm text-blue-700 mb-2">
+              Your CSV file should contain the following columns (in any order):
+            </p>
+            <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
+              name,identificationNumber,nationality,phoneNumber,address,visaExpiryDate,permitExpiryDate
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              • <strong>Required:</strong> name, identificationNumber, nationality, phoneNumber, address<br/>
+              • <strong>Optional:</strong> visaExpiryDate, permitExpiryDate<br/>
+              • <strong>Date format:</strong> YYYY-MM-DD (e.g., 2024-12-31)<br/>
+              • <strong>Example:</strong> Jane Smith,ID789012,Indonesian,+62812345678,456 Oak Ave,2025-06-15,2024-12-31
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Search */}
       <div className="relative w-full max-w-md">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -323,23 +361,6 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-      </div>
-
-      {/* CSV Import Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">CSV Import Format</h3>
-        <p className="text-sm text-blue-700 mb-2">
-          Your CSV file should contain the following columns (in any order):
-        </p>
-        <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
-          name,identificationNumber,nationality,phoneNumber,address,visaExpiryDate,permitExpiryDate
-        </div>
-        <p className="text-xs text-blue-600 mt-2">
-          • <strong>Required:</strong> name, identificationNumber, nationality, phoneNumber, address<br/>
-          • <strong>Optional:</strong> visaExpiryDate, permitExpiryDate<br/>
-          • <strong>Date format:</strong> YYYY-MM-DD (e.g., 2024-12-31)<br/>
-          • <strong>Example:</strong> Jane Smith,ID789012,Indonesian,+62812345678,456 Oak Ave,2025-06-15,2024-12-31
-        </p>
       </div>
 
       {/* Cleaning Personnel Table */}
@@ -451,6 +472,28 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls and Total Count */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+        <div>
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="mx-2">Page {currentPage} of {Math.ceil(totalCleaning / pageSize) || 1}</span>
+          <button
+            onClick={() => setCurrentPage((p) => (p * pageSize < totalCleaning ? p + 1 : p))}
+            disabled={currentPage * pageSize >= totalCleaning}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-gray-600">Total: {totalCleaning} entries</div>
       </div>
 
       {/* Modal */}

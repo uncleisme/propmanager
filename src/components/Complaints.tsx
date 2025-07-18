@@ -18,6 +18,9 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
   const [viewingComplaint, setViewingComplaint] = useState<Complaint | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalComplaints, setTotalComplaints] = useState(0);
 
   const [newComplaint, setNewComplaint] = useState<Omit<Complaint, 'id' | 'createdAt'>>({
     title: '',
@@ -38,13 +41,16 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await supabase
         .from('complaints')
-        .select('*')
-        .order('createdAt', { ascending: false });
-
+        .select('*', { count: 'exact' })
+        .order('createdAt', { ascending: false })
+        .range(from, to);
       if (error) throw error;
       setComplaints(data || []);
+      setTotalComplaints(count ?? 0);
     } catch (error) {
       console.error('Fetch error:', error);
     } finally {
@@ -54,7 +60,7 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const filteredComplaints = complaints.filter(complaint => {
     const matchesStatus = selectedStatus === 'all' || complaint.status === selectedStatus;
@@ -304,6 +310,28 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
           <p className="text-gray-500">No complaints found</p>
         </div>
       )}
+
+      {/* Pagination Controls and Total Count */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+        <div>
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="mx-2">Page {currentPage} of {Math.ceil(totalComplaints / pageSize) || 1}</span>
+          <button
+            onClick={() => setCurrentPage((p) => (p * pageSize < totalComplaints ? p + 1 : p))}
+            disabled={currentPage * pageSize >= totalComplaints}
+            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-gray-600">Total: {totalComplaints} entries</div>
+      </div>
 
       {/* Add Complaint Modal */}
       {showAddForm && (

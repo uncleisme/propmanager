@@ -31,6 +31,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [pageSize] = useState(10); // You can change this to any number
   const [totalContacts, setTotalContacts] = useState(0);
   const [importing, setImporting] = useState(false);
+  const [showImportInstructions, setShowImportInstructions] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -263,20 +264,34 @@ useEffect(() => {
     </div>
   </div>
   {/* CSV Import Instructions */}
-  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
-    <h3 className="text-sm font-medium text-blue-800 mb-2">CSV Import Format</h3>
-    <p className="text-sm text-blue-700 mb-2">
-      Your CSV file should contain the following columns (in any order):
-    </p>
-    <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
-      name,email,phone,address,type,company,notes
+ <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+  <button
+    onClick={() => setShowImportInstructions(!showImportInstructions)}
+    className="flex items-center justify-between w-full text-left"
+    type="button"
+  >
+    <h3 className="text-sm font-medium text-blue-800">
+      CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
+    </h3>
+    <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+  </button>
+  
+  <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
+    <div className="pt-2">
+      <p className="text-sm text-blue-700 mb-2">
+        Your CSV file should contain the following columns (in any order):
+      </p>
+      <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
+        name,email,phone,address,type,company,notes
+      </div>
+      <p className="text-xs text-blue-600 mt-2">
+        • <strong>Required:</strong> name, email, phone<br/>
+        • <strong>Optional:</strong> address, type, company, notes<br/>
+        • <strong>Example:</strong> John Doe,john@example.com,1234567890,123 Main St,contractor,Acme Corp,VIP client
+      </p>
     </div>
-    <p className="text-xs text-blue-600 mt-2">
-      • <strong>Required:</strong> name, email, phone<br/>
-      • <strong>Optional:</strong> address, type, company, notes<br/>
-      • <strong>Example:</strong> John Doe,john@example.com,1234567890,123 Main St,contractor,Acme Corp,VIP client
-    </p>
   </div>
+</div> 
 
   {/* Search Bar */}
   <div className="relative w-full max-w-md">
@@ -357,28 +372,26 @@ useEffect(() => {
       </tbody>
     </table>
   </div>
-  <div className="flex justify-between items-center mt-4">
-  <p className="text-sm text-gray-600">
-    Page {currentPage} of {Math.ceil(totalContacts / pageSize)}
-  </p>
-  <div className="flex gap-2">
+  {/* Pagination Controls and Total Count */}
+<div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+  <div>
     <button
-      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
       disabled={currentPage === 1}
-      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+      className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
     >
       Prev
     </button>
+    <span className="mx-2">Page {currentPage} of {Math.ceil(totalContacts / pageSize) || 1}</span>
     <button
-      onClick={() =>
-        setCurrentPage((p) => p < Math.ceil(totalContacts / pageSize) ? p + 1 : p)
-      }
-      disabled={currentPage === Math.ceil(totalContacts / pageSize)}
-      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+      onClick={() => setCurrentPage((p) => (p * pageSize < totalContacts ? p + 1 : p))}
+      disabled={currentPage * pageSize >= totalContacts}
+      className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
     >
       Next
     </button>
   </div>
+  <div className="text-sm text-gray-600">Total: {totalContacts} entries</div>
 </div>
 
 
