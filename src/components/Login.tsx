@@ -1,29 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Building2, Lock, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../utils/supabaseClient';
-import { User } from '@supabase/supabase-js';
 
 interface LoginProps {
+  onLogin: (email: string, password: string) => Promise<boolean>;
   onSwitchToRegister: () => void;
+  isLoading: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister, isLoading }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/dashboard');
-      }
-    };
-    checkSession();
-  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,32 +21,11 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
       return;
     }
     
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setIsLoading(false);
+    const success = await onLogin(email, password);
+    if (!success) {
+      setError('Login failed. Please check your credentials.');
     }
   };
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        navigate('/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

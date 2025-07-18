@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Handle authentication state
   useEffect(() => {
@@ -42,11 +43,17 @@ const App: React.FC = () => {
 
       if (event === 'SIGNED_OUT') {
         setCurrentView('dashboard');
+        setIsNewUser(false);
+      }
+      
+      if (event === 'SIGNED_IN' && isNewUser) {
+        setCurrentView('user-settings');
+        setIsNewUser(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isNewUser]);
 
   // Handle login
   const handleLogin = async (email: string, password: string) => {
@@ -73,6 +80,7 @@ const App: React.FC = () => {
         options: { data: { full_name } }
       });
       if (error) throw error;
+      setIsNewUser(true);
       return true;
     } catch (error) {
       console.error('Registration error:', error);

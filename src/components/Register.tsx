@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Lock, Mail, User } from 'lucide-react';
 
 interface RegisterProps {
-  onRegister: (fullName: string, email: string, password: string) => Promise<void>;
+  onRegister: (fullName: string, email: string, password: string) => Promise<boolean>;
   onSwitchToLogin: () => void;
   isLoading: boolean;
 }
@@ -34,7 +34,10 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin, isLoad
     }
     
     try {
-      await onRegister(fullName, email, password);
+      const success = await onRegister(fullName, email, password);
+      if (!success) {
+        setError('Registration failed. Please try again.');
+      }
     } catch {
       setError('Registration failed. Please try again.');
     }
