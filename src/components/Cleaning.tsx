@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { CleaningPerson } from '../types';
 import { User } from '@supabase/supabase-js';
