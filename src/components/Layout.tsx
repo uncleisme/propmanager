@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, 
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
+  ChevronDown, ChevronRight 
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as User } from '@supabase/supabase-js';
@@ -22,6 +23,9 @@ const Layout: React.FC<LayoutProps> = ({
   user 
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
+    new Set(['Overview', 'Management', 'Services', 'Settings']) // All sections expanded by default
+  );
 
   const menuSections = [
     {
@@ -61,6 +65,18 @@ const Layout: React.FC<LayoutProps> = ({
   const handleViewChange = (view: ViewType) => {
     onViewChange(view);
     setSidebarOpen(false);
+  };
+
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionTitle)) {
+        newSet.delete(sectionTitle);
+      } else {
+        newSet.add(sectionTitle);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -120,34 +136,51 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
           </div>
 
-          {menuSections.map((section, sectionIndex) => (
-            <div key={section.title} className={sectionIndex > 0 ? 'border-t border-gray-200 mt-2 pt-2' : ''}>
-              <div className="px-6 py-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  {section.title}
-                </h3>
-              </div>
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentView === item.id;
+          {menuSections.map((section, sectionIndex) => {
+            const isExpanded = expandedSections.has(section.title);
+            
+            return (
+              <div key={section.title} className={sectionIndex > 0 ? 'border-t border-gray-200 mt-2 pt-2' : ''}>
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  className="w-full flex items-center justify-between px-6 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {section.title}
+                  </h3>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
                 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleViewChange(item.id)}
-                    className={`w-full flex items-center space-x-3 px-6 py-2.5 text-left transition-colors duration-200 ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                }`}>
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentView === item.id;
+                    
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleViewChange(item.id)}
+                        className={`w-full flex items-center space-x-3 px-8 py-2.5 text-left transition-colors duration-200 ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="font-medium text-sm">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </nav>
         
         <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
