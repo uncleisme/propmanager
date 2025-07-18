@@ -19,7 +19,7 @@ export interface Contact {
 }
 
 export interface Contract {
-  id: string;
+  id?: string;
   title: string;
   contactId: string;
   startDate: string;
@@ -181,30 +181,4 @@ interface JmbMember {
   email: string;
   position: string;
 }
-export interface SecurityPerson {
-  id: string;
-  name: string;
-  identificationNumber: string;
-  nationality: string;
-  visaExpiryDate?: string;
-  permitExpiryDate?: string;
-  phoneNumber: string;
-  address: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CleaningPerson {
-  id: string;
-  name: string;
-  identificationNumber: string;
-  nationality: string;
-  visaExpiryDate?: string;
-  permitExpiryDate?: string;
-  phoneNumber: string;
-  address: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'security' | 'cleaning' | 'user-settings' | 'system-settings';
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings';
