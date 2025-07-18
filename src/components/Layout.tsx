@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, 
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
-  ChevronDown, ChevronRight 
+  ChevronDown, ChevronRight, Shield, Sparkles 
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as User } from '@supabase/supabase-js';
@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
-    new Set(['Overview', 'Management', 'Services', 'Settings']) // All sections expanded by default
+    new Set(['Overview', 'Management', 'Services', 'Service Providers', 'Settings']) // All sections expanded by default
   );
 
   const menuSections = [
@@ -51,6 +51,13 @@ const Layout: React.FC<LayoutProps> = ({
         { id: 'packages' as ViewType, icon: Package, label: 'Packages' },
         { id: 'guests' as ViewType, icon: UserCheck, label: 'Guests' },
         { id: 'move-requests' as ViewType, icon: Truck, label: 'Move Requests' },
+      ]
+    },
+    {
+      title: 'Service Providers',
+      items: [
+        { id: 'security' as ViewType, icon: Shield, label: 'Security' },
+        { id: 'cleaning' as ViewType, icon: Sparkles, label: 'Cleaning' },
       ]
     },
     {

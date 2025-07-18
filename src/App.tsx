@@ -14,6 +14,8 @@ import Amenities from './components/Amenities';
 import Packages from './components/Packages';
 import Guests from './components/Guests';
 import MoveRequests from './components/MoveRequests';
+import Security from './components/Security';
+import Cleaning from './components/Cleaning';
 import UserSettings from './components/UserSettings';
 import SystemSettings from './components/SystemSettings';
 
@@ -108,6 +110,8 @@ const App: React.FC = () => {
       case 'packages': return <Packages user={user} />;
       case 'guests': return <Guests user={user} />;
       case 'move-requests': return <MoveRequests user={user} />;
+      case 'security': return <Security user={user} />;
+      case 'cleaning': return <Cleaning user={user} />;
       case 'user-settings': return <UserSettings user={user} />;
       case 'system-settings': return <SystemSettings user={user} />;
       default: return <Dashboard user={user} />;
