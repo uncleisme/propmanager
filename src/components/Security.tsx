@@ -24,12 +24,25 @@ const Security: React.FC<SecurityProps> = ({ user }) => {
     const { data, error } = await supabase
       .from('security_persons')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (error) {
       setErrorMsg(error.message);
     } else {
-      setSecurityPersons(data || []);
+      // Map snake_case to camelCase
+      const mapped = (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        identificationNumber: row.identificationNumber,
+        nationality: row.nationality,
+        visaExpiryDate: row.visaExpiryDate ? row.visaExpiryDate : undefined,
+        permitExpiryDate: row.permitExpiryDate ? row.permitExpiryDate : undefined,
+        phoneNumber: row.phoneNumber,
+        address: row.address,
+        createdAt: row.createdAt || row.created_at,
+        updatedAt: row.updatedAt || row.updated_at,
+      }));
+      setSecurityPersons(mapped);
     }
     setLoading(false);
   };

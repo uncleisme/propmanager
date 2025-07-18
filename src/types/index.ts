@@ -181,4 +181,30 @@ interface JmbMember {
   email: string;
   position: string;
 }
+
+export interface CleaningPerson {
+  id: string;
+  name: string;
+  identificationNumber: string;
+  nationality: string;
+  visaExpiryDate?: string; // ISO string or undefined
+  permitExpiryDate?: string; // ISO string or undefined
+  phoneNumber: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SecurityPerson {
+  id: string;
+  name: string;
+  identificationNumber: string;
+  nationality: string;
+  visaExpiryDate?: string; // ISO string or undefined
+  permitExpiryDate?: string; // ISO string or undefined
+  phoneNumber: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
 export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings';

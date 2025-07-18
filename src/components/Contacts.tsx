@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
+import Papa from 'papaparse';
 import { User } from '@supabase/supabase-js';
 
 interface DashboardProps {
@@ -29,6 +30,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // You can change this to any number
   const [totalContacts, setTotalContacts] = useState(0);
+  const [importing, setImporting] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -122,6 +124,89 @@ useEffect(() => {
     fetchContacts();
   };
 
+  const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      setErrorMsg('Please select a CSV file');
+      return;
+    }
+
+    setImporting(true);
+    setErrorMsg('');
+
+    try {
+      const text = await file.text();
+      const parseResult = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim().toLowerCase(),
+      });
+      if (parseResult.errors.length > 0) {
+        throw new Error(`CSV parsing error: ${parseResult.errors[0].message}`);
+      }
+      const data = parseResult.data as any[];
+      if (data.length === 0) {
+        throw new Error('CSV file is empty or contains no valid data');
+      }
+      const requiredHeaders = ['name', 'email', 'phone'];
+      const headers = Object.keys(data[0]);
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+      }
+      const allowedTypes = ['contractor', 'supplier', 'serviceProvider', 'resident', 'government', 'others'];
+      const typeMap: Record<string, string> = {
+        'contractor': 'contractor',
+        'supplier': 'supplier',
+        'service provider': 'service provider',
+        'serviceprovider': 'service provider',
+        'resident': 'resident',
+        'residents': 'resident',
+        'government': 'government',
+        'others': 'others',
+      };
+      const contactsToImport: any[] = [];
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        let typeValue = row.type?.trim().toLowerCase() || '';
+        typeValue = typeMap[typeValue] || null;
+        if (typeValue && !allowedTypes.includes(typeValue)) typeValue = null;
+        const contactData: any = {
+          name: row.name?.trim() || '',
+          email: row.email?.trim() || '',
+          phone: row.phone?.trim() || '',
+          address: row.address?.trim() || null,
+          type: typeValue,
+          company: row.company?.trim() || null,
+          notes: row.notes?.trim() || null,
+        };
+        if (!contactData.name || !contactData.email || !contactData.phone) {
+          throw new Error(`Row ${i + 2}: Missing required fields (name, email, phone)`);
+        }
+        contactsToImport.push(contactData);
+      }
+      if (contactsToImport.length === 0) {
+        throw new Error('No valid contacts found in CSV');
+      }
+      const { data: insertedData, error } = await supabase
+        .from('contacts')
+        .insert(contactsToImport)
+        .select();
+      if (error) throw error;
+      if (insertedData) {
+        setContacts(prev => [...insertedData, ...prev]);
+      }
+      alert(`Successfully imported ${contactsToImport.length} contacts`);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+      event.target.value = '';
+    }
+  };
+
   // Filter contacts by search
   const filteredContacts = contacts.filter(
     (c) =>
@@ -149,13 +234,48 @@ useEffect(() => {
       <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
       <p className="text-gray-600">Manage all contacts</p>
     </div>
-    <button
-      onClick={handleAdd}
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
-    >
-      <Plus className="w-4 h-4" />
-      <span>Add Contact</span>
-    </button>
+    <div className="flex items-center space-x-3">
+      {/* CSV Import Button */}
+      <div className="relative">
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleCSVImport}
+          disabled={importing}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+          id="csv-import-contacts"
+        />
+        <label
+          htmlFor="csv-import-contacts"
+          className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <Upload className="w-4 h-4" />
+          <span>{importing ? 'Importing...' : 'Import CSV'}</span>
+        </label>
+      </div>
+      <button
+        onClick={handleAdd}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+      >
+        <Plus className="w-4 h-4" />
+        <span>Add Contact</span>
+      </button>
+    </div>
+  </div>
+  {/* CSV Import Instructions */}
+  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+    <h3 className="text-sm font-medium text-blue-800 mb-2">CSV Import Format</h3>
+    <p className="text-sm text-blue-700 mb-2">
+      Your CSV file should contain the following columns (in any order):
+    </p>
+    <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
+      name,email,phone,address,type,company,notes
+    </div>
+    <p className="text-xs text-blue-600 mt-2">
+      • <strong>Required:</strong> name, email, phone<br/>
+      • <strong>Optional:</strong> address, type, company, notes<br/>
+      • <strong>Example:</strong> John Doe,john@example.com,1234567890,123 Main St,contractor,Acme Corp,VIP client
+    </p>
   </div>
 
   {/* Search Bar */}
