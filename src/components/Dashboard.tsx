@@ -24,6 +24,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  // Handle window resize for responsive tooltip behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      setHoveredCard(null); // Clean up tooltip state
+    };
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -217,7 +231,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             );
           }
           // Hide tooltip on mobile (sm and below)
-          const showTooltip = isUtility && hoveredCard === index && typeof window !== 'undefined' && window.innerWidth > 640;
+          const showTooltip = isUtility && hoveredCard === index && windowWidth > 640;
           return (
             <div
               key={index}
@@ -226,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               onMouseLeave={() => isUtility && setHoveredCard(null)}
               // Show tooltip on click for mobile
               onClick={e => {
-                if (window.innerWidth <= 640 && isUtility) {
+                if (windowWidth <= 640 && isUtility) {
                   setHoveredCard(hoveredCard === index ? null : index);
                   e.stopPropagation();
                 }
@@ -263,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 </div>
               )}
               {/* Tooltip for mobile (on click) */}
-              {isUtility && hoveredCard === index && window.innerWidth <= 640 && (
+              {isUtility && hoveredCard === index && windowWidth <= 640 && (
                 <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-max max-w-xs">
                   {tooltipContent}
                 </div>

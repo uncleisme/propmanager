@@ -86,21 +86,21 @@ export interface Booking {
 
 export interface Package {
   id: string;
-  trackingNumber: string;
-  recipientName: string;
-  recipientUnit: string;
-  recipientPhone?: string;
+  tracking_number: string;
+  recipient_name: string;
+  recipient_unit: string;
+  recipient_phone?: string;
   sender: string;
-  packageType: 'standard' | 'fragile' | 'perishable' | 'large' | 'document';
-  deliveryDate: string;
-  deliveryTime?: string;
+  package_type: 'standard' | 'fragile' | 'perishable' | 'large' | 'document';
+  delivery_date: string;
+  delivery_time?: string;
   status: 'received' | 'notified' | 'picked_up' | 'returned';
   location: string;
   notes?: string;
-  receivedBy?: string;
-  pickedUpAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  received_by?: string;
+  picked_up_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Guest {

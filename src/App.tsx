@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
 import Layout from './components/Layout';
 import Login from './components/Login';
@@ -30,7 +31,7 @@ const App: React.FC = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
 
   // Handle authentication state
