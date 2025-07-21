@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Package as PackageIcon, Plus, Search, Eye, Edit, X, Bell, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { Package } from '../types';
 import { supabase } from '../utils/supabaseClient';
+import LoadingSpinner from './LoadingSpinner';
+import EmptyState from './EmptyState';
+import Button from './Button';
 
 const Packages: React.FC = () => {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -224,7 +227,7 @@ const Packages: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="text-gray-500 text-lg">Loading packages...</span>
+        <LoadingSpinner size="lg" text="Loading packages..." />
       </div>
     );
   }
@@ -236,13 +239,13 @@ const Packages: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Package Delivery</h1>
           <p className="text-gray-600">Track and manage package deliveries</p>
         </div>
-        <button
+        <Button
           onClick={handleAdd}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+          icon={<Plus className="w-4 h-4" />}
+          variant="primary"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Package</span>
-        </button>
+          Add Package
+        </Button>
       </div>
 
       {/* Stats */}
@@ -396,9 +399,20 @@ const Packages: React.FC = () => {
       </div>
 
       {filteredPackages.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <PackageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No packages found</p>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <EmptyState
+            icon={<PackageIcon className="w-8 h-8" />}
+            title="No packages found"
+            description={search || statusFilter !== 'all' 
+              ? "No packages match your current filters. Try adjusting your search criteria."
+              : "No packages have been registered yet. Add your first package to get started."
+            }
+            action={search || statusFilter !== 'all' ? undefined : {
+              label: "Add First Package",
+              onClick: handleAdd,
+              icon: <Plus className="w-4 h-4" />
+            }}
+          />
         </div>
       )}
 

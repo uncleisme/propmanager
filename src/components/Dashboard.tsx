@@ -1,9 +1,12 @@
 
-import { User } from '@supabase/supabase-js';import React, { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import React, { useEffect, useState } from 'react';
 import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
+import LoadingSpinner from './LoadingSpinner';
+import StatsCard from './StatsCard';
 
 
 interface DashboardProps {
@@ -195,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="text-gray-500 text-lg">Loading dashboard...</span>
+        <LoadingSpinner size="lg" text="Loading dashboard..." />
       </div>
     );
   }
@@ -213,78 +216,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          const isUtility = stat.title === 'Water' || stat.title === 'Electricity';
-          let tooltipContent = null;
-          if (isUtility && stat.percent) {
-            const prev = stat.title === 'Water' ? utilitiesPrev.water : utilitiesPrev.electricity;
-            const curr = stat.title === 'Water' ? utilities.water : utilities.electricity;
-            tooltipContent = (
-              <div className="bg-white border border-gray-300 rounded shadow-lg p-3 text-xs text-gray-800 min-w-[180px]">
-                <div className="mb-1 font-semibold">{stat.title} Details</div>
-                <div>Current: <span className="font-bold">{curr.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-                <div>Previous: <span className="font-bold">{prev.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-                <div>Difference: <span className="font-bold">{(curr - prev).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-              </div>
-            );
-          }
-          // Hide tooltip on mobile (sm and below)
-          const showTooltip = isUtility && hoveredCard === index && windowWidth > 640;
-          return (
-            <div
-              key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative min-w-0"
-              onMouseEnter={() => isUtility && setHoveredCard(index)}
-              onMouseLeave={() => isUtility && setHoveredCard(null)}
-              // Show tooltip on click for mobile
-              onClick={e => {
-                if (windowWidth <= 640 && isUtility) {
-                  setHoveredCard(hoveredCard === index ? null : index);
-                  e.stopPropagation();
-                }
-              }}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2 truncate" style={{ wordBreak: 'break-all' }}>{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-2 sm:p-3 rounded-full flex-shrink-0 ml-2 sm:ml-4`}>
-                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-              </div>
-              {/* Trend/Percent Change Row - always present, same style for all cards */}
-              <div className="mt-2 sm:mt-4 flex items-center min-h-[20px] sm:min-h-[24px]">
-                {stat.percent ? (
-                  <span className={`inline-flex items-center text-xs sm:text-sm font-medium ${stat.percent.up ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.percent.up ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
-                    {stat.percent.value}% {stat.percent.up ? 'increase' : 'decrease'}
-                  </span>
-                ) : stat.trend ? (
-                  <>
-                    <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                    <span className="text-xs sm:text-sm text-green-600 font-medium">{stat.trend}</span>
-                    <span className="text-xs sm:text-sm text-gray-500 ml-1">from last month</span>
-                  </>
-                ) : null}
-              </div>
-              {/* Tooltip for utilities */}
-              {showTooltip && (
-                <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
-                  {tooltipContent}
-                </div>
-              )}
-              {/* Tooltip for mobile (on click) */}
-              {isUtility && hoveredCard === index && windowWidth <= 640 && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-max max-w-xs">
-                  {tooltipContent}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <StatsCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            trend={stat.trend}
+            percent={stat.percent}
+          />
+        ))}
       </div>
 
       {/* Building Overview */}
