@@ -1,6 +1,6 @@
 
 import { User } from '@supabase/supabase-js';import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box } from 'lucide-react';
+import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
@@ -21,6 +21,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
+  const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -52,6 +55,41 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       setPackages(packagesData || []);
       setGuests(guestsData || []);
       setMoveRequests(moveRequestsData || []);
+      // Fetch utilities for current and previous month
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+      const monthDateStr = `${monthStr}-01`;
+      const prevMonthDateStr = `${prevMonthStr}-01`;
+      const { data: waterData } = await supabase
+        .from('utilities_consumption')
+        .select('cost')
+        .eq('type', 'water')
+        .eq('month', monthDateStr);
+      const { data: elecData } = await supabase
+        .from('utilities_consumption')
+        .select('cost')
+        .eq('type', 'electricity')
+        .eq('month', monthDateStr);
+      const { data: waterPrevData } = await supabase
+        .from('utilities_consumption')
+        .select('cost')
+        .eq('type', 'water')
+        .eq('month', prevMonthDateStr);
+      const { data: elecPrevData } = await supabase
+        .from('utilities_consumption')
+        .select('cost')
+        .eq('type', 'electricity')
+        .eq('month', prevMonthDateStr);
+      setUtilities({
+        water: (waterData || []).reduce((sum, row) => sum + (row.cost || 0), 0),
+        electricity: (elecData || []).reduce((sum, row) => sum + (row.cost || 0), 0),
+      });
+      setUtilitiesPrev({
+        water: (waterPrevData || []).reduce((sum, row) => sum + (row.cost || 0), 0),
+        electricity: (elecPrevData || []).reduce((sum, row) => sum + (row.cost || 0), 0),
+      });
       setLoading(false);
     };
     fetchAll();
@@ -75,6 +113,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     const days = getDaysUntilExpiration(expirationDate);
     return days <= 30 && days >= 0;
   });
+
+  // Helper to calculate percent change
+  function percentChange(current: number, prev: number) {
+    if (prev === 0 && current === 0) return { value: 0, up: false };
+    if (prev === 0) return { value: 100, up: true };
+    const diff = current - prev;
+    const up = diff >= 0;
+    const pct = Math.abs(diff / prev) * 100;
+    return { value: Math.round(pct), up };
+  }
 
   const stats = [
     {
@@ -106,11 +154,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       trend: '-8%'
     },
     {
-      title: 'Pending Packages',
-      value: packages.filter(p => p.status === 'received' || p.status === 'notified').length,
-      icon: Box,
-      color: 'bg-orange-500',
-      trend: '+3%'
+      title: 'Water',
+      value: utilities.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+      icon: Droplet,
+      color: 'bg-blue-400',
+      trend: '',
+      percent: percentChange(utilities.water, utilitiesPrev.water)
+    },
+    {
+      title: 'Electricity',
+      value: utilities.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+      icon: Zap,
+      color: 'bg-yellow-400',
+      trend: '',
+      percent: percentChange(utilities.electricity, utilitiesPrev.electricity)
     },
     {
       title: 'Pending Guests',
@@ -118,13 +175,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       icon: UserCheck,
       color: 'bg-indigo-500',
       trend: '+15%'
-    },
-    {
-      title: 'Move Requests',
-      value: moveRequests.filter(m => m.status === 'pending' || m.status === 'approved').length,
-      icon: Truck,
-      color: 'bg-teal-500',
-      trend: '+7%'
     }
   ];
 
@@ -152,22 +202,57 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
+          const isUtility = stat.title === 'Water' || stat.title === 'Electricity';
+          let tooltipContent = null;
+          if (isUtility && stat.percent) {
+            const prev = stat.title === 'Water' ? utilitiesPrev.water : utilitiesPrev.electricity;
+            const curr = stat.title === 'Water' ? utilities.water : utilities.electricity;
+            tooltipContent = (
+              <div className="bg-white border border-gray-300 rounded shadow-lg p-3 text-xs text-gray-800 min-w-[180px]">
+                <div className="mb-1 font-semibold">{stat.title} Details</div>
+                <div>Current: <span className="font-bold">{curr.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
+                <div>Previous: <span className="font-bold">{prev.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
+                <div>Difference: <span className="font-bold">{(curr - prev).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
+              </div>
+            );
+          }
           return (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative"
+              onMouseEnter={() => isUtility && setHoveredCard(index)}
+              onMouseLeave={() => isUtility && setHoveredCard(null)}
+            >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 truncate">{stat.title}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2 truncate" style={{ wordBreak: 'break-all' }}>{stat.value}</p>
                 </div>
-                <div className={`${stat.color} p-3 rounded-full`}>
+                <div className={`${stat.color} p-3 rounded-full flex-shrink-0 ml-4`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className="mt-4 flex items-center">
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600 font-medium">{stat.trend}</span>
-                <span className="text-sm text-gray-500 ml-1">from last month</span>
+              {/* Trend/Percent Change Row - always present, same style for all cards */}
+              <div className="mt-4 flex items-center min-h-[24px]">
+                {stat.percent ? (
+                  <span className={`inline-flex items-center text-sm font-medium ${stat.percent.up ? 'text-green-600' : 'text-red-600'}`}>
+                    {stat.percent.up ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+                    {stat.percent.value}% {stat.percent.up ? 'increase' : 'decrease'}
+                  </span>
+                ) : stat.trend ? (
+                  <>
+                    <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                    <span className="text-sm text-green-600 font-medium">{stat.trend}</span>
+                    <span className="text-sm text-gray-500 ml-1">from last month</span>
+                  </>
+                ) : null}
               </div>
+              {/* Tooltip for utilities */}
+              {isUtility && hoveredCard === index && (
+                <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
+                  {tooltipContent}
+                </div>
+              )}
             </div>
           );
         })}

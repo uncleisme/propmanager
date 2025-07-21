@@ -23,9 +23,7 @@ const Layout: React.FC<LayoutProps> = ({
   user 
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
-    new Set(['Overview', 'Management', 'Services', 'Service Providers', 'Settings']) // All sections expanded by default
-  );
+  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set());
 
   const menuSections = [
     {
@@ -58,6 +56,19 @@ const Layout: React.FC<LayoutProps> = ({
       items: [
         { id: 'security' as ViewType, icon: Shield, label: 'Security' },
         { id: 'cleaning' as ViewType, icon: Sparkles, label: 'Cleaning' },
+      ]
+    },
+    {
+      title: 'Utilities',
+      items: [
+        { id: 'water-utility' as ViewType, icon: BarChart3, label: 'Water' },
+        { id: 'electricity-utility' as ViewType, icon: BarChart3, label: 'Electricity' },
+      ]
+    },
+    {
+      title: 'Reporting',
+      items: [
+        { id: 'reporting' as ViewType, icon: BarChart3, label: 'Reporting' },
       ]
     },
     {

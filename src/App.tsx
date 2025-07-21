@@ -18,6 +18,10 @@ import Security from './components/Security';
 import Cleaning from './components/Cleaning';
 import UserSettings from './components/UserSettings';
 import SystemSettings from './components/SystemSettings';
+import Utilities from './components/Utilities';
+import WaterUtility from './components/WaterUtility';
+import ElectricityUtility from './components/ElectricityUtility';
+import Reporting from './components/Reporting';
 
 import { ViewType } from './types';
 
@@ -114,6 +118,9 @@ const App: React.FC = () => {
       case 'cleaning': return <Cleaning user={user} />;
       case 'user-settings': return <UserSettings user={user} />;
       case 'system-settings': return <SystemSettings user={user} />;
+      case 'water-utility': return <WaterUtility user={user} />;
+      case 'electricity-utility': return <ElectricityUtility user={user} />;
+      case 'reporting': return <Reporting user={user} />;
       default: return <Dashboard user={user} />;
     }
   };
