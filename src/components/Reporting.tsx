@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../utils/supabaseClient';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { List, Download } from 'lucide-react';
 
 const categories = [
@@ -213,7 +213,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
   };
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    doc.autoTable({
+    autoTable(doc, {
       head: [columns.map(col => col.label)],
       body: exportRows.map(row => columns.map(col => row[col.key]?.toString() || '')),
       styles: { fontSize: 8 },
