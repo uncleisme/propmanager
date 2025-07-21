@@ -4,6 +4,7 @@ import { supabase } from '../utils/supabaseClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { List, Download } from 'lucide-react';
+import type { Contact } from '../types';
 
 const categories = [
   { key: 'contacts', label: 'Contacts' },
@@ -27,7 +28,7 @@ const columnsMap: Record<string, { key: string; label: string }[]> = {
   ],
   contracts: [
     { key: 'title', label: 'Title' },
-    { key: 'contactId', label: 'Contact ID' },
+    { key: 'contactId', label: 'Service Provider' },
     { key: 'startDate', label: 'Start Date' },
     { key: 'endDate', label: 'End Date' },
     { key: 'value', label: 'Value' },
@@ -97,12 +98,10 @@ const tableMap: Record<string, string> = {
   utilities: 'utilities_consumption',
 };
 
-const Reporting: React.FC<{ user?: any }> = () => {
-  const [activeTab, setActiveTab] = useState(categories[0].key);
-  const [data, setData] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
+const Reporting: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>(categories[0].key);
+  const [data, setData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
   // Dropdown state for export
@@ -111,6 +110,8 @@ const Reporting: React.FC<{ user?: any }> = () => {
   // Dropdown state for category
   const [categoryOpen, setCategoryOpen] = useState(false);
   const categoryRef = useRef<HTMLDivElement>(null);
+  // Add contacts state for contracts tab
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -141,22 +142,16 @@ const Reporting: React.FC<{ user?: any }> = () => {
     fetchData();
   }, [activeTab]);
 
+  // Fetch contacts if contracts tab is active
+  useEffect(() => {
+    if (activeTab === 'contracts') {
+      supabase.from('contacts').select('*').then(({ data }) => setContacts(data || []));
+    }
+  }, [activeTab]);
+
   const columns = columnsMap[activeTab];
-  const filteredData = data.filter(row =>
-    columns.some(col =>
-      (row[col.key] || '').toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
-  // Sorting
-  const sortedData = sort
-    ? [...filteredData].sort((a, b) => {
-        const aVal = a[sort.key] ?? '';
-        const bVal = b[sort.key] ?? '';
-        if (aVal < bVal) return sort.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sort.direction === 'asc' ? 1 : -1;
-        return 0;
-      })
-    : filteredData;
+  const filteredData = data; // No search
+  const sortedData = filteredData; // No sort
 
   // Selection
   const handleSelectRow = (idx: number) => {
@@ -181,10 +176,14 @@ const Reporting: React.FC<{ user?: any }> = () => {
 
   // Export functions
   const handleExportExcel = () => {
-    const exportData = exportRows.map(row => {
-      const out: Record<string, any> = {};
+    const exportData = exportRows.map((row: Record<string, unknown>) => {
+      const out: Record<string, unknown> = {};
       columns.forEach(col => {
-        out[col.label] = row[col.key];
+        if (activeTab === 'contracts' && col.key === 'contactId') {
+          out[col.label] = getContactName(row[col.key] as string);
+        } else {
+          out[col.label] = row[col.key];
+        }
       });
       return out;
     });
@@ -194,10 +193,14 @@ const Reporting: React.FC<{ user?: any }> = () => {
     XLSX.writeFile(wb, `${activeTab}_report.xlsx`);
   };
   const handleExportCSV = () => {
-    const exportData = exportRows.map(row => {
-      const out: Record<string, any> = {};
+    const exportData = exportRows.map((row: Record<string, unknown>) => {
+      const out: Record<string, unknown> = {};
       columns.forEach(col => {
-        out[col.label] = row[col.key];
+        if (activeTab === 'contracts' && col.key === 'contactId') {
+          out[col.label] = getContactName(row[col.key] as string);
+        } else {
+          out[col.label] = row[col.key];
+        }
       });
       return out;
     });
@@ -213,19 +216,86 @@ const Reporting: React.FC<{ user?: any }> = () => {
   };
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    autoTable(doc, {
-      head: [columns.map(col => col.label)],
-      body: exportRows.map(row => columns.map(col => row[col.key]?.toString() || '')),
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [41, 128, 185] },
-    });
-    doc.save(`${activeTab}_report.pdf`);
+    const logoUrl = '/images.png'; // Path in public directory
+    const companyName = 'PropManager Sdn Bhd';
+    const companyAddress = 'Suite 23-A, Jalan Integra, 50450 Kuala Lumpur, Malaysia';
+    const companyPhone = '+60 12-345 6789';
+    const companyEmail = 'info@propmanager.com';
+    const exportDate = new Date().toLocaleString();
+    const addContentAndSave = () => {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      // Logo
+      const logoWidth = 36;
+      const logoHeight = 18;
+      const logoY = 10;
+      const logoX = 14;
+      // Vertically center text with logo
+      const headerCenterY = logoY + logoHeight / 2 + 2;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companyName, pageWidth / 2, headerCenterY - 3, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(companyAddress, pageWidth / 2, headerCenterY + 5, { align: 'center' });
+      doc.text(`${companyPhone} • ${companyEmail}`, pageWidth / 2, headerCenterY + 13, { align: 'center' });
+      // Draw line below header
+      doc.setDrawColor(180);
+      doc.setLineWidth(0.5);
+      doc.line(14, 38, pageWidth - 14, 38); // x1, y1, x2, y2
+      // Add title further below header, above table
+      const title = categories.find(c => c.key === activeTab)?.label || 'Report';
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 48, { align: 'center' });
+      // Table
+      autoTable(doc, {
+        startY: 56,
+        head: [columns.map(col => col.label)],
+        body: exportRows.map((row: Record<string, unknown>) => columns.map(col =>
+          (activeTab === 'contracts' && col.key === 'contactId')
+            ? getContactName(row[col.key] as string)
+            : row[col.key]?.toString() || ''
+        )),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+        didDrawPage: (data) => {
+          doc.setFontSize(8);
+          // Number of entries below the table (centered)
+          const pageCount = (doc as any).internal.getNumberOfPages ? (doc as any).internal.getNumberOfPages() : 1;
+          if (data.pageNumber === pageCount && data.cursor) {
+            doc.text(`Total: ${exportRows.length} entries`, doc.internal.pageSize.getWidth() / 2, data.cursor.y + 8, { align: 'center' });
+          }
+          // Draw line above footer
+          doc.setDrawColor(180);
+          doc.setLineWidth(0.5);
+          doc.line(14, doc.internal.pageSize.getHeight() - 16, pageWidth - 14, doc.internal.pageSize.getHeight() - 16);
+          // Export date at bottom right
+          doc.text(`Exported: ${exportDate}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+          // Copyright centered
+          doc.text('Copyright of PropManager 2025', pageWidth / 2, doc.internal.pageSize.getHeight() - 8, { align: 'center' });
+        }
+      });
+      doc.save(`${activeTab}_report.pdf`);
+    };
+    // Load logo as image
+    const img = new window.Image();
+    img.src = logoUrl;
+    img.onload = () => {
+      try {
+        doc.addImage(img, 'JPEG', 14, 10, 36, 18); // x, y, width, height
+      } catch {
+        // Optionally log error
+      }
+      addContentAndSave();
+    };
+    img.onerror = () => {
+      addContentAndSave();
+    };
   };
 
   // Helper to export for a specific category
   const handleExport = (type: 'excel' | 'csv' | 'pdf', categoryKey: string) => {
     setExportOpen(false);
-    setExportSubOpen(null);
     const prevTab = activeTab;
     setActiveTab(categoryKey);
     setTimeout(() => {
@@ -234,6 +304,12 @@ const Reporting: React.FC<{ user?: any }> = () => {
       if (type === 'pdf') handleExportPDF();
       setActiveTab(prevTab);
     }, 0);
+  };
+
+  // Helper to get contact name by id
+  const getContactName = (contactId: string) => {
+    const contact = contacts.find((c) => c.id === contactId);
+    return contact ? contact.name : contactId;
   };
 
   return (
@@ -333,23 +409,17 @@ const Reporting: React.FC<{ user?: any }> = () => {
                 {columns.map(col => (
                   <th
                     key={col.key}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100"
-                    onClick={() => handleSort(col.key)}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     <span className="flex items-center">
                       {col.label}
-                      {sort?.key === col.key && (
-                        <span className="ml-1">
-                          {sort.direction === 'asc' ? '▲' : '▼'}
-                        </span>
-                      )}
                     </span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((row, i) => (
+              {sortedData.map((row: Record<string, unknown>, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
                   <td className="px-6 py-4 text-center">
                     <input
@@ -359,7 +429,11 @@ const Reporting: React.FC<{ user?: any }> = () => {
                     />
                   </td>
                   {columns.map(col => (
-                    <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px] overflow-x-auto">{row[col.key]?.toString() || ''}</td>
+                    <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px] overflow-x-auto">
+                      {activeTab === 'contracts' && col.key === 'contactId'
+                        ? getContactName(row[col.key] as string)
+                        : row[col.key]?.toString() || ''}
+                    </td>
                   ))}
                 </tr>
               ))}
