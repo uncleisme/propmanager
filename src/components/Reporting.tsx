@@ -238,78 +238,81 @@ const Reporting: React.FC<{ user?: any }> = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reporting</h1>
-        <p className="text-gray-600">Manage all reporting</p>
-      </div>
-      {/* Category and Export Dropdown Row */}
-      <div className="flex flex-col sm:flex-row justify-center sm:justify-end items-center gap-3 sm:gap-4 mb-4 w-full">
-        {/* Category Dropdown */}
-        <div className="relative w-full sm:w-auto max-w-xs" ref={categoryRef}>
-          <button
-            className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            onClick={() => setCategoryOpen((open) => !open)}
-            aria-haspopup="true"
-            aria-expanded={categoryOpen}
-            type="button"
-          >
-            <List className="w-4 h-4" />
-            <span className="font-medium">{categories.find(c => c.key === activeTab)?.label || 'Select Category'}</span>
-            <svg className={`w-4 h-4 ml-1 transition-transform ${categoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-          </button>
-          {categoryOpen && (
-            <div className="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
-              {categories.map(cat => (
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Reporting</h1>
+          <p className="text-gray-600">Manage all reporting</p>
+        </div>
+        {/* Category and Export Dropdown Row */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+          {/* Category Dropdown */}
+          <div className="relative w-full sm:w-auto max-w-xs" ref={categoryRef}>
+            <button
+              className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={() => setCategoryOpen((open) => !open)}
+              aria-haspopup="true"
+              aria-expanded={categoryOpen}
+              type="button"
+            >
+              <List className="w-4 h-4" />
+              <span className="font-medium">{categories.find(c => c.key === activeTab)?.label || 'Select Category'}</span>
+              <svg className={`w-4 h-4 ml-1 transition-transform ${categoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {categoryOpen && (
+              <div className="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
+                {categories.map(cat => (
+                  <button
+                    key={cat.key}
+                    className={`block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none ${activeTab === cat.key ? 'bg-blue-100' : ''}`}
+                    onClick={() => { setActiveTab(cat.key); setCategoryOpen(false); }}
+                    type="button"
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Export Dropdown */}
+          <div className="relative w-full sm:w-auto max-w-xs" ref={exportRef}>
+            <button
+              className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={() => setExportOpen((open) => !open)}
+              aria-haspopup="true"
+              aria-expanded={exportOpen}
+              type="button"
+            >
+              <Download className="w-4 h-4" />
+              <span className="font-medium">Export</span>
+              <svg className={`w-4 h-4 ml-1 transition-transform ${exportOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
                 <button
-                  key={cat.key}
-                  className={`block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none ${activeTab === cat.key ? 'bg-blue-100' : ''}`}
-                  onClick={() => { setActiveTab(cat.key); setCategoryOpen(false); }}
+                  className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                  onClick={() => { setExportOpen(false); handleExportExcel(); }}
                   type="button"
                 >
-                  {cat.label}
+                  Export Excel
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* Export Dropdown */}
-        <div className="relative w-full sm:w-auto max-w-xs" ref={exportRef}>
-          <button
-            className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            onClick={() => setExportOpen((open) => !open)}
-            aria-haspopup="true"
-            aria-expanded={exportOpen}
-            type="button"
-          >
-            <Download className="w-4 h-4" />
-            <span className="font-medium">Export</span>
-            <svg className={`w-4 h-4 ml-1 transition-transform ${exportOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-          </button>
-          {exportOpen && (
-            <div className="absolute right-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
-              <button
-                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
-                onClick={() => { setExportOpen(false); handleExportExcel(); }}
-                type="button"
-              >
-                Export Excel
-              </button>
-              <button
-                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
-                onClick={() => { setExportOpen(false); handleExportCSV(); }}
-                type="button"
-              >
-                Export CSV
-              </button>
-              <button
-                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
-                onClick={() => { setExportOpen(false); handleExportPDF(); }}
-                type="button"
-              >
-                Export PDF
-              </button>
-            </div>
-          )}
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                  onClick={() => { setExportOpen(false); handleExportCSV(); }}
+                  type="button"
+                >
+                  Export CSV
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                  onClick={() => { setExportOpen(false); handleExportPDF(); }}
+                  type="button"
+                >
+                  Export PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <h2 className="text-base sm:text-lg font-semibold mb-2">{categories.find(c => c.key === activeTab)?.label} Data</h2>
