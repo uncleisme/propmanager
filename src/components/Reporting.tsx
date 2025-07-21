@@ -200,54 +200,54 @@ const Reporting: React.FC<{ user?: any }> = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Reporting</h1>
-      <div className="flex space-x-4 mb-6">
+    <div className="p-2 sm:p-4 md:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Reporting</h1>
+      <div className="flex flex-wrap gap-2 sm:space-x-4 mb-4 sm:mb-6">
         {categories.map(cat => (
           <button
             key={cat.key}
-            className={`px-4 py-2 rounded ${activeTab === cat.key ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base ${activeTab === cat.key ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
             onClick={() => setActiveTab(cat.key)}
           >
             {cat.label}
           </button>
         ))}
       </div>
-      <div className="mb-4 flex flex-wrap gap-2 justify-between items-center">
+      <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-2 justify-between items-center">
         <input
           type="text"
           placeholder="Search..."
-          className="border rounded px-2 py-1 w-64"
+          className="border rounded px-2 py-1 w-full sm:w-64 text-xs sm:text-base"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
-            className="bg-green-600 text-white px-4 py-2 rounded"
+            className="bg-green-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
             onClick={handleExportExcel}
           >
             Export Excel
           </button>
           <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
             onClick={handleExportCSV}
           >
             Export CSV
           </button>
           <button
-            className="bg-red-600 text-white px-4 py-2 rounded"
+            className="bg-red-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
             onClick={handleExportPDF}
           >
             Export PDF
           </button>
         </div>
       </div>
-      <div className="bg-white rounded shadow p-4">
-        <h2 className="text-lg font-semibold mb-2">{categories.find(c => c.key === activeTab)?.label} Data</h2>
-        {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading...</div>
-        ) : (
-          <table className="min-w-full border">
+      <h2 className="text-base sm:text-lg font-semibold mb-2">{categories.find(c => c.key === activeTab)?.label} Data</h2>
+      {loading ? (
+        <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Loading...</div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="min-w-full text-xs sm:text-sm border">
             <thead>
               <tr>
                 <th className="border px-2 py-1">
@@ -277,7 +277,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
             </thead>
             <tbody>
               {sortedData.map((row, i) => (
-                <tr key={i}>
+                <tr key={i} className="hover:bg-gray-50">
                   <td className="border px-2 py-1 text-center">
                     <input
                       type="checkbox"
@@ -286,7 +286,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
                     />
                   </td>
                   {columns.map(col => (
-                    <td key={col.key} className="border px-2 py-1">{row[col.key]?.toString() || ''}</td>
+                    <td key={col.key} className="border px-2 py-1 whitespace-nowrap max-w-[120px] overflow-x-auto">{row[col.key]?.toString() || ''}</td>
                   ))}
                 </tr>
               ))}
@@ -297,8 +297,8 @@ const Reporting: React.FC<{ user?: any }> = () => {
               )}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
