@@ -95,7 +95,7 @@ const Utilities: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Utilities</h2>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">Utilities</h1>
       <div className="flex space-x-4 mb-6">
         {UTILITY_TYPES.map(tab => (
           <button
