@@ -319,11 +319,11 @@ const Reporting: React.FC<{ user?: any }> = () => {
       {loading ? (
         <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Loading...</div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="min-w-full text-xs sm:text-sm border">
-            <thead>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="border px-2 py-1">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
                     type="checkbox"
                     checked={selectAll}
@@ -333,7 +333,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
                 {columns.map(col => (
                   <th
                     key={col.key}
-                    className="border px-2 py-1 cursor-pointer select-none hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100"
                     onClick={() => handleSort(col.key)}
                   >
                     <span className="flex items-center">
@@ -350,8 +350,8 @@ const Reporting: React.FC<{ user?: any }> = () => {
             </thead>
             <tbody>
               {sortedData.map((row, i) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="border px-2 py-1 text-center">
+                <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
+                  <td className="px-6 py-4 text-center">
                     <input
                       type="checkbox"
                       checked={selected.has(i)}
@@ -359,7 +359,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
                     />
                   </td>
                   {columns.map(col => (
-                    <td key={col.key} className="border px-2 py-1 whitespace-nowrap max-w-[120px] overflow-x-auto">{row[col.key]?.toString() || ''}</td>
+                    <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px] overflow-x-auto">{row[col.key]?.toString() || ''}</td>
                   ))}
                 </tr>
               ))}
