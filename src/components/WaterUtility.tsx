@@ -124,8 +124,14 @@ const WaterUtility: React.FC = () => {
     ],
   };
 
+  // Helper to format month as 'Jan', 'Feb', etc.
+  const formatMonth = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-screen-lg mx-auto min-h-screen flex flex-col pb-8">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -141,20 +147,20 @@ const WaterUtility: React.FC = () => {
         </button>
       </div>
       {/* Graph Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 max-w-full w-full md:max-w-5xl mx-auto h-auto min-h-[16rem] flex flex-col justify-center">
         <h3 className="font-semibold mb-2">Monthly Water Consumption Graph</h3>
-        <Bar data={chartData} />
+        <Bar data={chartData} width={900} height={220} />
       </div>
       {/* Table Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -175,11 +181,11 @@ const WaterUtility: React.FC = () => {
             ) : (
               entries.map((e, idx) => (
                 <tr key={e.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                  <td className="px-6 py-4 whitespace-nowrap">{e.month.slice(0, 7)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{e.consumption}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{e.cost ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{e.notes ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <td className="px-3 py-2 whitespace-nowrap">{formatMonth(e.month)}</td>
+                  <td className="px-3 py-2 whitespace-nowrap">{e.consumption}</td>
+                  <td className="px-3 py-2 whitespace-nowrap">{e.cost ?? '-'}</td>
+                  <td className="px-3 py-2 whitespace-nowrap">{e.notes ?? '-'}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-center">
                     <button
                       className="text-blue-600 hover:text-blue-800"
                       onClick={() => openEditModal(e)}

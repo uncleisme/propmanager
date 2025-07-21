@@ -31,7 +31,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(8);
   const [totalLicenses, setTotalLicenses] = useState(0);
   const [importing, setImporting] = useState(false);
   const [showImportInstructions, setShowImportInstructions] = useState(false);
@@ -221,7 +221,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-screen-lg mx-auto min-h-screen flex flex-col pb-8">
       {/* Error Message */}
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
