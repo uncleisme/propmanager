@@ -167,7 +167,8 @@ const Utilities: React.FC = () => {
       </div>
       <div>
         <h3 className="font-semibold mb-2">Entries</h3>
-        <table className="min-w-full border">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <table className="min-w-full border">
           <thead>
             <tr>
               <th className="border px-2 py-1">Month</th>
@@ -191,7 +192,8 @@ const Utilities: React.FC = () => {
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
   );
