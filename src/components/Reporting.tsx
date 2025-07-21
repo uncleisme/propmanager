@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../utils/supabaseClient';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { List, Download } from 'lucide-react';
 
 const categories = [
   { key: 'contacts', label: 'Contacts' },
@@ -104,6 +105,28 @@ const Reporting: React.FC<{ user?: any }> = () => {
   const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  // Dropdown state for export
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  // Dropdown state for category
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
+        setExportOpen(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setCategoryOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,47 +222,94 @@ const Reporting: React.FC<{ user?: any }> = () => {
     doc.save(`${activeTab}_report.pdf`);
   };
 
+  // Helper to export for a specific category
+  const handleExport = (type: 'excel' | 'csv' | 'pdf', categoryKey: string) => {
+    setExportOpen(false);
+    setExportSubOpen(null);
+    const prevTab = activeTab;
+    setActiveTab(categoryKey);
+    setTimeout(() => {
+      if (type === 'excel') handleExportExcel();
+      if (type === 'csv') handleExportCSV();
+      if (type === 'pdf') handleExportPDF();
+      setActiveTab(prevTab);
+    }, 0);
+  };
+
   return (
-    <div className="p-2 sm:p-4 md:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Reporting</h1>
-      <div className="flex flex-wrap gap-2 sm:space-x-4 mb-4 sm:mb-6">
-        {categories.map(cat => (
-          <button
-            key={cat.key}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base ${activeTab === cat.key ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => setActiveTab(cat.key)}
-          >
-            {cat.label}
-          </button>
-        ))}
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Reporting</h1>
+        <p className="text-gray-600">Manage all reporting</p>
       </div>
-      <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-2 justify-between items-center">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="border rounded px-2 py-1 w-full sm:w-64 text-xs sm:text-base"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <div className="flex gap-2 w-full sm:w-auto">
+      {/* Category and Export Dropdown Row */}
+      <div className="flex flex-col sm:flex-row justify-center sm:justify-end items-center gap-3 sm:gap-4 mb-4 w-full">
+        {/* Category Dropdown */}
+        <div className="relative w-full sm:w-auto max-w-xs" ref={categoryRef}>
           <button
-            className="bg-green-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
-            onClick={handleExportExcel}
+            className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onClick={() => setCategoryOpen((open) => !open)}
+            aria-haspopup="true"
+            aria-expanded={categoryOpen}
+            type="button"
           >
-            Export Excel
+            <List className="w-4 h-4" />
+            <span className="font-medium">{categories.find(c => c.key === activeTab)?.label || 'Select Category'}</span>
+            <svg className={`w-4 h-4 ml-1 transition-transform ${categoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </button>
+          {categoryOpen && (
+            <div className="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
+              {categories.map(cat => (
+                <button
+                  key={cat.key}
+                  className={`block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none ${activeTab === cat.key ? 'bg-blue-100' : ''}`}
+                  onClick={() => { setActiveTab(cat.key); setCategoryOpen(false); }}
+                  type="button"
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Export Dropdown */}
+        <div className="relative w-full sm:w-auto max-w-xs" ref={exportRef}>
           <button
-            className="bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
-            onClick={handleExportCSV}
+            className="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:bg-blue-800 transition-colors duration-200 space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onClick={() => setExportOpen((open) => !open)}
+            aria-haspopup="true"
+            aria-expanded={exportOpen}
+            type="button"
           >
-            Export CSV
+            <Download className="w-4 h-4" />
+            <span className="font-medium">Export</span>
+            <svg className={`w-4 h-4 ml-1 transition-transform ${exportOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </button>
-          <button
-            className="bg-red-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-base"
-            onClick={handleExportPDF}
-          >
-            Export PDF
-          </button>
+          {exportOpen && (
+            <div className="absolute right-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fade-in">
+              <button
+                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                onClick={() => { setExportOpen(false); handleExportExcel(); }}
+                type="button"
+              >
+                Export Excel
+              </button>
+              <button
+                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                onClick={() => { setExportOpen(false); handleExportCSV(); }}
+                type="button"
+              >
+                Export CSV
+              </button>
+              <button
+                className="block w-full text-left px-4 py-2 text-sm rounded hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                onClick={() => { setExportOpen(false); handleExportPDF(); }}
+                type="button"
+              >
+                Export PDF
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <h2 className="text-base sm:text-lg font-semibold mb-2">{categories.find(c => c.key === activeTab)?.label} Data</h2>
