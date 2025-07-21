@@ -200,9 +200,12 @@ const Reporting: React.FC<{ user?: any }> = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 md:p-6">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">Reporting</h1>
-      <div className="flex flex-wrap gap-2 sm:space-x-4 mb-4 sm:mb-6">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Reporting</h1>
+        <p className="text-gray-600">Generate and export reports for all data</p>
+      </div>
+      <div className="flex flex-wrap gap-2 sm:space-x-4">
         {categories.map(cat => (
           <button
             key={cat.key}
@@ -213,7 +216,7 @@ const Reporting: React.FC<{ user?: any }> = () => {
           </button>
         ))}
       </div>
-      <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-2 justify-between items-center">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-2 justify-between items-center">
         <input
           type="text"
           placeholder="Search..."
@@ -242,10 +245,12 @@ const Reporting: React.FC<{ user?: any }> = () => {
           </button>
         </div>
       </div>
-      <h2 className="text-base sm:text-lg font-semibold mb-2">{categories.find(c => c.key === activeTab)?.label} Data</h2>
-      {loading ? (
-        <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Loading...</div>
-      ) : (
+      
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{categories.find(c => c.key === activeTab)?.label} Data</h2>
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Loading...</div>
+        ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="min-w-full text-xs sm:text-sm border">
             <thead>
@@ -298,7 +303,8 @@ const Reporting: React.FC<{ user?: any }> = () => {
             </tbody>
           </table>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
