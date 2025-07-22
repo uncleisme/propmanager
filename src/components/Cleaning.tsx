@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { CleaningPerson } from '../types';
 import { User } from '@supabase/supabase-js';
@@ -364,7 +364,7 @@ const Cleaning: React.FC<CleaningProps> = ({ user }) => {
       </div>
 
       {/* Cleaning Personnel Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

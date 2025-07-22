@@ -364,7 +364,7 @@ const Security: React.FC<SecurityProps> = ({ user }) => {
       </div>
 
       {/* Security Personnel Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

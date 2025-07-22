@@ -395,55 +395,57 @@ const Reporting: React.FC = () => {
       {loading ? (
         <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Loading...</div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAll}
-                  />
-                </th>
-                {columns.map(col => (
-                  <th
-                    key={col.key}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    <span className="flex items-center">
-                      {col.label}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData.map((row: Record<string, unknown>, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                  <td className="px-6 py-4 text-center">
+        <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <input
                       type="checkbox"
-                      checked={selected.has(i)}
-                      onChange={() => handleSelectRow(i)}
+                      checked={selectAll}
+                      onChange={handleSelectAll}
                     />
-                  </td>
+                  </th>
                   {columns.map(col => (
-                    <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px] overflow-x-auto">
-                      {activeTab === 'contracts' && col.key === 'contactId'
-                        ? getContactName(row[col.key] as string)
-                        : row[col.key]?.toString() || ''}
-                    </td>
+                    <th
+                      key={col.key}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <span className="flex items-center">
+                        {col.label}
+                      </span>
+                    </th>
                   ))}
                 </tr>
-              ))}
-              {sortedData.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length + 1} className="text-center py-2">No data found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sortedData.map((row: Record<string, unknown>, i) => (
+                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
+                    <td className="px-6 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(i)}
+                        onChange={() => handleSelectRow(i)}
+                      />
+                    </td>
+                    {columns.map(col => (
+                      <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px] overflow-x-auto">
+                        {activeTab === 'contracts' && col.key === 'contactId'
+                          ? getContactName(row[col.key] as string)
+                          : row[col.key]?.toString() || ''}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {sortedData.length === 0 && (
+                  <tr>
+                    <td colSpan={columns.length + 1} className="text-center py-2">No data found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
