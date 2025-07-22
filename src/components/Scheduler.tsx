@@ -1,14 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import SchedulerProvider, { useScheduler } from './SchedulerContext';
-import { Calendar, dateFnsLocalizer, Event as RBCEvent } from 'react-big-calendar';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { format } from 'date-fns/format';
-import { parse } from 'date-fns/parse';
-import { startOfWeek } from 'date-fns/startOfWeek';
-import { getDay } from 'date-fns/getDay';
-import { enUS } from 'date-fns/locale/en-US';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import '@fullcalendar/common/main.css';
+import '@fullcalendar/daygrid/main.css';
+import '@fullcalendar/timegrid/main.css';
 import { Tooltip } from 'react-tooltip';
 import { X } from 'lucide-react';
 
@@ -30,57 +28,10 @@ const statusColors: Record<string, string> = {
   complete: '#10b981', // green
 };
 
-// Custom event component for calendar
-const CalendarEvent: React.FC<{ event: any }> = ({ event }) => {
-  const job = event.job;
-  const tooltipContent = `
-    <div style='min-width:180px;'>
-      <div><b>${job.title}</b></div>
-      <div style='font-size:12px;'>${job.description || ''}</div>
-      <div style='font-size:12px;margin-top:4px;'><b>Time:</b> ${job.scheduledDate} ${job.scheduledStart}-${job.scheduledEnd}</div>
-      ${job.technicianId ? `<div style='font-size:12px;'><b>Technician:</b> ${event.technicians?.find((t: any) => t.id === job.technicianId)?.name || 'Technician'}</div>` : ''}
-      <div style='font-size:12px;'><b>Status:</b> ${job.status.replace('_', ' ')}</div>
-    </div>
-  `;
-  return (
-    <div
-      style={{
-        background: statusColors[job.status] || '#e5e7eb',
-        color: '#111827',
-        borderRadius: 4,
-        padding: '2px 6px',
-        fontWeight: 500,
-        fontSize: 13,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        cursor: 'pointer',
-      }}
-      data-tooltip-id="job-tooltip"
-      data-tooltip-html={tooltipContent}
-    >
-      <span>{job.title}</span>
-      {job.technicianId && (
-        <span style={{ fontSize: 11, color: '#374151', marginLeft: 4 }}>
-          ({event.technicians?.find((t: any) => t.id === job.technicianId)?.name || 'Technician'})
-        </span>
-      )}
-      <span
-        style={{
-          marginLeft: 'auto',
-          fontSize: 10,
-          background: '#fff',
-          color: statusColors[job.status] || '#6b7280',
-          borderRadius: 8,
-          padding: '0 6px',
-          border: `1px solid ${statusColors[job.status] || '#d1d5db'}`,
-        }}
-      >
-        {job.status.replace('_', ' ')}
-      </span>
-    </div>
-  );
-};
+// FullCalendar event data
+function getEventColor(status: string) {
+  return statusColors[status] || '#e5e7eb';
+}
 
 const Scheduler: React.FC = () => {
   const { jobs, technicians, assignableContacts, addJob, assignJob, rescheduleJob, loading, error } = useScheduler();
@@ -92,30 +43,28 @@ const Scheduler: React.FC = () => {
   const [selectedTech, setSelectedTech] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  // Convert jobs to calendar events
+  // Convert jobs to FullCalendar events
   const events: any[] = useMemo(() =>
     jobs.map(job => {
-      const start = new Date(`${job.scheduledDate}T${job.scheduledStart}`);
-      const end = new Date(`${job.scheduledDate}T${job.scheduledEnd}`);
+      const start = `${job.scheduledDate}T${job.scheduledStart}`;
+      const end = `${job.scheduledDate}T${job.scheduledEnd}`;
       return {
         id: job.id,
         title: job.title,
         start,
         end,
-        resourceId: job.technicianId || 'unassigned',
-        allDay: false,
-        job,
-        technicians,
+        backgroundColor: getEventColor(job.status),
+        borderColor: getEventColor(job.status),
+        extendedProps: {
+          job,
+          technicians,
+        },
       };
     }),
     [jobs, technicians]
   );
 
-  // Technicians as resources
-  const resources: any[] = useMemo(() => [
-    ...technicians.map(t => ({ resourceId: t.id, resourceTitle: t.name })),
-    { resourceId: 'unassigned', resourceTitle: 'Unassigned' },
-  ], [technicians]);
+  // No resources for now (FullCalendar resource view is a paid feature)
 
   const handleAddJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,17 +87,16 @@ const Scheduler: React.FC = () => {
   };
 
   // Drag-and-drop rescheduling
-  const onEventDrop = async ({ event, start, end, resourceId }: any) => {
-    const date = format(start, 'yyyy-MM-dd');
-    const startTime = format(start, 'HH:mm');
-    const endTime = format(end, 'HH:mm');
+  const onEventDrop = async (info: any) => {
+    const { event } = info;
+    const start = event.start;
+    const end = event.end;
+    if (!start || !end) return;
+    const date = start.toISOString().slice(0, 10);
+    const startTime = start.toTimeString().slice(0, 5);
+    const endTime = end.toTimeString().slice(0, 5);
     await rescheduleJob(event.id, date, startTime, endTime);
-    if (resourceId && resourceId !== event.job.technicianId) {
-      await assignJob(event.id, resourceId);
-    }
   };
-
-  const DragAndDropCalendar = withDragAndDrop(Calendar);
 
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
@@ -233,20 +181,20 @@ const Scheduler: React.FC = () => {
       )}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-2">Calendar</h2>
-        {/* @ts-expect-error react-big-calendar typing issue */}
-        <DragAndDropCalendar
-          localizer={localizer}
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
           events={events}
-          startAccessor={(event: any) => event.start}
-          endAccessor={(event: any) => event.end}
-          style={{ height: 500 }}
-          resources={resources}
-          resourceIdAccessor={(resource: any) => resource.resourceId}
-          resourceTitleAccessor={(resource: any) => resource.resourceTitle}
-          onEventDrop={onEventDrop}
-          draggableAccessor={() => true}
-          resizable
-          components={{ event: CalendarEvent }}
+          editable={true}
+          droppable={false}
+          eventDrop={onEventDrop}
+          height={500}
+          eventContent={renderEventContent}
         />
       </div>
       <div className="flex gap-4 mt-2 text-xs">
@@ -288,6 +236,35 @@ const Scheduler: React.FC = () => {
     </div>
   );
 };
+
+// Custom rendering for FullCalendar events
+function renderEventContent(arg: any) {
+  const job = arg.event.extendedProps.job;
+  const technicians = arg.event.extendedProps.technicians;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <span>{job.title}</span>
+      {job.technicianId && (
+        <span style={{ fontSize: 11, color: '#374151', marginLeft: 4 }}>
+          ({technicians?.find((t: any) => t.id === job.technicianId)?.name || 'Technician'})
+        </span>
+      )}
+      <span
+        style={{
+          marginLeft: 'auto',
+          fontSize: 10,
+          background: '#fff',
+          color: statusColors[job.status] || '#6b7280',
+          borderRadius: 8,
+          padding: '0 6px',
+          border: `1px solid ${statusColors[job.status] || '#d1d5db'}`,
+        }}
+      >
+        {job.status.replace('_', ' ')}
+      </span>
+    </div>
+  );
+}
 
 const SchedulerModule: React.FC = () => (
   <SchedulerProvider>
