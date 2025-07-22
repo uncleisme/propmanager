@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X, Eye } from 'lucide-react';
+import { Plus, AlertTriangle, Clock, CheckCircle, Edit, X, Eye, Wrench } from 'lucide-react';
 import { Complaint } from '../types';
 import { supabase } from '../utils/supabaseClient';
 import { User } from '@supabase/supabase-js';
+import { useScheduler } from './SchedulerContext';
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -259,6 +260,85 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
+  // Jobs from scheduler context
+  const { jobs, addJob, assignableContacts } = useScheduler();
+
+  // Add form type state
+  const [addType, setAddType] = useState<'complaint' | 'job'>('complaint');
+  // Job form state (reuse fields for both, but jobs require more fields)
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [jobScheduledDate, setJobScheduledDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [jobScheduledStart, setJobScheduledStart] = useState('09:00');
+  const [jobScheduledEnd, setJobScheduledEnd] = useState('10:00');
+  const [jobTechnician, setJobTechnician] = useState('');
+  const [jobError, setJobError] = useState<string | null>(null);
+  const [jobLoading, setJobLoading] = useState(false);
+
+  // Combined list: jobs and complaints, sorted by scheduledDate (or createdAt if missing)
+  const combinedList = [
+    ...jobs.map(j => ({
+      ...j,
+      _type: 'job' as const,
+      _sort: j.scheduledDate || j.createdAt,
+    })),
+    ...complaints.map(c => ({
+      ...c,
+      _type: 'complaint' as const,
+      _sort: c.scheduledDate || c.createdAt,
+    })),
+  ].sort((a, b) => (a._sort > b._sort ? -1 : 1));
+
+  // Add handler for unified form
+  const handleAddUnified = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setJobError(null);
+    setJobLoading(true);
+    try {
+      if (addType === 'job') {
+        if (!jobTitle.trim()) throw new Error('Title required');
+        await addJob({
+          title: jobTitle,
+          description: jobDescription,
+          scheduledDate: jobScheduledDate,
+          scheduledStart: jobScheduledStart,
+          scheduledEnd: jobScheduledEnd,
+          technicianId: jobTechnician || undefined,
+          status: 'pending',
+        });
+      } else {
+        if (!jobTitle.trim()) throw new Error('Title required');
+        // Add complaint (reuse job fields for simplicity)
+        const { error } = await supabase.from('complaints').insert([
+          {
+            title: jobTitle,
+            description: jobDescription,
+            priority: 'medium',
+            status: 'open',
+            propertyUnit: '',
+            scheduledDate: jobScheduledDate,
+            scheduledStart: jobScheduledStart,
+            scheduledEnd: jobScheduledEnd,
+            technicianId: jobTechnician || null,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        if (error) throw error;
+        await fetchData();
+      }
+      setJobTitle('');
+      setJobDescription('');
+      setJobScheduledDate(new Date().toISOString().slice(0, 10));
+      setJobScheduledStart('09:00');
+      setJobScheduledEnd('10:00');
+      setJobTechnician('');
+    } catch (err: any) {
+      setJobError(err.message || 'Failed to add');
+    } finally {
+      setJobLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -309,95 +389,8 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Loading complaints...</p>
-        </div>
-      )}
-
-      {/* Complaints List */}
-      {!loading && (
-        <div className="space-y-4">
-          {filteredComplaints.map(complaint => (
-            <div key={complaint.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-lg ${getPriorityColor(complaint.priority)}`}>
-                    {getStatusIcon(complaint.status)}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
-                    <p className="text-sm text-gray-600">{complaint.propertyUnit}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(complaint.priority)}`}>
-                    {complaint.priority}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
-                    {complaint.status}
-                  </span>
-                  <button
-                    onClick={() => handleView(complaint)}
-                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
-                    title="View complaint"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(complaint)}
-                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
-                    title="Edit complaint"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="text-sm text-gray-500">
-                  Created: {new Date(complaint.createdAt).toLocaleDateString()}
-                  {complaint.resolvedAt && (
-                    <span className="ml-2">
-                      • Resolved: {new Date(complaint.resolvedAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!loading && filteredComplaints.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No complaints found</p>
-        </div>
-      )}
-
-      {/* Pagination Controls and Total Count */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
-        <div>
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="mx-2">Page {currentPage} of {Math.ceil(totalComplaints / pageSize) || 1}</span>
-          <button
-            onClick={() => setCurrentPage((p) => (p * pageSize < totalComplaints ? p + 1 : p))}
-            disabled={currentPage * pageSize >= totalComplaints}
-            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-        <div className="text-sm text-gray-600">Total: {totalComplaints} entries</div>
-      </div>
+      {/* Section Divider */}
+      <div className="my-8 border-t border-gray-200" />
 
       {/* Add Complaint Modal */}
       {showAddForm && (
@@ -774,6 +767,112 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
+
+      {/* Unified Add Form */}
+      <div className="bg-white rounded-lg shadow p-4 mb-6 max-w-xl mx-auto">
+        <form onSubmit={handleAddUnified} className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <select value={addType} onChange={e => setAddType(e.target.value as 'complaint' | 'job')} className="border rounded px-2 py-1">
+              <option value="complaint">Complaint</option>
+              <option value="job">Job</option>
+            </select>
+            <input
+              className="border rounded px-2 py-1 flex-1"
+              placeholder={addType === 'job' ? 'Job Title' : 'Complaint Title'}
+              value={jobTitle}
+              onChange={e => setJobTitle(e.target.value)}
+              required
+            />
+          </div>
+          <textarea
+            className="border rounded px-2 py-1 w-full"
+            placeholder="Description"
+            value={jobDescription}
+            onChange={e => setJobDescription(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <input
+              type="date"
+              className="border rounded px-2 py-1 flex-1"
+              value={jobScheduledDate}
+              onChange={e => setJobScheduledDate(e.target.value)}
+              required
+            />
+            <input
+              type="time"
+              className="border rounded px-2 py-1 flex-1"
+              value={jobScheduledStart}
+              onChange={e => setJobScheduledStart(e.target.value)}
+              required
+            />
+            <input
+              type="time"
+              className="border rounded px-2 py-1 flex-1"
+              value={jobScheduledEnd}
+              onChange={e => setJobScheduledEnd(e.target.value)}
+              required
+            />
+          </div>
+          <select
+            className="border rounded px-2 py-1 w-full"
+            value={jobTechnician}
+            onChange={e => setJobTechnician(e.target.value)}
+          >
+            <option value="">Unassigned</option>
+            {assignableContacts.map(c => (
+              <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+            ))}
+          </select>
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full" disabled={jobLoading}>
+            Add {addType === 'job' ? 'Job' : 'Complaint'}
+          </button>
+          {jobError && <div className="text-red-500 text-sm">{jobError}</div>}
+        </form>
+      </div>
+
+      {/* Combined List */}
+      <div className="bg-white rounded-lg shadow p-4 mb-6 max-w-2xl mx-auto">
+        <h2 className="text-lg font-bold mb-4">Jobs & Complaints</h2>
+        <ul className="divide-y unified-list">
+          {combinedList.map(item => (
+            <li key={item._type + '-' + item.id} className="py-3 px-3 rounded-lg flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                {item._type === 'job' ? <Wrench className="w-4 h-4 text-blue-500" /> : <AlertTriangle className="w-4 h-4 text-yellow-500" />}
+                <span className={item._type === 'job' ? 'font-semibold text-blue-900' : 'font-semibold text-yellow-900'}>{item.title}</span>
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${item._type === 'job' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>{item._type === 'job' ? 'Job' : 'Complaint'}</span>
+              </div>
+              <div className="flex flex-wrap gap-2 items-center text-xs mt-1">
+                <span className={item._type === 'job' ? 'bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full' : 'bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full'}>
+                  Scheduled: {item.scheduledDate}
+                  {'scheduledStart' in item && item.scheduledStart ? ` ${item.scheduledStart}` : ''}
+                  {'scheduledEnd' in item && item.scheduledEnd ? `-${item.scheduledEnd}` : ''}
+                </span>
+                {'technicianId' in item && item.technicianId && (
+                  <span className={item._type === 'job' ? 'bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full' : 'bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full'}>
+                    Assigned: {assignableContacts.find(c => c.id === item.technicianId)?.name}
+                  </span>
+                )}
+                {'propertyUnit' in item && item._type === 'complaint' && item.propertyUnit && (
+                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Unit: {item.propertyUnit}</span>
+                )}
+              </div>
+              <div className="text-xs text-gray-400">Created: {new Date(item.createdAt).toLocaleString()}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <style>{`
+        @media (max-width: 640px) {
+          .unified-list li { padding: 0.5rem 0.5rem; }
+        }
+        .unified-list li {
+          transition: box-shadow 0.2s, background 0.2s;
+        }
+        .unified-list li:hover {
+          background: #f3f4f6;
+          box-shadow: 0 2px 8px 0 #0001;
+        }
+      `}</style>
     </div>
   );
 };

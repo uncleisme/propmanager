@@ -30,6 +30,7 @@ interface ComplaintCard {
   scheduledDate?: string;
   scheduledStart?: string;
   scheduledEnd?: string;
+  technicianId?: string;
 }
 
 // Pagination helper
@@ -303,11 +304,11 @@ const Scheduler: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-2 items-center text-xs mt-1">
                       {complaint.propertyUnit && <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Unit: {complaint.propertyUnit}</span>}
-                      <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">{complaint.scheduledDate} {complaint.scheduledStart}-{complaint.scheduledEnd}</span>
-                      <span className={`px-2 py-0.5 rounded-full ${complaint.status === 'open' ? 'bg-yellow-200 text-yellow-900' : complaint.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : complaint.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{complaint.status.replace('_', ' ')}</span>
-                      <span className={`px-2 py-0.5 rounded-full ${complaint.priority === 'critical' ? 'bg-red-100 text-red-800' : complaint.priority === 'high' ? 'bg-orange-100 text-orange-800' : complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{complaint.priority}</span>
+                      <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Scheduled: {complaint.scheduledDate} {complaint.scheduledStart}-{complaint.scheduledEnd}</span>
+                      {complaint.technicianId && (
+                        <span className="bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full">Assigned: {assignableContacts.find(c => c.id === complaint.technicianId)?.name}</span>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-400">Created: {new Date(complaint.createdAt).toLocaleString()}</div>
                   </li>
                 ))}
               </ul>
@@ -328,7 +329,7 @@ const Scheduler: React.FC = () => {
           </div>
         </div>
         <div className="bg-white p-2 sm:p-4 rounded shadow flex-[2] min-w-[280px] overflow-x-auto">
-          <h2 className="text-lg font-semibold mb-2">Calendar</h2>
+  
           <div className="w-[600px] sm:w-auto">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
