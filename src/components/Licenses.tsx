@@ -416,8 +416,8 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: '70vh' }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                   {modalType === "view" ? "License Details" : modalType === "add" ? "Add License" : "Edit License"}

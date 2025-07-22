@@ -49,6 +49,8 @@ export interface Complaint {
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
   propertyUnit?: string;
+  scheduledDate?: string;
+  technicianId?: string;
   createdAt: string;
   resolvedAt?: string;
 }
@@ -226,13 +228,13 @@ export interface Job {
   scheduledStart: string;
   scheduledEnd: string;
   technicianId?: string;
+  complaintId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface SchedulerContextType {
   jobs: Job[];
-  technicians: Technician[];
   assignableContacts: Contact[];
   addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateJob: (job: Job) => Promise<void>;

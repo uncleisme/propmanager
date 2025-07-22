@@ -21,6 +21,9 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalComplaints, setTotalComplaints] = useState(0);
+  const [technicians, setTechnicians] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTechnician, setSelectedTechnician] = useState<string>('');
+  const [viewingJob, setViewingJob] = useState<any>(null);
 
   const [newComplaint, setNewComplaint] = useState<Omit<Complaint, 'id' | 'createdAt'>>({
     title: '',
@@ -29,13 +32,18 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
     status: 'open',
     propertyUnit: ''
   });
+  const [scheduledDate, setScheduledDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [scheduledStart, setScheduledStart] = useState('09:00');
+  const [scheduledEnd, setScheduledEnd] = useState('10:00');
 
   const [editForm, setEditForm] = useState<Omit<Complaint, 'id' | 'createdAt' | 'resolvedAt'>>({
     title: '',
     description: '',
     priority: 'medium',
     status: 'open',
-    propertyUnit: ''
+    propertyUnit: '',
+    scheduledDate: '',
+    technicianId: ''
   });
 
   const fetchData = async () => {
@@ -57,6 +65,18 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
       setLoading(false);
     }
   };
+
+  // Fetch technicians from contacts
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('id, name')
+        .eq('type', 'technician');
+      if (!error && data) setTechnicians(data);
+    };
+    fetchTechnicians();
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -112,7 +132,8 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
         throw new Error('Title and description are required');
       }
 
-      const { error } = await supabase
+      // Insert complaint and get the new complaint's id
+      const { data: insertedComplaints, error } = await supabase
         .from('complaints')
         .insert([{
           title: newComplaint.title,
@@ -120,10 +141,15 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
           priority: newComplaint.priority,
           status: newComplaint.status,
           propertyUnit: newComplaint.propertyUnit || null,
+          scheduledDate: scheduledDate,
+          scheduledStart: scheduledStart,
+          scheduledEnd: scheduledEnd,
           createdAt: new Date().toISOString()
-        }]);
+        }])
+        .select();
 
       if (error) throw error;
+      const newComplaintId = insertedComplaints && insertedComplaints[0]?.id;
 
       await fetchData();
       setShowAddForm(false);
@@ -134,6 +160,10 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
         status: 'open',
         propertyUnit: ''
       });
+      setScheduledDate(new Date().toISOString().slice(0, 10));
+      setScheduledStart('09:00');
+      setScheduledEnd('10:00');
+      setSelectedTechnician('');
     } catch (error) {
       console.error('Error adding complaint:', error);
       setSubmitError(error instanceof Error ? error.message : 'Failed to add complaint');
@@ -149,12 +179,29 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
       description: complaint.description,
       priority: complaint.priority,
       status: complaint.status,
-      propertyUnit: complaint.propertyUnit || ''
+      propertyUnit: complaint.propertyUnit || '',
+      scheduledDate: complaint.scheduledDate ?? '',
+      technicianId: complaint.technicianId ?? ''
     });
   };
 
-  const handleView = (complaint: Complaint) => {
+  const handleView = async (complaint: Complaint) => {
     setViewingComplaint(complaint);
+    // Fetch the job linked to this complaint
+    if (complaint.id) {
+      const { data: jobs, error } = await supabase
+        .from('jobs')
+        .select('*, contacts(name)')
+        .eq('complaintId', complaint.id)
+        .limit(1);
+      if (!error && jobs && jobs.length > 0) {
+        setViewingJob(jobs[0]);
+      } else {
+        setViewingJob(null);
+      }
+    } else {
+      setViewingJob(null);
+    }
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
@@ -173,7 +220,9 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
         ...editForm,
         resolvedAt: (editForm.status === 'resolved' || editForm.status === 'closed')
           ? new Date().toISOString()
-          : undefined
+          : undefined,
+        scheduledDate: editForm.scheduledDate || undefined,
+        technicianId: editForm.technicianId || undefined,
       };
 
       const { error } = await supabase
@@ -188,6 +237,23 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
     } catch (error) {
       console.error('Error updating complaint:', error);
       setSubmitError(error instanceof Error ? error.message : 'Failed to update complaint');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editingComplaint) return;
+    if (!window.confirm('Are you sure you want to delete this complaint?')) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { error } = await supabase.from('complaints').delete().eq('id', editingComplaint.id);
+      if (error) throw error;
+      setEditingComplaint(null);
+      await fetchData();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to delete complaint');
     } finally {
       setIsSubmitting(false);
     }
@@ -336,14 +402,17 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
       {/* Add Complaint Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: '70vh' }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Add New Complaint</h2>
                 <button
                   onClick={() => {
                     setShowAddForm(false);
                     setSubmitError(null);
+                    setScheduledDate(new Date().toISOString().slice(0, 10));
+                    setScheduledStart('09:00');
+                    setScheduledEnd('10:00');
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 >
@@ -380,14 +449,56 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
                   />
                 </div>
                 
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
+                    <input
+                      type="text"
+                      value={newComplaint.propertyUnit}
+                      onChange={(e) => setNewComplaint({ ...newComplaint, propertyUnit: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                    <input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={e => setScheduledDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={scheduledStart}
+                      onChange={e => setScheduledStart(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={scheduledEnd}
+                      onChange={e => setScheduledEnd(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
-                  <input
-                    type="text"
-                    value={newComplaint.propertyUnit}
-                    onChange={(e) => setNewComplaint({ ...newComplaint, propertyUnit: e.target.value })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign Technician (optional)</label>
+                  <select
+                    value={selectedTechnician}
+                    onChange={e => setSelectedTechnician(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="">Unassigned</option>
+                    {technicians.map(tech => (
+                      <option key={tech.id} value={tech.id}>{tech.name}</option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -483,6 +594,22 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
                   <p className="text-sm text-gray-600 whitespace-pre-line">{viewingComplaint.description}</p>
                 </div>
 
+                <div className="pt-2 border-t border-gray-100">
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Job Details</h4>
+                  {viewingJob ? (
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div><span className="font-medium">Title:</span> {viewingJob.title}</div>
+                      <div><span className="font-medium">Job Description:</span> {viewingJob.description}</div>
+                      <div><span className="font-medium">Status:</span> {viewingJob.status}</div>
+                      <div><span className="font-medium">Scheduled Date:</span> {viewingJob.scheduledDate}</div>
+                      <div><span className="font-medium">Scheduled Time:</span> {viewingJob.scheduledStart} - {viewingJob.scheduledEnd}</div>
+                      <div><span className="font-medium">Assigned Person:</span> {viewingJob.contacts?.name || (technicians.find(t => t.id === viewingJob.technicianId)?.name) || 'Unassigned'}</div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No job is linked to this complaint.</div>
+                  )}
+                </div>
+
                 <div className="pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500">
                     <span className="font-medium">Created:</span> {new Date(viewingComplaint.createdAt).toLocaleString()}
@@ -502,8 +629,8 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
       {/* Edit Complaint Modal */}
       {editingComplaint && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: '70vh' }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Edit Complaint</h2>
                 <button
@@ -546,14 +673,38 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
                   />
                 </div>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
+                    <input
+                      type="text"
+                      value={editForm.propertyUnit}
+                      onChange={(e) => setEditForm({ ...editForm, propertyUnit: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                    <input
+                      type="date"
+                      value={editForm.scheduledDate || ''}
+                      onChange={e => setEditForm({ ...editForm, scheduledDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
-                  <input
-                    type="text"
-                    value={editForm.propertyUnit}
-                    onChange={(e) => setEditForm({ ...editForm, propertyUnit: e.target.value })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign Technician (optional)</label>
+                  <select
+                    value={editForm.technicianId || ''}
+                    onChange={e => setEditForm({ ...editForm, technicianId: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="">Unassigned</option>
+                    {technicians.map(tech => (
+                      <option key={tech.id} value={tech.id}>{tech.name}</option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -607,6 +758,16 @@ const Complaints: React.FC<DashboardProps> = ({ user }) => {
                   >
                     Cancel
                   </button>
+                  {editingComplaint && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </form>
             </div>

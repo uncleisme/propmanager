@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { SchedulerContextType, Job, Technician } from '../types';
+import { SchedulerContextType, Job } from '../types';
 import { Contact } from '../types';
 import { supabase } from '../utils/supabaseClient';
 
@@ -7,7 +7,6 @@ const SchedulerContext = createContext<SchedulerContextType | undefined>(undefin
 
 const SchedulerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [assignableContacts, setAssignableContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,16 +15,13 @@ const SchedulerProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setLoading(true);
     setError(null);
     try {
-      const { data: techs, error: techErr } = await supabase.from('technicians').select('*');
       const { data: jobsData, error: jobsErr } = await supabase.from('jobs').select('*');
       const { data: contactsData, error: contactsErr } = await supabase
         .from('contacts')
         .select('*')
-        .in('type', ['serviceProvider', 'contractor', 'supplier']);
-      if (techErr) throw techErr;
+        .in('type', ['serviceProvider', 'contractor', 'supplier', 'technician']);
       if (jobsErr) throw jobsErr;
       if (contactsErr) throw contactsErr;
-      setTechnicians(techs || []);
       setJobs(jobsData || []);
       setAssignableContacts(contactsData || []);
     } catch (err) {
@@ -122,7 +118,7 @@ const SchedulerProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   }, [fetchAll]);
 
   return (
-    <SchedulerContext.Provider value={{ jobs, technicians, assignableContacts, addJob, updateJob, deleteJob, assignJob, rescheduleJob, fetchAll, loading, error }}>
+    <SchedulerContext.Provider value={{ jobs, assignableContacts, addJob, updateJob, deleteJob, assignJob, rescheduleJob, fetchAll, loading, error }}>
       {children}
     </SchedulerContext.Provider>
   );
