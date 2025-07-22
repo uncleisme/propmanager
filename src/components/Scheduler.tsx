@@ -166,7 +166,7 @@ const Scheduler: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="max-w-6xl mx-auto p-2 sm:p-4">
       <h1 className="text-2xl font-bold mb-4">Job Scheduler</h1>
       <button
         className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
@@ -247,7 +247,7 @@ const Scheduler: React.FC = () => {
         </div>
       )}
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex flex-col gap-4 flex-1 min-w-[320px]">
+        <div className="flex flex-col gap-4 flex-1 min-w-[280px]">
           <div className="p-4 rounded-xl shadow" style={{ background: '#e0edfa', border: '1px solid #60a5fa' }}>
             <div className="flex items-center gap-2 mb-2">
               <Wrench className="w-5 h-5 text-blue-700" />
@@ -327,24 +327,26 @@ const Scheduler: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded shadow flex-[2] min-w-[320px]">
+        <div className="bg-white p-2 sm:p-4 rounded shadow flex-[2] min-w-[280px] overflow-x-auto">
           <h2 className="text-lg font-semibold mb-2">Calendar</h2>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            events={events}
-            editable={true}
-            droppable={false}
-            eventDrop={onEventDrop}
-            height={500}
-            eventContent={renderEventContent}
-          />
-          <div className="flex gap-4 mt-4 text-xs border-t pt-2">
+          <div className="w-[600px] sm:w-auto">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="timeGridWeek"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              }}
+              events={events}
+              editable={true}
+              droppable={false}
+              eventDrop={onEventDrop}
+              height={500}
+              eventContent={renderEventContent}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 mt-4 text-xs border-t pt-2">
             <div className="flex items-center gap-1"><Wrench className="w-3 h-3 text-blue-500" /><span style={{ background: '#3b82f6', width: 14, height: 14, borderRadius: 3, display: 'inline-block' }}></span> Job</div>
             <div className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-yellow-500" /><span style={{ background: '#FACC15', width: 14, height: 14, borderRadius: 3, display: 'inline-block' }}></span> Complaint</div>
           </div>
@@ -367,6 +369,14 @@ const Scheduler: React.FC = () => {
         }
         .fc-daygrid-event.event-complaint .fc-daygrid-event-dot {
           border-color: #facc15 !important;
+        }
+        @media (max-width: 640px) {
+          .fc .fc-toolbar-title { font-size: 1rem; }
+          .fc .fc-toolbar { flex-wrap: wrap; }
+          .fc .fc-header-toolbar { padding: 0.25rem 0; }
+          .fc .fc-daygrid-day-number { font-size: 0.9rem; }
+          .fc .fc-daygrid-event, .fc .fc-timegrid-event { font-size: 0.85rem; }
+          .fc .fc-scrollgrid-sync-table { min-width: 600px; }
         }
       `}</style>
     </div>
