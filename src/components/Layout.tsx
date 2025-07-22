@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as User } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabaseClient';
+import { useEffect, useState } from 'react';
 
 interface LayoutProps {
   currentView: ViewType;
@@ -215,12 +217,43 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="w-10" />
           </div>
         </div>
-        <main className="p-2 sm:p-4 md:p-8">
+        <main className="flex-1 p-2 sm:p-4 md:p-8">
           {children}
         </main>
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );
 };
 
 export default Layout;
+
+// Footer component
+const Footer = () => {
+  const [status, setStatus] = useState<'online' | 'offline'>('online');
+  useEffect(() => {
+    let isMounted = true;
+    const checkStatus = async () => {
+      try {
+        // Try a simple query to check connection
+        const { error } = await supabase.from('contacts').select('id').limit(1);
+        if (isMounted) setStatus(error ? 'offline' : 'online');
+      } catch {
+        if (isMounted) setStatus('offline');
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 15000); // check every 15s
+    return () => { isMounted = false; clearInterval(interval); };
+  }, []);
+  return (
+    <footer className="w-full bg-white border-t border-gray-200 py-2 px-4 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-500">
+      <span>© {new Date().getFullYear()} PropManager. All rights reserved.</span>
+      <span className="flex items-center gap-1 mt-1 sm:mt-0">
+        <span className={status === 'online' ? 'inline-block w-2 h-2 rounded-full bg-green-500' : 'inline-block w-2 h-2 rounded-full bg-red-500'}></span>
+        Supabase: {status === 'online' ? 'Online' : 'Offline'}
+      </span>
+    </footer>
+  );
+};

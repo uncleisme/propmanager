@@ -752,43 +752,44 @@ const addNewMember = () => {
         </div>
       )}
       {buildingInfo?.jmbMembers?.length > 0 && (
-  <div className="md:col-span-2">
-    <p className="text-sm font-medium text-gray-500 mb-2">JMB Members</p>
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto w-full overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
-              Name
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
-              Phone
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
-              Email
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {buildingInfo.jmbMembers.map((member, index) => (
-            <tr key={index}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {member.name}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {member.phone || '-'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {member.email || '-'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium text-gray-500 mb-2">JMB Members</p>
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-auto w-full overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+                      Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+                      Phone
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+                      Email
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {buildingInfo.jmbMembers.map((member, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {member.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {member.phone || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {member.email || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   </div>
 )}
