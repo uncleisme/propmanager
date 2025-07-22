@@ -18,17 +18,18 @@ import Security from './components/Security';
 import Cleaning from './components/Cleaning';
 import UserSettings from './components/UserSettings';
 import SystemSettings from './components/SystemSettings';
-import Utilities from './components/Utilities';
 import WaterUtility from './components/WaterUtility';
 import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
+import SchedulerModule from './components/Scheduler';
 
 import { ViewType } from './types';
+type AppViewType = ViewType | 'scheduler';
 
 const App: React.FC = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const [currentView, setCurrentView] = useState<AppViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -117,10 +118,11 @@ const App: React.FC = () => {
       case 'security': return <Security user={user} />;
       case 'cleaning': return <Cleaning user={user} />;
       case 'user-settings': return <UserSettings user={user} />;
-      case 'system-settings': return <SystemSettings user={user} />;
+      case 'system-settings': return <SystemSettings />;
       case 'water-utility': return <WaterUtility user={user} />;
       case 'electricity-utility': return <ElectricityUtility user={user} />;
       case 'reporting': return <Reporting user={user} />;
+      case 'scheduler': return <SchedulerModule />;
       default: return <Dashboard user={user} />;
     }
   };

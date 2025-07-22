@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, 
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
-  ChevronDown, ChevronRight, Shield, Sparkles 
+  ChevronDown, ChevronRight, Shield, Sparkles, Calendar as CalendarIcon 
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as User } from '@supabase/supabase-js';
@@ -71,6 +71,12 @@ const Layout: React.FC<LayoutProps> = ({
       title: 'Reporting',
       items: [
         { id: 'reporting' as ViewType, icon: BarChart3, label: 'Reporting' },
+      ]
+    },
+    {
+      title: 'Scheduler',
+      items: [
+        { id: 'scheduler' as ViewType, icon: CalendarIcon, label: 'Scheduler' },
       ]
     },
     {

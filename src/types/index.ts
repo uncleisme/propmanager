@@ -207,4 +207,41 @@ export interface SecurityPerson {
   createdAt: string;
   updatedAt: string;
 }
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting';
+
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  skills: string[];
+  availability: Array<{ date: string; start: string; end: string }>;
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'complete';
+  scheduledDate: string;
+  scheduledStart: string;
+  scheduledEnd: string;
+  technicianId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SchedulerContextType {
+  jobs: Job[];
+  technicians: Technician[];
+  assignableContacts: Contact[];
+  addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateJob: (job: Job) => Promise<void>;
+  deleteJob: (id: string) => Promise<void>;
+  assignJob: (jobId: string, technicianId: string) => Promise<void>;
+  rescheduleJob: (jobId: string, date: string, start: string, end: string) => Promise<void>;
+  fetchAll: () => Promise<void>;
+  loading: boolean;
+  error: string | null;
+}
+
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler';
