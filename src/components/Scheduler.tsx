@@ -134,9 +134,10 @@ const Scheduler: React.FC = () => {
       start: h.date,
       end: h.date,
       allDay: true,
-      backgroundColor: '#e0e7ef',
-      borderColor: '#64748b',
-      textColor: '#334155',
+      backgroundColor: '#ff5252', // vibrant red
+      borderColor: '#b91c1c',
+      textColor: '#000', // black for better contrast
+      color: '#000', // force black font
       className: 'event-holiday',
       editable: false,
       display: 'background',
@@ -199,8 +200,8 @@ const Scheduler: React.FC = () => {
         <div className="flex items-center space-x-3"></div>
       </div>
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="bg-white p-2 sm:p-4 rounded shadow w-full overflow-x-auto">
-          <div className="w-[600px] sm:w-auto">
+        <div className="bg-white p-4 rounded shadow w-full overflow-x-auto">
+          <div className="w-[600px] sm:w-auto p-2">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView="timeGridWeek"
@@ -218,10 +219,10 @@ const Scheduler: React.FC = () => {
             />
           </div>
           {/* Add legend for public holidays */}
-          <div className="flex flex-wrap gap-2 mt-4 text-xs border-t pt-2">
-            <div className="flex items-center gap-1"><Wrench className="w-3 h-3 text-blue-500" /><span style={{ background: '#3b82f6', width: 14, height: 14, borderRadius: 3, display: 'inline-block' }}></span> Job</div>
-            <div className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-yellow-500" /><span style={{ background: '#FACC15', width: 14, height: 14, borderRadius: 3, display: 'inline-block' }}></span> Complaint</div>
-            <div className="flex items-center gap-1"><span style={{ background: '#e0e7ef', width: 14, height: 14, borderRadius: 3, display: 'inline-block', border: '1px solid #64748b' }}></span> Public Holiday</div>
+          <div className="flex flex-wrap gap-4 mt-6 text-xs border-t pt-4 bg-gray-50 rounded-b-lg">
+            <div className="flex items-center gap-1"><Wrench className="w-3 h-3 text-blue-500" /><span style={{ background: '#3b82f6', width: 16, height: 16, borderRadius: 3, display: 'inline-block' }}></span> <span className="font-medium text-gray-700">Job</span></div>
+            <div className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-yellow-500" /><span style={{ background: '#FACC15', width: 16, height: 16, borderRadius: 3, display: 'inline-block' }}></span> <span className="font-medium text-gray-700">Complaint</span></div>
+            <div className="flex items-center gap-1"><span style={{ background: '#ff5252', width: 16, height: 16, borderRadius: 3, display: 'inline-block', border: '1px solid #b91c1c' }}></span> <span className="font-medium text-gray-700">Public Holiday</span></div>
           </div>
         </div>
       </div>
@@ -244,9 +245,10 @@ const Scheduler: React.FC = () => {
           border-color: #facc15 !important;
         }
         .event-holiday, .fc-event.event-holiday {
-          background-color: #e0e7ef !important;
-          border-color: #64748b !important;
-          color: #334155 !important;
+          background-color: #ff5252 !important;
+          border-color: #b91c1c !important;
+          color: #000 !important;
+          * { color: #000 !important; }
         }
         @media (max-width: 640px) {
           .fc .fc-toolbar-title { font-size: 1rem; }
