@@ -1,0 +1,44 @@
+Common Work Order Titles (Issue Types)
+🔧 Facilities / Maintenance
+PLUMBING_ISSUE – e.g., leaking pipe, clogged drain
+
+ELECTRICAL_ISSUE – e.g., power outage, broken outlet
+
+AIR_CONDITIONING – e.g., AC not working, no cooling
+
+LIGHTING_PROBLEM – e.g., light flickering, bulb replacement
+
+DOOR_OR_LOCK_REPAIR – e.g., jammed door, broken lock
+
+FURNITURE_REPAIR – e.g., broken desk/chair
+
+CLEANING_REQUEST – e.g., spill cleanup, sanitation
+
+PEST_CONTROL – e.g., insects, rodents
+
+PAINTING_REQUEST – touch-up or repainting
+
+💻 IT / Technical
+COMPUTER_ISSUE – system not booting, hardware failure
+
+INTERNET_PROBLEM – connectivity, slow Wi-Fi
+
+SOFTWARE_SUPPORT – app crashes, installation help
+
+PRINTER_ISSUE – not printing, paper jam
+
+EMAIL_OR_ACCOUNT – password reset, login issues
+
+NETWORK_PROBLEM – router/switch issues, network drops
+
+🏢 Administrative / General Office
+SUPPLY_REQUEST – paper, pens, etc.
+
+MEETING_ROOM_SETUP – projector, seating
+
+KEYCARD_ACCESS – lost card, permission issue
+
+MOVING_ASSISTANCE – shifting desks, equipment
+
+OTHER – anything that doesn’t fit above
+

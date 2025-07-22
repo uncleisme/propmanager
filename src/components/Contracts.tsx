@@ -225,7 +225,6 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
           <p className="text-gray-600">Monitor and manage service provider contracts</p>
         </div>
         <div className="flex items-center space-x-3">
-          
           {/* Add Contract Button */}
           <button
             onClick={handleAdd}

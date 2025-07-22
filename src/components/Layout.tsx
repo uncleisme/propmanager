@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({
         { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
         { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
         { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
-        { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Complaints' },
+        { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Work Order' },
       ]
     },
     {

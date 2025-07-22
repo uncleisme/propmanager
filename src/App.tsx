@@ -22,6 +22,7 @@ import WaterUtility from './components/WaterUtility';
 import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
 import SchedulerModule from './components/Scheduler';
+import SchedulerProvider from './components/SchedulerContext';
 
 import { ViewType } from './types';
 type AppViewType = ViewType | 'scheduler';
@@ -146,14 +147,16 @@ const App: React.FC = () => {
 
   // Render main app layout
   return (
-    <Layout
-      currentView={currentView}
-      onViewChange={setCurrentView}
-      onLogout={handleLogout}
-      user={user}
-    >
-      {renderCurrentView()}
-    </Layout>
+    <SchedulerProvider>
+      <Layout
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        onLogout={handleLogout}
+        user={user}
+      >
+        {renderCurrentView()}
+      </Layout>
+    </SchedulerProvider>
   );
 };
 
