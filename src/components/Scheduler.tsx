@@ -248,7 +248,9 @@ const Scheduler: React.FC = () => {
           background-color: #ff5252 !important;
           border-color: #b91c1c !important;
           color: #000 !important;
-          * { color: #000 !important; }
+        }
+        .event-holiday *, .fc-event.event-holiday * {
+          color: #000 !important;
         }
         @media (max-width: 640px) {
           .fc .fc-toolbar-title { font-size: 1rem; }
