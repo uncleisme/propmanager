@@ -13,7 +13,7 @@ export interface Contact {
   email: string;
   phone: string;
   address: string;
-  type: 'contractor' | 'supplier' | 'serviceProvider' | 'resident' | 'government' | 'others';
+  type: 'contractor' | 'supplier' | 'serviceProvider' | 'technician' | 'resident' | 'government' | 'others';
   notes?: string;
   createdAt: string;
 }
