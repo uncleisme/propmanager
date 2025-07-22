@@ -7,19 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import '@fullcalendar/common/main.css';
 import '@fullcalendar/daygrid/main.css';
 import '@fullcalendar/timegrid/main.css';
-import { Tooltip } from 'react-tooltip';
 import { X } from 'lucide-react';
-
-const locales = {
-  'en-US': enUS,
-};
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-});
 
 // Color map for job status
 const statusColors: Record<string, string> = {
@@ -232,7 +220,6 @@ const Scheduler: React.FC = () => {
           ))}
         </ul>
       </div>
-      <Tooltip id="job-tooltip" place="top" />
     </div>
   );
 };
