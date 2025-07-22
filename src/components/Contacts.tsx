@@ -493,8 +493,9 @@ useEffect(() => {
                   <option value="">Select type</option>
                   <option value="contractor">Contractor</option>
                   <option value="supplier">Supplier</option>
-                  <option value="service provider">Service Provider</option>
-                  <option value="residents">Residents</option>
+                  <option value="serviceProvider">Service Provider</option>
+                  <option value="technician">Technician</option>
+                  <option value="resident">Resident</option>
                   <option value="government">Government</option>
                   <option value="others">Others</option>
                 </select>
