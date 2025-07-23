@@ -27,6 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({
     overview: false,
+    buildingInfo: false,
     tasks: false,
     maintenance: false,
     residents: false,
@@ -333,40 +334,43 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       {/* Building Info Section (standalone) */}
       {buildingInfo && (
         <section className="bg-white rounded-xl shadow-md p-6 mb-10">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 cursor-pointer select-none" onClick={() => toggleSection('buildingInfo')}>
             <Building2 className="w-6 h-6 text-blue-600" />
             <h2 className="text-xl font-bold text-gray-900 tracking-wide">Building Info</h2>
+            <span className="ml-auto">{collapsed.buildingInfo ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
           </div>
           <div className="border-b border-gray-200 mb-4"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Name</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.buildingName}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Address</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.buildingAddress}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Type</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.buildingType}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Total Units</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.totalUnits}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Total Floors</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.totalFloors}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 text-xs mb-1">Year Built</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.yearBuilt}</div>
-            </div>
-            <div className="sm:col-span-2 md:col-span-3">
-              <div className="text-gray-500 text-xs mb-1">Property Manager</div>
-              <div className="text-gray-800 font-semibold">{buildingInfo.propertyManagerName} ({buildingInfo.propertyManagerCompany})</div>
-              <div className="text-gray-500 text-xs">{buildingInfo.propertyManagerEmail} {buildingInfo.propertyManagerPhone && <>| {buildingInfo.propertyManagerPhone}</>}</div>
+          <div style={{ maxHeight: collapsed.buildingInfo ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Name</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.buildingName}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Address</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.buildingAddress}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Type</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.buildingType}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Total Units</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.totalUnits}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Total Floors</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.totalFloors}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs mb-1">Year Built</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.yearBuilt}</div>
+              </div>
+              <div className="sm:col-span-2 md:col-span-3">
+                <div className="text-gray-500 text-xs mb-1">Property Manager</div>
+                <div className="text-gray-800 font-semibold">{buildingInfo.propertyManagerName} ({buildingInfo.propertyManagerCompany})</div>
+                <div className="text-gray-500 text-xs">{buildingInfo.propertyManagerEmail} {buildingInfo.propertyManagerPhone && <>| {buildingInfo.propertyManagerPhone}</>}</div>
+              </div>
             </div>
           </div>
         </section>
