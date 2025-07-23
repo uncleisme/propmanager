@@ -1,6 +1,6 @@
 
 import { User } from '@supabase/supabase-js';import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ArrowUpRight, ArrowDownRight, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
@@ -20,10 +20,41 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({
+    overview: false,
+    tasks: false,
+    maintenance: false,
+    residents: false,
+    utilities: false,
+    packages: false,
+    security: false,
+    documents: false,
+  });
+  const toggleSection = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
+
+  // Add state for pagination for each list
+  const [showCounts, setShowCounts] = React.useState<Record<string, number>>({
+    upcomingWorkOrders: 5,
+    pendingMoveRequests: 5,
+    pendingGuestRequests: 5,
+    recentActivity: 5,
+    scheduledJobs: 5,
+    openIssues: 5,
+    completedTasks: 5,
+    residents: 5,
+    moveRequests: 5,
+    pendingPickups: 5,
+    recentDeliveries: 5,
+    visitors: 5,
+    expiringLicenses: 5,
+    contracts: 5,
+  } as Record<string, number>);
+  const handleLoadMore = (key: string, total: number) => setShowCounts(prev => ({ ...prev, [key]: Math.min(prev[key] + 5, total) }));
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -36,7 +67,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         { data: complaintsData },
         { data: packagesData },
         { data: guestsData },
-        { data: moveRequestsData }
+        { data: moveRequestsData },
+        { data: workOrdersData }
       ] = await Promise.all([
         supabase.from('buildingInfo').select('*').limit(1).single(),
         supabase.from('contacts').select('*'),
@@ -45,7 +77,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         supabase.from('complaints').select('*'),
         supabase.from('packages').select('*'),
         supabase.from('guests').select('*'),
-        supabase.from('moveRequests').select('*')
+        supabase.from('moveRequests').select('*'),
+        supabase.from('work_order').select('id,type,status,createdAt,scheduledDate,title,propertyUnit,priority')
       ]);
       setBuildingInfo(buildingData);
       setContacts(contactsData || []);
@@ -55,11 +88,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       setPackages(packagesData || []);
       setGuests(guestsData || []);
       setMoveRequests(moveRequestsData || []);
+      setWorkOrders(workOrdersData || []);
       // Fetch utilities for current and previous month
       const now = new Date();
       const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+      const prevMonthStr = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
       const monthDateStr = `${monthStr}-01`;
       const prevMonthDateStr = `${prevMonthStr}-01`;
       const { data: waterData } = await supabase
@@ -98,6 +131,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const activeComplaints = complaints.filter(c => c.status === 'open' || c.status === 'in-progress');
   const criticalComplaints = complaints.filter(c => c.priority === 'critical' || c.priority === 'high');
   
+  const activeJobs = workOrders.filter(
+    (wo) => wo.type === 'job' && (
+      wo.status === 'open' ||
+      wo.status === 'in-progress' ||
+      wo.status === 'pending' ||
+      wo.status === 'in_progress'
+    )
+  );
+
   // Fixed: Ensure we're using the correct field name for contract end date
   const expiringContracts = contracts.filter(contract => {
     const endDate = contract.endDate;
@@ -116,13 +158,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Helper to calculate percent change
   function percentChange(current: number, prev: number) {
-    if (prev === 0 && current === 0) return { value: 0, up: false };
-    if (prev === 0) return { value: 100, up: true };
-    const diff = current - prev;
-    const up = diff >= 0;
-    const pct = Math.abs(diff / prev) * 100;
-    return { value: Math.round(pct), up };
+    if (prev === 0 && current === 0) return 0;
+    if (prev === 0) return 100;
+    return Math.round(((current - prev) / Math.abs(prev || 1)) * 100);
   }
+
+  // Calculate previous month open jobs
+  const now = new Date();
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+  const prevMonthDateStr = `${prevMonthStr}-01`;
+
+  // Filter workOrders for previous month
+  const activeJobsPrev = workOrders.filter(
+    (wo) => wo.type === 'job' && (
+      wo.status === 'open' ||
+      wo.status === 'in-progress' ||
+      wo.status === 'pending' ||
+      wo.status === 'in_progress'
+    ) && wo.createdAt && wo.createdAt.startsWith(prevMonthStr)
+  );
+
+  // Water/Electricity previous month already in utilitiesPrev
+
+  const jobsTrend = percentChange(activeJobs.length, activeJobsPrev.length);
+  const jobsTrendStr = (jobsTrend > 0 ? '+' : '') + jobsTrend + '%';
+  const waterTrend = percentChange(utilities.water, utilitiesPrev.water);
+  const waterTrendStr = (waterTrend > 0 ? '+' : '') + waterTrend + '%';
+  const elecTrend = percentChange(utilities.electricity, utilitiesPrev.electricity);
+  const elecTrendStr = (elecTrend > 0 ? '+' : '') + elecTrend + '%';
 
   const stats = [
     {
@@ -154,20 +218,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       trend: '-8%'
     },
     {
+      title: 'Open Jobs',
+      value: activeJobs.length,
+      icon: Wrench,
+      color: 'bg-blue-600',
+      trend: jobsTrendStr
+    },
+    {
       title: 'Water',
       value: utilities.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
       icon: Droplet,
       color: 'bg-blue-400',
-      trend: '',
-      percent: percentChange(utilities.water, utilitiesPrev.water)
+      trend: waterTrendStr
     },
     {
       title: 'Electricity',
       value: utilities.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
       icon: Zap,
       color: 'bg-yellow-400',
-      trend: '',
-      percent: percentChange(utilities.electricity, utilitiesPrev.electricity)
+      trend: elecTrendStr
     },
     {
       title: 'Pending Guests',
@@ -186,225 +255,542 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     );
   }
 
+  // Helper to filter and sort work orders by type and date
+  const filterAndSort = (type: string): any[] => workOrders
+    .filter(wo =>
+      wo.type === type &&
+      wo.scheduledDate &&
+      new Date(wo.scheduledDate).getTime() >= new Date().setHours(0,0,0,0) &&
+      new Date(wo.scheduledDate).getTime() <= (() => { const d = new Date(); d.setDate(d.getDate() + 7); d.setHours(23,59,59,999); return d.getTime(); })()
+    )
+    .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
+    .slice(0, 5);
+
   return (
-    <div className="space-y-6 sm:space-y-8 px-2 sm:px-4 md:px-8">
-      <div>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1 sm:gap-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+    <div className="font-sans bg-gray-50 min-h-screen pb-10 px-2 sm:px-4 md:px-8">
+      {/* OVERVIEW */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-3 mb-2 cursor-pointer select-none" onClick={() => toggleSection('overview')}>
+          <BarChart3 className="w-7 h-7 text-blue-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-wide">Overview</h1>
           {buildingInfo && (
-            <span className="text-lg sm:text-1xl font-bold text-blue-400">{buildingInfo.buildingName}</span>
+            <span className="text-lg font-semibold text-blue-500 ml-2">{buildingInfo.buildingName}</span>
           )}
+          <span className="ml-auto">{collapsed.overview ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
         </div>
-        <p className="text-gray-600 text-sm sm:text-base">Overview of your property management activities</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          const isUtility = stat.title === 'Water' || stat.title === 'Electricity';
-          let tooltipContent = null;
-          if (isUtility && stat.percent) {
-            const prev = stat.title === 'Water' ? utilitiesPrev.water : utilitiesPrev.electricity;
-            const curr = stat.title === 'Water' ? utilities.water : utilities.electricity;
-            tooltipContent = (
-              <div className="bg-white border border-gray-300 rounded shadow-lg p-3 text-xs text-gray-800 min-w-[180px]">
-                <div className="mb-1 font-semibold">{stat.title} Details</div>
-                <div>Current: <span className="font-bold">{curr.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-                <div>Previous: <span className="font-bold">{prev.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-                <div>Difference: <span className="font-bold">{(curr - prev).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span></div>
-              </div>
-            );
-          }
-          // Hide tooltip on mobile (sm and below)
-          const showTooltip = isUtility && hoveredCard === index && typeof window !== 'undefined' && window.innerWidth > 640;
-          return (
-            <div
-              key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative min-w-0"
-              onMouseEnter={() => isUtility && setHoveredCard(index)}
-              onMouseLeave={() => isUtility && setHoveredCard(null)}
-              // Show tooltip on click for mobile
-              onClick={e => {
-                if (window.innerWidth <= 640 && isUtility) {
-                  setHoveredCard(hoveredCard === index ? null : index);
-                  e.stopPropagation();
-                }
-              }}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2 truncate" style={{ wordBreak: 'break-all' }}>{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-2 sm:p-3 rounded-full flex-shrink-0 ml-2 sm:ml-4`}>
-                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-              </div>
-              {/* Trend/Percent Change Row - always present, same style for all cards */}
-              <div className="mt-2 sm:mt-4 flex items-center min-h-[20px] sm:min-h-[24px]">
-                {stat.percent ? (
-                  <span className={`inline-flex items-center text-xs sm:text-sm font-medium ${stat.percent.up ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.percent.up ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
-                    {stat.percent.value}% {stat.percent.up ? 'increase' : 'decrease'}
-                  </span>
-                ) : stat.trend ? (
-                  <>
-                    <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                    <span className="text-xs sm:text-sm text-green-600 font-medium">{stat.trend}</span>
-                    <span className="text-xs sm:text-sm text-gray-500 ml-1">from last month</span>
-                  </>
-                ) : null}
-              </div>
-              {/* Tooltip for utilities */}
-              {showTooltip && (
-                <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
-                  {tooltipContent}
-                </div>
-              )}
-              {/* Tooltip for mobile (on click) */}
-              {isUtility && hoveredCard === index && window.innerWidth <= 640 && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-max max-w-xs">
-                  {tooltipContent}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Building Overview */}
-      {buildingInfo && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-4 flex items-center">
-            <Building2 className="w-5 h-5 mr-2" />
-            Building Overview
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">{buildingInfo.totalUnits}</p>
-              <p className="text-xs sm:text-sm text-gray-600">Total Units</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-green-600">{buildingInfo.totalFloors}</p>
-              <p className="text-xs sm:text-sm text-gray-600">Floors</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-purple-600">{buildingInfo.parkingSpaces}</p>
-              <p className="text-xs sm:text-sm text-gray-600">Parking Spaces</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-orange-600">{buildingInfo.yearBuilt}</p>
-              <p className="text-xs sm:text-sm text-gray-600">Year Built</p>
-            </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.overview ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Quick Actions */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <button className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition">+ Add Work Order</button>
+            <button className="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition">+ Register Guest</button>
           </div>
-          <div className="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-gray-200">
-            <p className="text-xs sm:text-sm text-gray-600">
-              <strong>Type:</strong> {buildingInfo.buildingType?.replace('_', ' ') || 'Not specified'} •
-              <strong> Manager:</strong> {buildingInfo.propertyManagerName || 'Not specified'}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Alerts and Notifications */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-        {/* Expiring Contracts */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center mb-2 sm:mb-4">
-            <Calendar className="w-5 h-5 text-amber-500 mr-2" />
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Expiring Contracts</h2>
-          </div>
-          <div className="space-y-2 sm:space-y-3">
-            {expiringContracts.length === 0 ? (
-              <p className="text-gray-500 text-xs sm:text-sm">No contracts expiring in the next 30 days</p>
-            ) : (
-              expiringContracts.map(contract => {
-                const endDate = contract.endDate;
-                const days = getDaysUntilExpiration(endDate);
-                return (
-                  <div key={contract.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 bg-amber-50 rounded-lg gap-1 sm:gap-0">
-                    <div>
-                      <p className="font-medium text-gray-900 text-xs sm:text-sm">{contract.title}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Expires: {formatDate(endDate)}</p>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              // Tooltip logic for all cards
+              const showTooltip = hoveredCard === index && typeof window !== 'undefined' && window.innerWidth > 640;
+              // Compute details for tooltip
+              let prevValue = null;
+              let percent = null;
+              if (stat.title === 'Open Jobs') {
+                prevValue = activeJobsPrev.length;
+                percent = jobsTrendStr;
+              } else if (stat.title === 'Water') {
+                prevValue = utilitiesPrev.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+                percent = waterTrendStr;
+              } else if (stat.title === 'Electricity') {
+                prevValue = utilitiesPrev.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+                percent = elecTrendStr;
+              } else if (stat.title === 'Open Complaints') {
+                // Example: you can add prevValue/percent for complaints if you want
+                prevValue = null;
+                percent = stat.trend;
+              } else {
+                prevValue = null;
+                percent = stat.trend;
+              }
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative min-w-0 hover:bg-gray-50 font-sans text-base"
+                  onMouseEnter={() => setHoveredCard(index)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-600 truncate">{stat.title}</p>
+                      <p className="text-2xl sm:text-3xl font-semibold text-gray-900 mt-1 sm:mt-2 truncate" style={{ wordBreak: 'break-all' }}>{stat.value}</p>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(days)}`}>
-                      {days} days
-                    </span>
+                    <div className={`${stat.color} p-2 sm:p-3 rounded-full flex-shrink-0 ml-2 sm:ml-4`}>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
                   </div>
-                );
-              })
+                  {/* Trend Row - always show */}
+                  <div className="mt-2 sm:mt-4 flex items-center min-h-[20px] sm:min-h-[24px]">
+                    {stat.trend ? (
+                      <>
+                        <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                        <span className="text-xs sm:text-sm text-green-600 font-medium">{stat.trend}</span>
+                        <span className="text-xs sm:text-sm text-gray-500 ml-1">from last month</span>
+                      </>
+                    ) : (
+                      <span className="invisible">placeholder</span>
+                    )}
+                  </div>
+                  {/* Tooltip for all cards */}
+                  {showTooltip && (
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
+                      <div className="bg-white border border-gray-300 rounded shadow-lg p-3 text-xs text-gray-800 min-w-[180px] font-sans text-base">
+                        <div className="mb-1 font-semibold">{stat.title} Details</div>
+                        <div>Current: <span className="font-bold">{stat.value}</span></div>
+                        <div>Previous: <span className="font-bold">{prevValue != null ? prevValue : 0}</span></div>
+                        <div>Change: <span className="font-bold">{percent && percent !== '' && percent !== '0%' ? percent : '-'}</span></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* TASKS & REQUESTS */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('tasks')}>
+          <Truck className="w-7 h-7 text-yellow-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Tasks & Requests</h2>
+          <span className="ml-auto">{collapsed.tasks ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.tasks ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Upcoming Work Orders */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Upcoming Work Orders (Next 7 Days)</h3>
+            {(() => {
+              const today = new Date();
+              today.setHours(0,0,0,0);
+              const weekFromNow = new Date();
+              weekFromNow.setDate(today.getDate() + 7);
+              weekFromNow.setHours(23,59,59,999);
+              const upcoming = workOrders
+                .filter(wo =>
+                  (wo.type === 'job' || wo.type === 'complaint') &&
+                  wo.scheduledDate &&
+                  new Date(wo.scheduledDate).getTime() >= today.getTime() &&
+                  new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
+                )
+                .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
+                .slice(0, showCounts.upcomingWorkOrders);
+              if (upcoming.length === 0) {
+                return <p className="text-gray-500 text-xs sm:text-sm">No jobs or complaints scheduled in the next 7 days</p>;
+              }
+              return (
+                <>
+                  {upcoming.map(order => (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg gap-1 sm:gap-0 mb-2 font-sans text-base">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 text-xs sm:text-sm">[{order.type}] {order.title}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">{order.propertyUnit || '-'}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">Scheduled: {order.scheduledDate || '-'}</p>
+                      </div>
+                      <div className="flex items-center space-x-1 sm:space-x-2">
+                        {order.priority && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            order.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                            order.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                            order.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {order.priority}
+                          </span>
+                        )}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          order.status === 'open' ? 'bg-red-100 text-red-800' :
+                          order.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {workOrders.filter(wo =>
+                    (wo.type === 'job' || wo.type === 'complaint') &&
+                    wo.scheduledDate &&
+                    new Date(wo.scheduledDate).getTime() >= today.getTime() &&
+                    new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
+                  ).length > showCounts.upcomingWorkOrders && (
+                    <button onClick={() => handleLoadMore('upcomingWorkOrders', workOrders.filter(wo =>
+                      (wo.type === 'job' || wo.type === 'complaint') &&
+                      wo.scheduledDate &&
+                      new Date(wo.scheduledDate).getTime() >= today.getTime() &&
+                      new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
+                    ).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          {/* Pending Approvals */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-yellow-700 mb-1">Pending Approvals</h3>
+            {/* Move Requests */}
+            <div className="mb-2">
+              <h4 className="font-semibold text-xs text-gray-700">Move Requests</h4>
+              {moveRequests.filter(r => r.status === 'pending').length === 0 ? (
+                <p className="text-gray-500 text-xs">No pending move requests</p>
+              ) : moveRequests.filter(r => r.status === 'pending').slice(0, showCounts.pendingMoveRequests).map(r => (
+                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                  <span>{r.residentName} ({r.unitNumber})</span>
+                  <span className="text-xs text-yellow-700">Pending</span>
+                </div>
+              ))}
+              {moveRequests.filter(r => r.status === 'pending').length > showCounts.pendingMoveRequests && (
+                <button onClick={() => handleLoadMore('pendingMoveRequests', moveRequests.filter(r => r.status === 'pending').length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+              )}
+            </div>
+            {/* Guest Requests */}
+            <div>
+              <h4 className="font-semibold text-xs text-gray-700">Guest Requests</h4>
+              {guests.filter(g => g.status === 'pending').length === 0 ? (
+                <p className="text-gray-500 text-xs">No pending guest requests</p>
+              ) : guests.filter(g => g.status === 'pending').slice(0, showCounts.pendingGuestRequests).map(g => (
+                <div key={g.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                  <span>{g.visitorName} (Host: {g.hostName}, Unit: {g.hostUnit})</span>
+                  <span className="text-xs text-yellow-700">Pending</span>
+                </div>
+              ))}
+              {guests.filter(g => g.status === 'pending').length > showCounts.pendingGuestRequests && (
+                <button onClick={() => handleLoadMore('pendingGuestRequests', guests.filter(g => g.status === 'pending').length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+              )}
+            </div>
+          </div>
+          {/* Recent Activity */}
+          <div>
+            <h3 className="font-semibold text-sm text-green-700 mb-1">Recent Activity</h3>
+            {(() => {
+              const recent = workOrders
+                .filter(wo =>
+                  (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
+                  wo.createdAt &&
+                  new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
+                )
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, showCounts.recentActivity);
+              if (recent.length === 0) {
+                return <p className="text-gray-500 text-xs sm:text-sm">No recent completed jobs or complaints</p>;
+              }
+              return (
+                <>
+                  {recent.map(order => (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                      <span>[{order.type}] {order.title}</span>
+                      <span className="text-xs text-green-700">{order.status}</span>
+                    </div>
+                  ))}
+                  {workOrders.filter(wo =>
+                    (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
+                    wo.createdAt &&
+                    new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
+                  ).length > showCounts.recentActivity && (
+                    <button onClick={() => handleLoadMore('recentActivity', workOrders.filter(wo =>
+                      (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
+                      wo.createdAt &&
+                      new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
+                    ).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      </section>
+
+      {/* MAINTENANCE */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('maintenance')}>
+          <Wrench className="w-7 h-7 text-red-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Maintenance</h2>
+          <span className="ml-auto">{collapsed.maintenance ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.maintenance ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Scheduled Jobs */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Scheduled Jobs</h3>
+            {(() => {
+              const jobs = workOrders.filter(wo => wo.type === 'job' && wo.scheduledDate).sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()).slice(0, showCounts.scheduledJobs);
+              if (jobs.length === 0) {
+                return <p className="text-gray-500 text-xs">No scheduled jobs</p>;
+              }
+              return (
+                <>
+                  {jobs.map(order => (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                      <span>{order.title} (Scheduled: {order.scheduledDate})</span>
+                      <span className="text-xs text-blue-700">{order.status}</span>
+                    </div>
+                  ))}
+                  {workOrders.filter(wo => wo.type === 'job' && wo.scheduledDate).length > showCounts.scheduledJobs && (
+                    <button onClick={() => handleLoadMore('scheduledJobs', workOrders.filter(wo => wo.type === 'job' && wo.scheduledDate).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          {/* Open Issues */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-red-700 mb-1">Open Issues</h3>
+            {(() => {
+              const open = workOrders.filter(wo => (wo.status === 'open' || wo.status === 'in-progress')).slice(0, showCounts.openIssues);
+              if (open.length === 0) {
+                return <p className="text-gray-500 text-xs">No open issues</p>;
+              }
+              return (
+                <>
+                  {open.map(order => (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                      <span>[{order.type}] {order.title}</span>
+                      <span className="text-xs text-red-700">{order.status}</span>
+                    </div>
+                  ))}
+                  {workOrders.filter(wo => (wo.status === 'open' || wo.status === 'in-progress')).length > showCounts.openIssues && (
+                    <button onClick={() => handleLoadMore('openIssues', workOrders.filter(wo => (wo.status === 'open' || wo.status === 'in-progress')).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          {/* Completed Tasks */}
+          <div>
+            <h3 className="font-semibold text-sm text-green-700 mb-1">Completed Tasks</h3>
+            {(() => {
+              const completed = workOrders.filter(wo => (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed')).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, showCounts.completedTasks);
+              if (completed.length === 0) {
+                return <p className="text-gray-500 text-xs">No completed tasks</p>;
+              }
+              return (
+                <>
+                  {completed.map(order => (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                      <span>[{order.type}] {order.title}</span>
+                      <span className="text-xs text-green-700">{order.status}</span>
+                    </div>
+                  ))}
+                  {workOrders.filter(wo => (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed')).length > showCounts.completedTasks && (
+                    <button onClick={() => handleLoadMore('completedTasks', workOrders.filter(wo => (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed')).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      </section>
+
+      {/* RESIDENTS & UNITS */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('residents')}>
+          <Users className="w-7 h-7 text-indigo-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Residents & Units</h2>
+          <span className="ml-auto">{collapsed.residents ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.residents ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Resident Directory */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Resident Directory</h3>
+            {contacts.length === 0 ? (
+              <p className="text-gray-500 text-xs">No residents found</p>
+            ) : contacts.slice(0, showCounts.residents).map(c => (
+              <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{c.name} ({c.type})</span>
+                <span className="text-xs text-gray-700">{c.email}</span>
+              </div>
+            ))}
+            {contacts.length > showCounts.residents && (
+              <button onClick={() => handleLoadMore('residents', contacts.length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+            )}
+          </div>
+          {/* Unit Status Placeholder */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-purple-700 mb-1">Unit Status</h3>
+            <p className="text-gray-500 text-xs">(Unit status data not implemented)</p>
+          </div>
+          {/* Move Requests */}
+          <div>
+            <h3 className="font-semibold text-sm text-yellow-700 mb-1">Move Requests</h3>
+            {moveRequests.length === 0 ? (
+              <p className="text-gray-500 text-xs">No move requests</p>
+            ) : moveRequests.slice(0, showCounts.moveRequests).map(r => (
+              <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{r.residentName} ({r.unitNumber})</span>
+                <span className="text-xs text-yellow-700">{r.status}</span>
+              </div>
+            ))}
+            {moveRequests.length > showCounts.moveRequests && (
+              <button onClick={() => handleLoadMore('moveRequests', moveRequests.length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Expiring Licenses */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center mb-2 sm:mb-4">
-            <Award className="w-5 h-5 text-purple-500 mr-2" />
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Expiring Licenses</h2>
+      {/* UTILITIES & EXPENSES */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('utilities')}>
+          <Droplet className="w-7 h-7 text-blue-400" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Utilities & Expenses</h2>
+          <span className="ml-auto">{collapsed.utilities ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.utilities ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Utility Consumption */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Utility Consumption</h3>
+            <div className="flex flex-col gap-2 font-sans text-base">
+              <span>Water: {utilities.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span>
+              <span>Electricity: {utilities.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span>
+            </div>
           </div>
-          <div className="space-y-2 sm:space-y-3">
+          {/* Expense Tracking Placeholder */}
+          <div>
+            <h3 className="font-semibold text-sm text-green-700 mb-1">Expense Tracking</h3>
+            <p className="text-gray-500 text-xs">(Expense tracking not implemented)</p>
+          </div>
+        </div>
+      </section>
+
+      {/* PACKAGES & DELIVERIES */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('packages')}>
+          <Box className="w-7 h-7 text-green-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Packages & Deliveries</h2>
+          <span className="ml-auto">{collapsed.packages ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.packages ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Pending Pickups */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Pending Pickups</h3>
+            {packages.filter(p => p.status === 'notified' || p.status === 'received').length === 0 ? (
+              <p className="text-gray-500 text-xs">No pending pickups</p>
+            ) : packages.filter(p => p.status === 'notified' || p.status === 'received').slice(0, showCounts.pendingPickups).map(p => (
+              <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{p.trackingNumber} ({p.recipientName})</span>
+                <span className="text-xs text-blue-700">{p.status}</span>
+              </div>
+            ))}
+            {packages.filter(p => p.status === 'notified' || p.status === 'received').length > showCounts.pendingPickups && (
+              <button onClick={() => handleLoadMore('pendingPickups', packages.filter(p => p.status === 'notified' || p.status === 'received').length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+            )}
+          </div>
+          {/* Recent Deliveries */}
+          <div>
+            <h3 className="font-semibold text-sm text-green-700 mb-1">Recent Deliveries</h3>
+            {packages.length === 0 ? (
+              <p className="text-gray-500 text-xs">No deliveries found</p>
+            ) : packages.slice(0, showCounts.recentDeliveries).map(p => (
+              <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{p.trackingNumber} ({p.recipientName})</span>
+                <span className="text-xs text-green-700">{p.status}</span>
+              </div>
+            ))}
+            {packages.length > showCounts.recentDeliveries && (
+              <button onClick={() => handleLoadMore('recentDeliveries', packages.length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* SECURITY & ACCESS */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('security')}>
+          <UserCheck className="w-7 h-7 text-purple-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Security & Access</h2>
+          <span className="ml-auto">{collapsed.security ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.security ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Visitor Log */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Visitor Log</h3>
+            {guests.length === 0 ? (
+              <p className="text-gray-500 text-xs">No visitors found</p>
+            ) : guests.slice(0, showCounts.visitors).map(g => (
+              <div key={g.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{g.visitorName} (Host: {g.hostName}, Unit: {g.hostUnit})</span>
+                <span className="text-xs text-blue-700">{g.status}</span>
+              </div>
+            ))}
+            {guests.length > showCounts.visitors && (
+              <button onClick={() => handleLoadMore('visitors', guests.length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+            )}
+          </div>
+          {/* Access Requests Placeholder */}
+          <div>
+            <h3 className="font-semibold text-sm text-purple-700 mb-1">Access Requests</h3>
+            <p className="text-gray-500 text-xs">(Access requests not implemented)</p>
+          </div>
+        </div>
+      </section>
+
+      {/* DOCUMENTS & COMPLIANCE */}
+      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('documents')}>
+          <FileText className="w-7 h-7 text-gray-500" />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Documents & Compliance</h2>
+          <span className="ml-auto">{collapsed.documents ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
+        </div>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div style={{ maxHeight: collapsed.documents ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+          {/* Expiring Licenses */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-sm text-red-700 mb-1">Expiring Licenses</h3>
             {expiringLicenses.length === 0 ? (
-              <p className="text-gray-500 text-xs sm:text-sm">No licenses expiring in the next 30 days</p>
-            ) : (
-              expiringLicenses.map(license => {
+              <p className="text-gray-500 text-xs">No licenses expiring in the next 30 days</p>
+            ) : expiringLicenses.slice(0, showCounts.expiringLicenses).map(license => {
+              const expirationDate = license.expirationDate;
+              const days = getDaysUntilExpiration(expirationDate);
+              return (
+                <div key={license.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                  <span>{license.name} (Expires: {formatDate(expirationDate)})</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(days)}`}>{days} days</span>
+                </div>
+              );
+            })}
+            {licenses.filter(license => {
+              const expirationDate = license.expirationDate;
+              if (!expirationDate) return false;
+              const days = getDaysUntilExpiration(expirationDate);
+              return days <= 30 && days >= 0;
+            }).length > showCounts.expiringLicenses && (
+              <button onClick={() => handleLoadMore('expiringLicenses', licenses.filter(license => {
                 const expirationDate = license.expirationDate;
+                if (!expirationDate) return false;
                 const days = getDaysUntilExpiration(expirationDate);
-                return (
-                  <div key={license.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 bg-purple-50 rounded-lg gap-1 sm:gap-0">
-                    <div>
-                      <p className="font-medium text-gray-900 text-xs sm:text-sm">{license.name}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Expires: {formatDate(expirationDate)}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(days)}`}>
-                      {days} days
-                    </span>
-                  </div>
-                );
-              })
+                return days <= 30 && days >= 0;
+              }).length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
+            )}
+          </div>
+          {/* Contracts */}
+          <div>
+            <h3 className="font-semibold text-sm text-blue-700 mb-1">Contracts</h3>
+            {contracts.length === 0 ? (
+              <p className="text-gray-500 text-xs">No contracts found</p>
+            ) : contracts.slice(0, showCounts.contracts).map(contract => (
+              <div key={contract.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-50 rounded mb-1 font-sans text-base">
+                <span>{contract.title} (End: {formatDate(contract.endDate)})</span>
+                <span className="text-xs text-blue-700">{contract.status}</span>
+              </div>
+            ))}
+            {contracts.length > showCounts.contracts && (
+              <button onClick={() => handleLoadMore('contracts', contracts.length)} className="mt-2 text-blue-500 hover:underline text-sm">Load More</button>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Recent Complaints */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 sm:mb-4 gap-1 sm:gap-0">
-          <div className="flex items-center">
-            <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Complaints</h2>
-          </div>
-          <span className="text-xs sm:text-sm text-gray-500">{criticalComplaints.length} critical/high priority</span>
-        </div>
-        <div className="space-y-2 sm:space-y-3">
-          {activeComplaints.slice(0, 5).map(complaint => (
-            <div key={complaint.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg gap-1 sm:gap-0">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 text-xs sm:text-sm">{complaint.title}</p>
-                <p className="text-xs sm:text-sm text-gray-600">{complaint.propertyUnit}</p>
-              </div>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  complaint.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                  complaint.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                  complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {complaint.priority}
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  complaint.status === 'open' ? 'bg-red-100 text-red-800' :
-                  complaint.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {complaint.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      </section>
     </div>
   );
 };
