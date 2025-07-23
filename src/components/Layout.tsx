@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut, 
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
-  ChevronDown, ChevronRight, Shield, Sparkles, Calendar as CalendarIcon 
+  ChevronDown, ChevronRight, Shield, Sparkles, Calendar as CalendarIcon, Home
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as User } from '@supabase/supabase-js';
@@ -25,27 +25,27 @@ const Layout: React.FC<LayoutProps> = ({
   user 
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set(['overview', 'management']));
 
   const menuSections = [
     {
-      title: 'Overview',
+      title: 'MENU',
       items: [
-        { id: 'dashboard' as ViewType, icon: BarChart3, label: 'Dashboard' },
-        { id: 'building-info' as ViewType, icon: Building2, label: 'Building Info' },
+        { id: 'dashboard' as ViewType, icon: Home, label: 'Dashboard' },
       ]
     },
     {
-      title: 'Management',
+      title: 'MANAGEMENT',
       items: [
+        { id: 'building-info' as ViewType, icon: Building2, label: 'Building Info' },
         { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
         { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
         { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
-        { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Work Order' },
+        { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Work Orders' },
       ]
     },
     {
-      title: 'Services',
+      title: 'SERVICES',
       items: [
         { id: 'amenities' as ViewType, icon: MapPin, label: 'Amenities' },
         { id: 'packages' as ViewType, icon: Package, label: 'Packages' },
@@ -54,36 +54,31 @@ const Layout: React.FC<LayoutProps> = ({
       ]
     },
     {
-      title: 'Service Providers',
+      title: 'STAFF',
       items: [
         { id: 'security' as ViewType, icon: Shield, label: 'Security' },
         { id: 'cleaning' as ViewType, icon: Sparkles, label: 'Cleaning' },
       ]
     },
     {
-      title: 'Utilities',
+      title: 'UTILITIES',
       items: [
         { id: 'water-utility' as ViewType, icon: BarChart3, label: 'Water' },
         { id: 'electricity-utility' as ViewType, icon: BarChart3, label: 'Electricity' },
       ]
     },
     {
-      title: 'Reporting',
+      title: 'TOOLS',
       items: [
         { id: 'reporting' as ViewType, icon: BarChart3, label: 'Reporting' },
-      ]
-    },
-    {
-      title: 'Scheduler',
-      items: [
         { id: 'scheduler' as ViewType, icon: CalendarIcon, label: 'Scheduler' },
       ]
     },
     {
-      title: 'Settings',
+      title: 'SETTINGS',
       items: [
-        { id: 'user-settings' as ViewType, icon: UserIcon, label: 'User Settings' },
-        { id: 'system-settings' as ViewType, icon: Settings, label: 'System Settings' },
+        { id: 'user-settings' as ViewType, icon: UserIcon, label: 'Profile' },
+        { id: 'system-settings' as ViewType, icon: Settings, label: 'System' },
       ]
     }
   ];
@@ -106,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+    <div className="dark:bg-boxdark-2 dark:text-bodydark">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
@@ -114,118 +109,131 @@ const Layout: React.FC<LayoutProps> = ({
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      
       {/* Sidebar */}
-      <div
-        className={`fixed z-50 top-0 left-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 transform transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:w-64`}
-        style={{ minWidth: 0 }}
+      <aside
+        className={`absolute left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Building2 className="w-8 h-8 text-blue-600" />
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
+          <div className="flex items-center space-x-3">
+            <Building2 className="w-8 h-8 text-white" />
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900">PropManager</h1>
+              <h1 className="text-xl font-bold text-white">PropManager</h1>
               {user && (
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-gray-400 truncate max-w-[150px]">
                   {user.email}
                 </p>
               )}
             </div>
           </div>
-        </div>
-        {/* Close button for mobile */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 lg:hidden"
-        >
-          <X className="w-5 h-5 text-gray-600" />
-        </button>
-        {/* Date/Time */}
-        <div className="px-4 sm:px-6 py-2 sm:py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between text-xs sm:text-m text-black font-bold">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4" />
-              <span>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          </div>
-        </div>
-        {/* Menu Sections */}
-        <nav className="flex-1 overflow-y-auto pb-24">
-          {menuSections.map((section, sectionIndex) => {
-            const isExpanded = expandedSections.has(section.title);
-            return (
-              <div key={section.title} className={sectionIndex > 0 ? 'border-t border-gray-200 mt-2 pt-2' : ''}>
-                <button
-                  onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-4 sm:px-6 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
-                >
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {section.title}
-                  </h3>
-                  {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-                <div className={`transition-all duration-200 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentView === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleViewChange(item.id)}
-                        className={`w-full flex items-center space-x-3 px-6 py-2.5 text-left transition-colors duration-200 text-xs sm:text-sm ${isActive ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="font-medium">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 border-t border-gray-200">
           <button
-            onClick={onLogout}
-            className="w-full flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors duration-200 text-xs sm:text-base"
+            onClick={() => setSidebarOpen(false)}
+            className="block lg:hidden text-white hover:bg-gray-800 p-1 rounded"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Logout</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
-      </div>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 p-2 sm:p-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100"
-            >
-              <Menu className="w-6 h-6 text-gray-600" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900">PropManager</h1>
-              {user && (
-                <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                  ({user.email})
-                </span>
-              )}
-            </div>
-            <div className="w-10" />
-          </div>
+
+        {/* Sidebar Menu */}
+        <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+          <nav className="mt-5 py-4 px-4 lg:mt-9 lg:px-6">
+            {menuSections.map((section, sectionIndex) => {
+              const isExpanded = expandedSections.has(section.title);
+              return (
+                <div key={section.title} className={sectionIndex > 0 ? 'mt-6' : ''}>
+                  <h3 className="mb-4 ml-4 text-sm font-semibold text-bodydark2">
+                    {section.title}
+                  </h3>
+                  <ul className="mb-6 flex flex-col gap-1.5">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentView === item.id;
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => handleViewChange(item.id)}
+                            className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 w-full text-left ${
+                              isActive ? 'bg-graydark dark:bg-meta-4' : ''
+                            }`}
+                          >
+                            <Icon className="w-5 h-5" />
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </nav>
         </div>
-        <main className="flex-1 p-2 sm:p-4 md:p-8">
+
+        {/* Sidebar Footer */}
+        <div className="mt-auto border-t border-stroke px-6 py-4 dark:border-strokedark">
+          <button
+            onClick={onLogout}
+            className="flex w-full items-center gap-3.5 py-4 px-6 text-sm font-medium text-bodydark1 duration-300 ease-in-out hover:text-white lg:text-base"
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="relative flex flex-1 flex-col lg:ml-72.5">
+        {/* Header */}
+        <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
+          <div className="flex flex-grow items-center justify-between py-4 px-4 shadow-2 md:px-6 2xl:px-11">
+            <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="hidden sm:block">
+              <div className="relative">
+                <h1 className="text-title-md2 font-semibold text-black dark:text-white">
+                  Property Management System
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 2xsm:gap-7">
+              <ul className="flex items-center gap-2 2xsm:gap-4">
+                {/* User Profile */}
+                <li className="relative">
+                  <div className="flex items-center gap-4">
+                    <span className="hidden text-right lg:block">
+                      <span className="block text-sm font-medium text-black dark:text-white">
+                        {user?.user_metadata?.full_name || 'User'}
+                      </span>
+                      <span className="block text-xs text-body dark:text-bodydark">
+                        Property Manager
+                      </span>
+                    </span>
+                    <span className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                      <UserIcon className="w-6 h-6 text-gray-600" />
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
           {children}
         </main>
+
         {/* Footer */}
         <Footer />
       </div>
@@ -242,7 +250,6 @@ const Footer = () => {
     let isMounted = true;
     const checkStatus = async () => {
       try {
-        // Try a simple query to check connection
         const { error } = await supabase.from('contacts').select('id').limit(1);
         if (isMounted) setStatus(error ? 'offline' : 'online');
       } catch {
@@ -250,16 +257,23 @@ const Footer = () => {
       }
     };
     checkStatus();
-    const interval = setInterval(checkStatus, 15000); // check every 15s
+    const interval = setInterval(checkStatus, 15000);
     return () => { isMounted = false; clearInterval(interval); };
   }, []);
+  
   return (
-    <footer className="w-full bg-white border-t border-gray-200 py-2 px-4 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-500">
-      <span>© {new Date().getFullYear()} PropManager. All rights reserved.</span>
-      <span className="flex items-center gap-1 mt-1 sm:mt-0">
-        <span className={status === 'online' ? 'inline-block w-2 h-2 rounded-full bg-green-500' : 'inline-block w-2 h-2 rounded-full bg-red-500'}></span>
-        Supabase: {status === 'online' ? 'Online' : 'Offline'}
-      </span>
+    <footer className="border-t border-stroke bg-white px-4 py-4 dark:border-strokedark dark:bg-boxdark md:px-6 2xl:px-11">
+      <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+        <div className="text-sm text-body dark:text-bodydark">
+          © {new Date().getFullYear()} PropManager. All rights reserved.
+        </div>
+        <div className="flex items-center gap-2 text-sm text-body dark:text-bodydark">
+          <span className={`inline-block h-2 w-2 rounded-full ${
+            status === 'online' ? 'bg-success' : 'bg-danger'
+          }`}></span>
+          Database: {status === 'online' ? 'Connected' : 'Disconnected'}
+        </div>
+      </div>
     </footer>
   );
 };
