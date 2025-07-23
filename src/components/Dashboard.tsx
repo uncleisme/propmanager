@@ -190,13 +190,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   const stats = [
     {
-      title: 'Total Contacts',
-      value: contacts.length,
-      icon: Users,
-      color: 'bg-blue-500',
-      trend: '+12%'
-    },
-    {
       title: 'Active Contracts',
       value: contracts.filter(c => c.status === 'active').length,
       icon: FileText,
@@ -223,20 +216,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       icon: Wrench,
       color: 'bg-blue-600',
       trend: jobsTrendStr
-    },
-    {
-      title: 'Water',
-      value: utilities.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
-      icon: Droplet,
-      color: 'bg-blue-400',
-      trend: waterTrendStr
-    },
-    {
-      title: 'Electricity',
-      value: utilities.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
-      icon: Zap,
-      color: 'bg-yellow-400',
-      trend: elecTrendStr
     },
     {
       title: 'Pending Guests',
@@ -297,12 +276,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               if (stat.title === 'Open Jobs') {
                 prevValue = activeJobsPrev.length;
                 percent = jobsTrendStr;
-              } else if (stat.title === 'Water') {
-                prevValue = utilitiesPrev.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-                percent = waterTrendStr;
-              } else if (stat.title === 'Electricity') {
-                prevValue = utilitiesPrev.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-                percent = elecTrendStr;
               } else if (stat.title === 'Open Complaints') {
                 // Example: you can add prevValue/percent for complaints if you want
                 prevValue = null;
@@ -356,6 +329,48 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
         </div>
       </section>
+
+      {/* Building Info Section (standalone) */}
+      {buildingInfo && (
+        <section className="bg-white rounded-xl shadow-md p-6 mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-wide">Building Info</h2>
+          </div>
+          <div className="border-b border-gray-200 mb-4"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Name</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.buildingName}</div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Address</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.buildingAddress}</div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Type</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.buildingType}</div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Total Units</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.totalUnits}</div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Total Floors</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.totalFloors}</div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Year Built</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.yearBuilt}</div>
+            </div>
+            <div className="sm:col-span-2 md:col-span-3">
+              <div className="text-gray-500 text-xs mb-1">Property Manager</div>
+              <div className="text-gray-800 font-semibold">{buildingInfo.propertyManagerName} ({buildingInfo.propertyManagerCompany})</div>
+              <div className="text-gray-500 text-xs">{buildingInfo.propertyManagerEmail} {buildingInfo.propertyManagerPhone && <>| {buildingInfo.propertyManagerPhone}</>}</div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* TASKS & REQUESTS */}
       <section className="bg-white rounded-xl shadow-md p-6 mb-10">
@@ -482,7 +497,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 <>
                   {recent.map(order => (
                     <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                      <span className="text-gray-800">[{order.type}] {order.title}</span>
+                      <span className="text-gray-800">({order.type}) {order.title}</span>
                       <span className={`text-xs ${
                         order.status === 'open' ? 'text-red-500' :
                         order.status === 'in-progress' ? 'text-blue-600' :
@@ -520,7 +535,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div style={{ maxHeight: collapsed.maintenance ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
           {/* Scheduled Jobs */}
           <div className="mb-4">
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Scheduled Jobs</h3>
+            <h3 className="font-semibold text-md text-blue-600 mb-1">Scheduled Jobs</h3>
             {(() => {
               const jobs = workOrders.filter(wo => wo.type === 'job' && wo.scheduledDate).sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()).slice(0, showCounts.scheduledJobs);
               if (jobs.length === 0) {
@@ -543,7 +558,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
           {/* Open Issues */}
           <div className="mb-4">
-            <h3 className="font-semibold text-sm text-red-700 mb-1">Open Issues</h3>
+            <h3 className="font-semibold text-md text-red-700 mb-1">Open Issues</h3>
             {(() => {
               const open = workOrders.filter(wo => (wo.status === 'open' || wo.status === 'in-progress')).slice(0, showCounts.openIssues);
               if (open.length === 0) {
@@ -566,7 +581,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
           {/* Completed Tasks */}
           <div>
-            <h3 className="font-semibold text-sm text-emerald-700 mb-1">Completed Tasks</h3>
+            <h3 className="font-semibold text-md text-emerald-700 mb-1">Completed Tasks</h3>
             {(() => {
               const completed = workOrders.filter(wo => (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed')).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, showCounts.completedTasks);
               if (completed.length === 0) {
@@ -586,78 +601,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 </>
               );
             })()}
-          </div>
-        </div>
-      </section>
-
-      {/* RESIDENTS & UNITS */}
-      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
-        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('residents')}>
-          <Users className="w-7 h-7 text-indigo-500" />
-          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Residents & Units</h2>
-          <span className="ml-auto">{collapsed.residents ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
-        </div>
-        <div className="border-b border-gray-200 mb-4"></div>
-        <div style={{ maxHeight: collapsed.residents ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
-          {/* Resident Directory */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Resident Directory</h3>
-            {contacts.length === 0 ? (
-              <p className="text-gray-500 text-xs">No residents found</p>
-            ) : contacts.slice(0, showCounts.residents).map(c => (
-              <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                <span>{c.name} ({c.type})</span>
-                <span className="text-xs text-gray-700">{c.email}</span>
-              </div>
-            ))}
-            {contacts.length > showCounts.residents && (
-              <button onClick={() => handleLoadMore('residents', contacts.length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-            )}
-          </div>
-          {/* Unit Status Placeholder */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-purple-700 mb-1">Unit Status</h3>
-            <p className="text-gray-500 text-xs">(Unit status data not implemented)</p>
-          </div>
-          {/* Move Requests */}
-          <div>
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Move Requests</h3>
-            {moveRequests.length === 0 ? (
-              <p className="text-gray-500 text-xs">No move requests</p>
-            ) : moveRequests.slice(0, showCounts.moveRequests).map(r => (
-              <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                <span>{r.residentName} ({r.unitNumber})</span>
-                <span className="text-xs text-blue-600">{r.status}</span>
-              </div>
-            ))}
-            {moveRequests.length > showCounts.moveRequests && (
-              <button onClick={() => handleLoadMore('moveRequests', moveRequests.length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* UTILITIES & EXPENSES */}
-      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
-        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('utilities')}>
-          <Droplet className="w-7 h-7 text-blue-400" />
-          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Utilities & Expenses</h2>
-          <span className="ml-auto">{collapsed.utilities ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
-        </div>
-        <div className="border-b border-gray-200 mb-4"></div>
-        <div style={{ maxHeight: collapsed.utilities ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
-          {/* Utility Consumption */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Utility Consumption</h3>
-            <div className="flex flex-col gap-2 font-sans text-base">
-              <span>Water: {utilities.water.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span>
-              <span>Electricity: {utilities.electricity.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span>
-            </div>
-          </div>
-          {/* Expense Tracking Placeholder */}
-          <div>
-            <h3 className="font-semibold text-sm text-emerald-700 mb-1">Expense Tracking</h3>
-            <p className="text-gray-500 text-xs">(Expense tracking not implemented)</p>
           </div>
         </div>
       </section>
@@ -747,7 +690,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div style={{ maxHeight: collapsed.documents ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
           {/* Expiring Licenses */}
           <div className="mb-4">
-            <h3 className="font-semibold text-sm text-red-700 mb-1">Expiring Licenses</h3>
+            <h3 className="font-semibold text-base text-red-700 mb-1">Expiring Licenses</h3>
             {expiringLicenses.length === 0 ? (
               <p className="text-gray-500 text-xs">No licenses expiring in the next 30 days</p>
             ) : expiringLicenses.slice(0, showCounts.expiringLicenses).map(license => {
@@ -776,7 +719,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
           {/* Contracts */}
           <div>
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Contracts</h3>
+            <h3 className="font-semibold text-base text-blue-600 mb-1">Contracts</h3>
             {contracts.length === 0 ? (
               <p className="text-gray-500 text-xs">No contracts found</p>
             ) : contracts.slice(0, showCounts.contracts).map(contract => (
