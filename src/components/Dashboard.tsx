@@ -324,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                       <p className="text-2xl sm:text-3xl font-semibold text-gray-900 mt-1 sm:mt-2 truncate" style={{ wordBreak: 'break-all' }}>{stat.value}</p>
                     </div>
                     <div className={`bg-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0 ml-2 sm:ml-4`}>
-                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                     </div>
                   </div>
                   {/* Trend Row - always show */}
@@ -343,7 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                   {showTooltip && (
                     <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
                       <div className="bg-white border border-gray-200 rounded shadow-lg p-3 text-xs text-blue-600 min-w-[180px] font-sans text-base">
-                        <div className="mb-1 font-semibold">{stat.title} Details</div>
+                        <div className="mb-1 font-semibold">{stat.title ? stat.title + ' Details' : 'Metric Details'}</div>
                         <div>Current: <span className="font-bold text-gray-900">{stat.value}</span></div>
                         <div>Previous: <span className="font-bold text-gray-900">{prevValue != null ? prevValue : 0}</span></div>
                         <div>Change: <span className="font-bold text-gray-900">{percent && percent !== '' && percent !== '0%' ? percent : '-'}</span></div>
@@ -368,7 +368,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div style={{ maxHeight: collapsed.tasks ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
           {/* Upcoming Work Orders */}
           <div className="mb-4">
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Upcoming Work Orders (Next 7 Days)</h3>
+            <h3 className="font-semibold text-md text-blue-600 mb-1">Upcoming Work Orders (Next 7 Days)</h3>
             {(() => {
               const today = new Date();
               today.setHours(0,0,0,0);
@@ -431,7 +431,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
           {/* Pending Approvals */}
           <div className="mb-4">
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Pending Approvals</h3>
+            <h3 className="font-semibold text-md text-blue-600 mb-1">Pending Approvals</h3>
             {/* Move Requests */}
             <div className="mb-2">
               <h4 className="font-semibold text-xs text-blue-600">Move Requests</h4>
@@ -465,7 +465,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
           {/* Recent Activity */}
           <div>
-            <h3 className="font-semibold text-sm text-blue-600 mb-1">Recent Activity</h3>
+            <h3 className="font-semibold text-md text-blue-600 mb-1">Recent Activity</h3>
             {(() => {
               const recent = workOrders
                 .filter(wo =>
