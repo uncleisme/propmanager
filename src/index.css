@@ -88,10 +88,6 @@
 }
 
 /* Table styles */
-.table-auto {
-  @apply w-full table-auto;
-}
-
 .table-header {
   @apply border-b border-stroke py-4 px-4 dark:border-strokedark;
 }
@@ -102,7 +98,7 @@
 
 /* Sidebar styles */
 .sidebar-link {
-  @apply group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4;
+  @apply relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4;
 }
 
 .sidebar-link.active {
@@ -132,7 +128,7 @@
 
 /* Loading spinner */
 .spinner {
-  @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary;
+  @apply animate-spin rounded-full border-2 border-stroke border-t-primary;
 }
 
 /* Responsive utilities */
@@ -147,10 +143,7 @@
   @apply outline-none ring-2 ring-primary ring-offset-2 dark:ring-offset-boxdark;
 }
 
-/* Transition utilities */
-.transition-all {
-  @apply transition-all duration-300 ease-in-out;
-}
+
 
 /* Grid utilities */
 .grid-auto-fit {
