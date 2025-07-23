@@ -4,10 +4,38 @@ import {
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon, Clock, Calendar, 
   ChevronDown, ChevronRight, Shield, Sparkles, Calendar as CalendarIcon 
 } from 'lucide-react';
-import { ViewType } from '../types';
+import { ViewType, BuildingInfo, User as AppUser } from '../types';
 import { User as User } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabaseClient';
 import { useEffect, useState } from 'react';
+
+// Footer component
+const Footer = () => {
+  const [status, setStatus] = useState<'online' | 'offline'>('online');
+  useEffect(() => {
+    let isMounted = true;
+    const checkStatus = async () => {
+      try {
+        const { error } = await supabase.from('contacts').select('id').limit(1);
+        if (isMounted) setStatus(error ? 'offline' : 'online');
+      } catch {
+        if (isMounted) setStatus('offline');
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 15000); // check every 15s
+    return () => { isMounted = false; clearInterval(interval); };
+  }, []);
+  return (
+    <footer className="w-full bg-white border-t border-gray-200 py-2 px-4 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-500">
+      <span>© {new Date().getFullYear()} PropManager. All rights reserved.</span>
+      <span className="flex items-center gap-1 mt-1 sm:mt-0">
+        <span className={status === 'online' ? 'inline-block w-2 h-2 rounded-full bg-green-500' : 'inline-block w-2 h-2 rounded-full bg-red-500'}></span>
+        Supabase: {status === 'online' ? 'Online' : 'Offline'}
+      </span>
+    </footer>
+  );
+};
 
 interface LayoutProps {
   currentView: ViewType;
@@ -26,6 +54,30 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set());
+  // Header state for building info and avatar dropdown
+  const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchBuildingInfo = async () => {
+      const { data } = await supabase.from('buildingInfo').select('*').limit(1).single();
+      setBuildingInfo(data);
+    };
+    fetchBuildingInfo();
+  }, []);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user && user.id) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        setProfile(data);
+      } else {
+        setProfile(null);
+      }
+    };
+    fetchProfile();
+  }, [user && user.id]);
 
   const menuSections = [
     {
@@ -106,160 +158,123 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      {/* Sidebar */}
-      <div
-        className={`fixed z-50 top-0 left-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 transform transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:w-64`}
-        style={{ minWidth: 0 }}
-      >
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Building2 className="w-8 h-8 text-blue-600" />
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900">PropManager</h1>
-              {user && (
-                <p className="text-xs text-gray-500 truncate">
-                  {user.email}
-                </p>
-              )}
-            </div>
+    <>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <aside className="fixed top-0 left-0 h-screen w-64 bg-white shadow-lg border-r border-gray-200 z-40 flex flex-col">
+          <div className="h-16 flex items-center justify-center border-b">
+            <span className="font-bold text-lg">PropManager</span>
           </div>
-        </div>
-        {/* Close button for mobile */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 lg:hidden"
-        >
-          <X className="w-5 h-5 text-gray-600" />
-        </button>
-        {/* Date/Time */}
-        <div className="px-4 sm:px-6 py-2 sm:py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between text-xs sm:text-m text-black font-bold">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4" />
-              <span>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          </div>
-        </div>
-        {/* Menu Sections */}
-        <nav className="flex-1 overflow-y-auto pb-24">
-          {menuSections.map((section, sectionIndex) => {
-            const isExpanded = expandedSections.has(section.title);
-            return (
-              <div key={section.title} className={sectionIndex > 0 ? 'border-t border-gray-200 mt-2 pt-2' : ''}>
-                <button
-                  onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-4 sm:px-6 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
-                >
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {section.title}
-                  </h3>
-                  {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-                <div className={`transition-all duration-200 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentView === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleViewChange(item.id)}
-                        className={`w-full flex items-center space-x-3 px-6 py-2.5 text-left transition-colors duration-200 text-xs sm:text-sm ${isActive ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="font-medium">{item.label}</span>
-                      </button>
-                    );
-                  })}
+          {/* Navigation links here (existing nav code) */}
+          <nav className="flex-1 overflow-y-auto pb-24">
+            {menuSections.map((section, sectionIndex) => {
+              const isExpanded = expandedSections.has(section.title);
+              return (
+                <div key={section.title} className={sectionIndex > 0 ? 'border-t border-gray-200 mt-2 pt-2' : ''}>
+                  <button
+                    onClick={() => toggleSection(section.title)}
+                    className="w-full flex items-center justify-between px-4 sm:px-6 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {section.title}
+                    </h3>
+                    {isExpanded ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  <div className={`transition-all duration-200 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentView === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleViewChange(item.id)}
+                          className={`w-full flex items-center space-x-3 px-6 py-2.5 text-left transition-colors duration-200 text-xs sm:text-sm ${isActive ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="font-medium">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 border-t border-gray-200">
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors duration-200 text-xs sm:text-base"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
-      </div>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 p-2 sm:p-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100"
-            >
-              <Menu className="w-6 h-6 text-gray-600" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900">PropManager</h1>
+              );
+            })}
+          </nav>
+        </aside>
+        {/* Main content area */}
+        <div className="flex-1 min-h-screen ml-0 lg:ml-64 flex flex-col">
+          {/* Header */}
+          <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b py-4 px-8 w-full lg:ml-64 h-14 flex items-center">
+            <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+              <span className="font-semibold text-gray-900 text-lg">Dashboard</span>
               {user && (
-                <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                  ({user.email})
-                </span>
+                <div className="relative flex items-center">
+                  <button
+                    className="focus:outline-none"
+                    aria-haspopup="true"
+                    aria-expanded={avatarMenuOpen ? 'true' : 'false'}
+                    onClick={() => setAvatarMenuOpen((open) => !open)}
+                    tabIndex={0}
+                  >
+                    {profile && profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="User Avatar"
+                        className="w-10 h-10 rounded-full border border-gray-300 object-cover ring-2 ring-blue-100"
+                        title={user.email || 'User'}
+                      />
+                    ) : user.user_metadata?.avatar_url ? (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="User Avatar"
+                        className="w-10 h-10 rounded-full border border-gray-300 object-cover ring-2 ring-blue-100"
+                        title={user.email || 'User'}
+                      />
+                    ) : (
+                      <div
+                        className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg border border-gray-300 ring-2 ring-blue-100"
+                        title={user.email}
+                      >
+                        {user.email ? user.email.split('@')[0].slice(0,2).toUpperCase() : ''}
+                      </div>
+                    )}
+                  </button>
+                  {avatarMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2">
+                      <button
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        onClick={() => {
+                          setAvatarMenuOpen(false);
+                          if (typeof onLogout === 'function') {
+                            onLogout();
+                          } else {
+                            window.location.reload();
+                          }
+                        }}
+                      >
+                        <LogOut className="w-5 h-5 text-red-500" />
+                        <span className="font-medium">Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-            <div className="w-10" />
-          </div>
+          </header>
+          {/* Main content */}
+          <main className="flex-1 max-w-6xl mx-auto w-full p-4 pt-14">
+            {children}
+          </main>
+          {/* Footer */}
+          <Footer />
         </div>
-        <main className="flex-1 p-2 sm:p-4 md:p-8">
-          {children}
-        </main>
-        {/* Footer */}
-        <Footer />
       </div>
-    </div>
+    </>
   );
 };
 
 export default Layout;
-
-// Footer component
-const Footer = () => {
-  const [status, setStatus] = useState<'online' | 'offline'>('online');
-  useEffect(() => {
-    let isMounted = true;
-    const checkStatus = async () => {
-      try {
-        // Try a simple query to check connection
-        const { error } = await supabase.from('contacts').select('id').limit(1);
-        if (isMounted) setStatus(error ? 'offline' : 'online');
-      } catch {
-        if (isMounted) setStatus('offline');
-      }
-    };
-    checkStatus();
-    const interval = setInterval(checkStatus, 15000); // check every 15s
-    return () => { isMounted = false; clearInterval(interval); };
-  }, []);
-  return (
-    <footer className="w-full bg-white border-t border-gray-200 py-2 px-4 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-500">
-      <span>© {new Date().getFullYear()} PropManager. All rights reserved.</span>
-      <span className="flex items-center gap-1 mt-1 sm:mt-0">
-        <span className={status === 'online' ? 'inline-block w-2 h-2 rounded-full bg-green-500' : 'inline-block w-2 h-2 rounded-full bg-red-500'}></span>
-        Supabase: {status === 'online' ? 'Online' : 'Offline'}
-      </span>
-    </footer>
-  );
-};
