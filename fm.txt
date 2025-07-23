@@ -1,0 +1,36 @@
+Purpose	Color Code	Description
+Primary	#2563EB	Blue 600 – Trustworthy & modern
+Primary Light	#3B82F6	Blue 500 – Hover/active state
+Secondary	#10B981	Emerald 500 – Positive actions
+Background	#F9FAFB	Light gray – Clean, minimal UI
+Surface (Cards)	#FFFFFF	Pure white – for contrast
+Text Primary	#1F2937	Gray 800 – Easy to read
+Text Muted	#6B7280	Gray 500 – Secondary info
+Border/Lines	#E5E7EB	Gray 200 – Subtle separation
+Error	#EF4444	Red 500 – For alerts & errors
+Warning	#F59E0B	Amber 500 – For caution
+Info	#3B82F6	Blue 500 – For neutral notices
+Success	#10B981	Emerald 500 – For success msgs
+
+🧭 Color Use Guidelines
+✅ Primary Blue (#2563EB)
+Use for main CTAs (buttons), highlights, active links, progress bars
+
+✅ Secondary Emerald (#10B981)
+For success states, confirmed actions, or secondary CTAs
+
+✅ Grays & Neutrals
+Use for backgrounds, text, cards, forms
+
+Keep the UI clean and distraction-free
+
+✅ Accent Colors
+Use Red, Amber, and Green sparingly for status indicators (alarms, maintenance issues, billing alerts)
+
+🌗 Optional Dark Mode
+Purpose	Color Code
+Background	#111827
+Surface	#1F2937
+Text	#F9FAFB
+Primary	#3B82F6
+Border	#374151
