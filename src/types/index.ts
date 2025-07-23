@@ -4,6 +4,7 @@ export interface User {
   avatarUrl: string;
   email: string;
   password?: string;
+  contactId?: string;
 }
 
 export interface Contact {
