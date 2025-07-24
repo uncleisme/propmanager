@@ -3,6 +3,8 @@ import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
 import Papa from 'papaparse';
 import { User } from '@supabase/supabase-js';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -32,6 +34,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [totalContacts, setTotalContacts] = useState(0);
   const [importing, setImporting] = useState(false);
   const [showImportInstructions, setShowImportInstructions] = useState(false);
+
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -307,114 +310,74 @@ useEffect(() => {
     />
   </div>
 
-  {/* Contacts Table for desktop/tablet */}
-  <div className="hidden sm:block w-full h-96 overflow-y-auto bg-white rounded-lg shadow-sm border border-gray-200">
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50 sticky top-0 z-10">
-        <tr>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {loading ? (
-          <tr>
-            <td colSpan={5} className="px-6 py-4 text-center">
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            </td>
-          </tr>
-        ) : filteredContacts.length === 0 ? (
-          <tr>
-            <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-              No contacts found
-            </td>
-          </tr>
-        ) : (
-          filteredContacts.map((contact, idx) => (
-            <tr key={contact.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.type}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleView(contact)}
-                    className="text-blue-600 hover:text-blue-900"
-                    title="View"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(contact)}
-                    className="text-yellow-600 hover:text-yellow-900"
-                    title="Edit"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(contact.id)}
-                    className="text-red-600 hover:text-red-900"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+  {/* Contacts Table (MUI Table, all screen sizes) */}
+  <div className="overflow-x-auto w-full h-96">
+    <TableContainer component={Paper} sx={{ maxHeight: 384, minWidth: 600 }}>
+      <Table stickyHeader aria-label="contacts table" sx={{ minWidth: 600 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>Phone</TableCell>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>Type</TableCell>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={5} align="center">
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+              </TableCell>
+            </TableRow>
+          ) : filteredContacts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} align="center" sx={{ color: '#6b7280' }}>
+                No contacts found
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredContacts.map((contact, idx) => (
+              <TableRow key={contact.id} hover>
+                <TableCell sx={{ whiteSpace: 'nowrap' }} component="th" scope="row">{contact.name}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.email}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.phone}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.type}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => handleView(contact)}
+                      style={{ color: '#2563eb' }}
+                      title="View"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(contact)}
+                      style={{ color: '#ca8a04' }}
+                      title="Edit"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(contact.id)}
+                      style={{ color: '#dc2626' }}
+                      title="Delete"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
   </div>
 
-  {/* Card view for mobile */}
-  <div className="sm:hidden">
-    {loading ? (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    ) : filteredContacts.length === 0 ? (
-      <div className="text-center text-gray-500 py-8">No contacts found</div>
-    ) : (
-      filteredContacts.map((contact) => (
-        <div key={contact.id} className="bg-white rounded-lg shadow p-3 mb-3 border border-gray-200">
-          <div className="font-bold text-gray-900 text-base">{contact.name}</div>
-          <div className="text-xs text-gray-500">Email: {contact.email}</div>
-          <div className="text-xs text-gray-500">Phone: {contact.phone}</div>
-          {contact.type && <div className="text-xs text-gray-500">Type: {contact.type}</div>}
-          <div className="flex space-x-2 mt-2">
-            <button
-              onClick={() => handleView(contact)}
-              className="text-blue-600 hover:text-blue-900"
-              title="View"
-            >
-              <Eye className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => handleEdit(contact)}
-              className="text-yellow-600 hover:text-yellow-900"
-              title="Edit"
-            >
-              <Edit className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => handleDelete(contact.id)}
-              className="text-red-600 hover:text-red-900"
-              title="Delete"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      ))
-    )}
-  </div>
   {/* Pagination Controls and Total Count */}
 <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
   <div>
