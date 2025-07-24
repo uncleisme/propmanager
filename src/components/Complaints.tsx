@@ -176,10 +176,10 @@ const Complaints: React.FC = () => {
     if (!file) return;
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-    const { data, error } = await supabase.storage.from('workorder').upload(fileName, file);
+    const { data, error } = await supabase.storage.from('work-order').upload(fileName, file);
     if (!error && data) {
-      const { publicURL } = supabase.storage.from('workorder').getPublicUrl(data.path).data;
-      setForm(prev => ({ ...prev, photoUrl: publicURL }));
+      const { publicUrl } = supabase.storage.from('work-order').getPublicUrl(data.path).data;
+      setForm(prev => ({ ...prev, photoUrl: publicUrl }));
     }
   };
 
@@ -192,15 +192,16 @@ const Complaints: React.FC = () => {
     }
     const insertData: Partial<WorkOrder> = {
       ...form,
-      priority: form.type === 'complaint' ? form.priority : null,
-      propertyUnit: form.type === 'complaint' ? form.propertyUnit : null,
-      scheduledDate: form.scheduledDate || null,
-      scheduledStart: form.scheduledStart || null,
-      scheduledEnd: form.scheduledEnd || null,
-      technicianId: form.technicianId || null,
+      type: form.type === 'job' || form.type === 'complaint' ? form.type : undefined,
+      priority: form.type === 'complaint' ? form.priority : undefined,
+      propertyUnit: form.type === 'complaint' ? form.propertyUnit : undefined,
+      scheduledDate: form.scheduledDate || undefined,
+      scheduledStart: form.scheduledStart || undefined,
+      scheduledEnd: form.scheduledEnd || undefined,
+      technicianId: form.technicianId || undefined,
       createdAt: modalType === 'add' ? new Date().toISOString() : undefined,
-      comment: form.comment || null,
-      photoUrl: form.photoUrl || null,
+      comment: form.comment || undefined,
+      photoUrl: form.photoUrl || undefined,
     };
     if (modalType === 'add') {
       const { error } = await supabase.from('work_order').insert([insertData]);
@@ -407,14 +408,18 @@ const Complaints: React.FC = () => {
               </div>
               <div className="mb-4">
                 <div className="font-medium text-gray-700 mb-1">Comment</div>
-                <div className="text-gray-900 text-sm">{selectedOrder.comment || '-'}</div>
+                <div className="bg-gray-50 border border-gray-200 rounded p-3 text-gray-900 text-sm min-h-[48px] whitespace-pre-line">
+                  {selectedOrder.comment ? selectedOrder.comment : <span className="text-gray-400">No comment</span>}
+                </div>
               </div>
-              <div className="mb-4">
+              <div className="mb-6">
                 <div className="font-medium text-gray-700 mb-1">Photo</div>
                 {selectedOrder?.photoUrl ? (
-                  <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="mt-2 max-h-48 rounded" />
+                  <div className="flex justify-center items-center bg-gray-100 border border-gray-200 rounded-lg p-2">
+                    <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="max-h-64 rounded shadow" />
+                  </div>
                 ) : (
-                  <div className="text-gray-500 text-sm">-</div>
+                  <div className="text-gray-400 text-sm italic text-center bg-gray-50 border border-gray-200 rounded p-4">No photo uploaded</div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
