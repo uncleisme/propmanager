@@ -3,6 +3,13 @@ import { UserCheck, Plus, Search, Eye, Edit, X, CheckCircle, XCircle, Clock, Cal
 import { Guest } from '../types';
 import { supabase } from '../utils/supabaseClient';
 import { User } from '@supabase/supabase-js';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -336,88 +343,85 @@ const Guests: React.FC<DashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Guests List */}
-      <div className="space-y-4">
-        {filteredGuests.map(guest => (
-          <div key={guest.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{guest.visitorName}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(guest.status)}`}>
-                    {getStatusIcon(guest.status)}
-                    <span className="capitalize">{guest.status}</span>
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div>
-                    <p><strong>Host:</strong> {guest.hostName} • Unit {guest.hostUnit}</p>
-                    <p><strong>Host Phone:</strong> {guest.hostPhone}</p>
-                    {guest.visitorPhone && (
-                      <p><strong>Visitor Phone:</strong> {guest.visitorPhone}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p><strong>Visit Date:</strong> {new Date(guest.visitDate).toLocaleDateString()}</p>
-                    {guest.visitTimeStart && guest.visitTimeEnd && (
-                      <p><strong>Time:</strong> {guest.visitTimeStart} - {guest.visitTimeEnd}</p>
-                    )}
-                    {guest.purpose && (
-                      <p><strong>Purpose:</strong> {guest.purpose}</p>
-                    )}
-                  </div>
-                </div>
-                {guest.vehicleInfo && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    <strong>Vehicle:</strong> {guest.vehicleInfo}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                {guest.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleApprove(guest)}
-                      className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                      title="Approve"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeny(guest)}
-                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      title="Deny"
-                    >
-                      <XCircle className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => handleView(guest)}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                  title="View details"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleEdit(guest)}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                  title="Edit guest"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredGuests.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No guests found</p>
-        </div>
-      )}
+      {/* Guests Table (MUI Table, all screen sizes) */}
+      <TableContainer component={Paper} sx={{ maxHeight: 384, minWidth: 650, overflowX: 'auto' }}>
+        <Table stickyHeader aria-label="guests table" sx={{ minWidth: 650 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Visitor</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Host</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Unit</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Visit Date</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Status</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Purpose</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Vehicle</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredGuests.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center" sx={{ color: '#6b7280' }}>
+                  No guests found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredGuests.map((guest) => (
+                <TableRow key={guest.id} hover>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.visitorName}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.hostName}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.hostUnit}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{new Date(guest.visitDate).toLocaleDateString()}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(guest.status)}`}>
+                      {getStatusIcon(guest.status)}
+                      <span className="capitalize">{guest.status}</span>
+                    </span>
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.purpose || '-'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.vehicleInfo || '-'}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>
+                    <div className="flex items-center space-x-2">
+                      {guest.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(guest)}
+                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                            title="Approve"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeny(guest)}
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                            title="Deny"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleView(guest)}
+                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(guest)}
+                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        title="Edit guest"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Guest Modal */}
       {showModal && (
