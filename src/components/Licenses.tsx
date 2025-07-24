@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Award, Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
 import Papa from 'papaparse';
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
 import { User } from '@supabase/supabase-js';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -318,68 +311,66 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
 
       {/* Licenses Table for desktop/tablet (MUI Table) */}
       <div className="hidden sm:block w-full h-96 overflow-y-auto">
-        <TableContainer component={Paper} sx={{ maxHeight: 384, minWidth: 650, overflowX: 'auto' }}>
-          <Table stickyHeader aria-label="licenses table" sx={{ minWidth: 650 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Name</TableCell>
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>License #</TableCell>
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Status</TableCell>
-                <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
+              <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredLicenses.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                  No licenses found
+                </td>
+              </tr>
+            ) : (
+              filteredLicenses.map((license) => (
+                <tr key={license.id} className="hover:bg-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{license.name}</td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">{license.licenseNumber}</td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getStatusBadge(license)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleView(license)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="View"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(license)}
+                        className="text-yellow-600 hover:text-yellow-900"
+                        title="Edit"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(license.id!)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredLicenses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ color: '#6b7280' }}>
-                    No licenses found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLicenses.map((license, idx) => (
-                  <TableRow key={license.id} hover selected={false}>
-                    <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{license.name}</TableCell>
-                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{license.licenseNumber}</TableCell>
-                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{getStatusBadge(license)}</TableCell>
-                    <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleView(license)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(license)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(license.id!)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Card view for mobile */}

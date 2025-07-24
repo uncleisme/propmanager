@@ -3,7 +3,6 @@ import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
 import Papa from 'papaparse';
 import { User } from '@supabase/supabase-js';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 
 
 interface DashboardProps {
@@ -311,71 +310,69 @@ useEffect(() => {
   </div>
 
   {/* Contacts Table (MUI Table, all screen sizes) */}
-  <div className="overflow-x-auto w-full h-96">
-    <TableContainer component={Paper} sx={{ maxHeight: 384, minWidth: 600 }}>
-      <Table stickyHeader aria-label="contacts table" sx={{ minWidth: 600 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>Phone</TableCell>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>Type</TableCell>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {loading ? (
-            <TableRow>
-              <TableCell colSpan={5} align="center">
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full bg-white border border-gray-200 text-sm text-left">
+      <thead className="bg-gray-100 text-gray-700 uppercase">
+        <tr>
+          <th className="px-4 py-3 border-b">Name</th>
+          <th className="px-4 py-3 border-b">Email</th>
+          <th className="px-4 py-3 border-b">Phone</th>
+          <th className="px-4 py-3 border-b hidden md:table-cell">Type</th>
+          <th className="px-4 py-3 border-b hidden md:block">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {loading ? (
+          <tr>
+            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            </td>
+          </tr>
+        ) : filteredContacts.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+              No contacts found
+            </td>
+          </tr>
+        ) : (
+          filteredContacts.map((contact) => (
+            <tr key={contact.id} className="hover:bg-gray-100">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.phone}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{contact.type}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => handleView(contact)}
+                    style={{ color: '#2563eb' }}
+                    title="View"
+                  >
+                    <Eye className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleEdit(contact)}
+                    style={{ color: '#ca8a04' }}
+                    title="Edit"
+                  >
+                    <Edit className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(contact.id)}
+                    style={{ color: '#dc2626' }}
+                    title="Delete"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
-              </TableCell>
-            </TableRow>
-          ) : filteredContacts.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} align="center" sx={{ color: '#6b7280' }}>
-                No contacts found
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredContacts.map((contact, idx) => (
-              <TableRow key={contact.id} hover>
-                <TableCell sx={{ whiteSpace: 'nowrap' }} component="th" scope="row">{contact.name}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.email}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.phone}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{contact.type}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={() => handleView(contact)}
-                      style={{ color: '#2563eb' }}
-                      title="View"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(contact)}
-                      style={{ color: '#ca8a04' }}
-                      title="Edit"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(contact.id)}
-                      style={{ color: '#dc2626' }}
-                      title="Delete"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
   </div>
 
   {/* Pagination Controls and Total Count */}

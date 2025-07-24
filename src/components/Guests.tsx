@@ -3,13 +3,6 @@ import { UserCheck, Plus, Search, Eye, Edit, X, CheckCircle, XCircle, Clock, Cal
 import { Guest } from '../types';
 import { supabase } from '../utils/supabaseClient';
 import { User } from '@supabase/supabase-js';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -344,43 +337,43 @@ const Guests: React.FC<DashboardProps> = ({ user }) => {
       </div>
 
       {/* Guests Table (MUI Table, all screen sizes) */}
-      <TableContainer component={Paper} sx={{ maxHeight: 384, minWidth: 650, overflowX: 'auto' }}>
-        <Table stickyHeader aria-label="guests table" sx={{ minWidth: 650 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Visitor</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Host</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Unit</TableCell>
-              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Visit Date</TableCell>
-              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Status</TableCell>
-              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Purpose</TableCell>
-              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Vehicle</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+              <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Date</th>
+              <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+              <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
             {filteredGuests.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ color: '#6b7280' }}>
+              <tr>
+                <td colSpan={8} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                   No guests found
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               filteredGuests.map((guest) => (
-                <TableRow key={guest.id} hover>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.visitorName}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.hostName}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.hostUnit}</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{new Date(guest.visitDate).toLocaleDateString()}</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>
+                <tr key={guest.id} className="hover:bg-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{guest.visitorName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.hostName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.hostUnit}</td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(guest.visitDate).toLocaleDateString()}</td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(guest.status)}`}>
                       {getStatusIcon(guest.status)}
                       <span className="capitalize">{guest.status}</span>
                     </span>
-                  </TableCell>
-                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.purpose || '-'}</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>{guest.vehicleInfo || '-'}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 }, fontSize: { xs: 12, sm: 14 } }}>
+                  </td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.purpose || '-'}</td>
+                  <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900">{guest.vehicleInfo || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       {guest.status === 'pending' && (
                         <>
@@ -415,13 +408,13 @@ const Guests: React.FC<DashboardProps> = ({ user }) => {
                         <Edit className="w-4 h-4" />
                       </button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
 
       {/* Guest Modal */}
       {showModal && (
