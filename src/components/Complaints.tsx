@@ -16,6 +16,8 @@ interface WorkOrder {
   technicianId?: string;
   createdAt: string;
   resolvedAt?: string;
+  comment?: string;
+  photoUrl?: string;
 }
 
 const Complaints: React.FC = () => {
@@ -35,12 +37,15 @@ const Complaints: React.FC = () => {
     scheduledStart: '',
     scheduledEnd: '',
     technicianId: '',
+    comment: '',
+    photoUrl: '',
   });
   const [search, setSearch] = useState('');
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>("add");
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  // Remove statusFilter and typeFilter state
 
   useEffect(() => {
   const fetchData = async () => {
@@ -48,7 +53,7 @@ const Complaints: React.FC = () => {
       // Fetch work orders
       const { data: woData, error: woError } = await supabase
         .from('work_order')
-        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt')
+        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
         .order('createdAt', { ascending: false });
       if (woError) {
       setLoading(false);
@@ -112,6 +117,8 @@ const Complaints: React.FC = () => {
       scheduledStart: '',
       scheduledEnd: '',
       technicianId: '',
+      comment: '',
+      photoUrl: '',
     });
     setErrorMsg('');
     setModalType('add');
@@ -131,12 +138,14 @@ const Complaints: React.FC = () => {
       title: order.title,
       description: order.description,
       status: order.status,
-      priority: order.priority || '',
-      propertyUnit: order.propertyUnit || '',
-      scheduledDate: order.scheduledDate || '',
-      scheduledStart: order.scheduledStart || '',
-      scheduledEnd: order.scheduledEnd || '',
-      technicianId: order.technicianId || '',
+      priority: (order.priority ?? '') || '',
+      propertyUnit: (order.propertyUnit ?? '') || '',
+      scheduledDate: (order.scheduledDate ?? '') || '',
+      scheduledStart: (order.scheduledStart ?? '') || '',
+      scheduledEnd: (order.scheduledEnd ?? '') || '',
+      technicianId: (order.technicianId ?? '') || '',
+      comment: order.comment || '',
+      photoUrl: order.photoUrl || '',
     });
     setSelectedOrder(order);
     setModalType('edit');
@@ -150,7 +159,7 @@ const Complaints: React.FC = () => {
     // Refresh table
     const { data: woData } = await supabase
       .from('work_order')
-      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt')
+      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
       .order('createdAt', { ascending: false });
     setWorkOrders(woData || []);
     setLoading(false);
@@ -158,7 +167,20 @@ const Complaints: React.FC = () => {
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value === null ? '' : value }));
+  };
+
+  // Handle photo upload
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const { data, error } = await supabase.storage.from('workorder').upload(fileName, file);
+    if (!error && data) {
+      const { publicURL } = supabase.storage.from('workorder').getPublicUrl(data.path).data;
+      setForm(prev => ({ ...prev, photoUrl: publicURL }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,6 +199,8 @@ const Complaints: React.FC = () => {
       scheduledEnd: form.scheduledEnd || null,
       technicianId: form.technicianId || null,
       createdAt: modalType === 'add' ? new Date().toISOString() : undefined,
+      comment: form.comment || null,
+      photoUrl: form.photoUrl || null,
     };
     if (modalType === 'add') {
       const { error } = await supabase.from('work_order').insert([insertData]);
@@ -207,13 +231,13 @@ const Complaints: React.FC = () => {
     setLoading(true);
     const { data: woData } = await supabase
       .from('work_order')
-      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt')
+      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
       .order('createdAt', { ascending: false });
     setWorkOrders(woData || []);
     setLoading(false);
   };
 
-  // Filter work orders by search
+  // Filter work orders by search only
   const filteredWorkOrders = workOrders.filter(order => {
     const techName = getTechnicianName(order.technicianId).toLowerCase();
     return (
@@ -251,114 +275,179 @@ const Complaints: React.FC = () => {
     'Other',
   ];
 
+  // Add a function to update status
+  const handleStatusChange = async (status: string) => {
+    if (!selectedOrder) return;
+    setLoading(true);
+    let updateFields: any = { status };
+    let resolvedAt: string | undefined = undefined;
+    if (status === 'completed') {
+      resolvedAt = new Date().toISOString();
+      updateFields.resolvedAt = resolvedAt;
+    } else if (selectedOrder.status === 'completed') {
+      // If reverting from completed, clear resolvedAt
+      updateFields.resolvedAt = null;
+    }
+    const { error } = await supabase.from('work_order').update(updateFields).eq('id', selectedOrder.id);
+    if (!error) {
+      setWorkOrders(prev => prev.map(wo => wo.id === selectedOrder.id ? { ...wo, status, resolvedAt: updateFields.resolvedAt } : wo));
+      setSelectedOrder(prev => prev ? { ...prev, status, resolvedAt: updateFields.resolvedAt } : prev);
+    }
+    setLoading(false);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
+    <>
+      {/* Page Title and Add Button (separate from main container) */}
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Work Orders</h1>
           <p className="text-gray-600">Monitor and manage all jobs and complaints</p>
         </div>
-        <div className="flex items-center space-x-3">
         <button
-            onClick={handleAdd}
+          onClick={handleAdd}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
         >
           <Plus className="w-4 h-4" />
-            <span>Add Work Order</span>
+          <span>Add Work Order</span>
         </button>
-        </div>
       </div>
-      {errorMsg && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-red-700 font-medium">
-            <span className="font-semibold">Error:</span> {errorMsg}
-          </p>
+      {/* Main Content: Two Columns */}
+      <div className="flex flex-1 min-h-0 h-[80vh] bg-white rounded-lg shadow border border-gray-200">
+        {/* Left: Work Order List */}
+        <div className="w-1/3 border-r overflow-y-auto p-2 bg-gray-50">
+          <div className="mb-2 flex flex-col gap-2">
+            <input
+              type="text"
+              placeholder="Search title, unit, technician, or status..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
           </div>
-      )}
-      {/* Search Bar */}
-      <div className="relative w-full max-w-md mb-4">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
+          <div>
+            {filteredWorkOrders.length === 0 ? (
+              <div className="text-gray-500 text-center py-8">No work order found</div>
+            ) : (
+              filteredWorkOrders.map(order => (
+                <div
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className={`relative p-4 mb-3 rounded-lg cursor-pointer border transition-colors duration-150 shadow-sm bg-white overflow-hidden
+                    ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'}`}
+                  style={{ minHeight: '72px' }}
+                >
+                  {/* Priority tag right-aligned at top */}
+                  {order.priority && (
+                    <span className={`absolute top-3 right-4 px-2 py-1 rounded-full text-xs font-medium z-10
+                      ${order.priority === 'high' ? 'bg-red-100 text-red-700' : order.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : order.priority === 'low' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{order.priority}</span>
+                  )}
+                  {/* Status tag for completed, in-progress, or open */}
+                  {order.status && order.status.toLowerCase() === 'completed' && (
+                    <span className="absolute bottom-3 right-4 px-2 py-1 rounded-full text-xs font-medium bg-green-600 text-white z-10">Done</span>
+                  )}
+                  {order.status && order.status.toLowerCase() === 'in-progress' && (
+                    <span className="absolute bottom-3 right-4 px-2 py-1 rounded-full text-xs font-medium bg-orange-500 text-white z-10">In Progress</span>
+                  )}
+                  {order.status && order.status.toLowerCase() === 'open' && (
+                    <span className="absolute bottom-3 right-4 px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white z-10">Open</span>
+                  )}
+                  <div className="flex flex-col">
+                    <div className="font-semibold text-gray-900 text-sm truncate pr-16">{order.title}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      {/* Type tag */}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize
+                        ${order.type === 'job' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>{order.type}</span>
+                      {order.propertyUnit && (
+                        <span className="text-xs text-gray-500">{order.propertyUnit}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-        <input
-          type="text"
-          placeholder="Search by title, unit, technician, or status..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-      {loading ? (
-        <div className="text-gray-500">Loading...</div>
-      ) : (
-        <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property Unit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Technician</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedWorkOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    No work order found
-                  </td>
-                </tr>
-              ) : (
-                paginatedWorkOrders.map((order, idx) => (
-                  <tr key={order.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{(currentPage - 1) * pageSize + idx + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm capitalize">{order.type}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">{order.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{order.propertyUnit || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{order.scheduledDate || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{getTechnicianName(order.technicianId) || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{getStatusBadge(order.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button onClick={() => handleView(order)} className="text-blue-600 hover:text-blue-900" title="View"><Eye className="w-5 h-5" /></button>
-                        <button onClick={() => handleEdit(order)} className="text-yellow-600 hover:text-yellow-900" title="Edit"><Edit className="w-5 h-5" /></button>
-                        <button onClick={() => handleDelete(order)} className="text-red-600 hover:text-red-900" title="Delete"><Trash2 className="w-5 h-5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+        {/* Right: Work Order Details */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          {!selectedOrder ? (
+            <div className="text-gray-400 text-center mt-24">Select a work order to view details</div>
+          ) : (
+            <div className="max-w-xl mx-auto">
+              {/* Status Buttons at the top */}
+              <div className="flex space-x-3 mb-6">
+                <button
+                  onClick={() => handleStatusChange('open')}
+                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
+                >Open</button>
+                <button
+                  onClick={() => handleStatusChange('in-progress')}
+                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'in-progress' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'}`}
+                >In Progress</button>
+                <button
+                  onClick={() => handleStatusChange('completed')}
+                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'completed' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-700 border-green-300 hover:bg-green-50'}`}
+                >Done</button>
+                <button
+                  onClick={() => handleEdit(selectedOrder)}
+                  className="flex-1 py-2 rounded-lg font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                >Edit</button>
+              </div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-lg font-bold text-gray-900">{selectedOrder.title}</div>
+                <div>{getStatusBadge(selectedOrder.status)}</div>
+              </div>
+              <div className="mb-2 text-sm text-gray-500 capitalize">{selectedOrder.type} {selectedOrder.propertyUnit ? `| ${selectedOrder.propertyUnit}` : ''}</div>
+              {selectedOrder.priority && (
+                <div className="mb-2"><span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.priority === 'high' ? 'bg-red-100 text-red-700' : selectedOrder.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : selectedOrder.priority === 'low' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{selectedOrder.priority}</span></div>
               )}
-            </tbody>
-          </table>
+              <div className="mb-4">
+                <div className="font-medium text-gray-700 mb-1">Description</div>
+                <div className="text-gray-900 text-sm">{selectedOrder.description || '-'}</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-medium text-gray-700 mb-1">Comment</div>
+                <div className="text-gray-900 text-sm">{selectedOrder.comment || '-'}</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-medium text-gray-700 mb-1">Photo</div>
+                {selectedOrder?.photoUrl ? (
+                  <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="mt-2 max-h-48 rounded" />
+                ) : (
+                  <div className="text-gray-500 text-sm">-</div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">Scheduled Date</div>
+                  <div className="text-gray-900 text-sm">{selectedOrder.scheduledDate || '-'}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">Start Time</div>
+                  <div className="text-gray-900 text-sm">{selectedOrder.scheduledStart || '-'}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">End Time</div>
+                  <div className="text-gray-900 text-sm">{selectedOrder.scheduledEnd || '-'}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">Technician</div>
+                  <div className="text-gray-900 text-sm">{getTechnicianName(selectedOrder.technicianId) || '-'}</div>
+                </div>
+              </div>
+              <div className="mb-4">
+                <div className="font-medium text-gray-700 mb-1">Created At</div>
+                <div className="text-gray-900 text-sm">{selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : '-'}</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-medium text-gray-700 mb-1">Resolved At</div>
+                <div className="text-gray-900 text-sm">{selectedOrder.resolvedAt ? new Date(selectedOrder.resolvedAt).toLocaleString() : '-'}</div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      {/* Pagination Controls and Total Count */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
-        <div>
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="mx-2">Page {currentPage} of {totalPages}</span>
-          <button
-            onClick={() => setCurrentPage((p) => (p < totalPages ? p + 1 : p))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-        <div className="text-sm text-gray-600">Total: {totalEntries} entries</div>
       </div>
-      {/* Add Work Order Modal */}
+      {/* Add Work Order Modal (unchanged) */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
@@ -389,6 +478,18 @@ const Complaints: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <div className="text-gray-900 text-sm">{selectedOrder?.description || '-'}</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                    <div className="text-gray-900 text-sm">{selectedOrder?.comment || '-'}</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                    {selectedOrder?.photoUrl ? (
+                      <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="mt-2 max-h-48 rounded" />
+                    ) : (
+                      <div className="text-gray-500 text-sm">-</div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -470,6 +571,27 @@ const Complaints: React.FC = () => {
                     onChange={handleFormChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                  <textarea
+                    name="comment"
+                    value={form.comment ?? ''}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {form.photoUrl && (
+                    <img src={form.photoUrl} alt="Work Order Photo" className="mt-2 max-h-32 rounded" />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
@@ -581,7 +703,7 @@ const Complaints: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
