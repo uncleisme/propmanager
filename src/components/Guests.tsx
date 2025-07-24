@@ -46,7 +46,7 @@ const Guests: React.FC<DashboardProps> = ({ user }) => {
         .order('visit_date', { ascending: false });
 
       if (error) throw error;
-      setGuests(data || []);
+      setGuests((data || []).map(g => ({ ...g, visitDate: g.visit_date })));
     } catch (error) {
       console.error('Fetch error:', error);
     } finally {
@@ -146,6 +146,7 @@ const Guests: React.FC<DashboardProps> = ({ user }) => {
         ...newGuest,
         visitorPhone: newGuest.visitorPhone || null,
         visitorEmail: newGuest.visitorEmail || null,
+        visit_date: newGuest.visitDate,
         visitTimeStart: newGuest.visitTimeStart || null,
         visitTimeEnd: newGuest.visitTimeEnd || null,
         purpose: newGuest.purpose || null,
