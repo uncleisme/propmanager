@@ -314,16 +314,16 @@ const Complaints: React.FC = () => {
         </button>
       </div>
       {/* Main Content: Two Columns */}
-      <div className="flex flex-1 min-h-0 h-[80vh] bg-white rounded-lg shadow border border-gray-200">
+      <div className="flex flex-1 min-h-0 h-[80vh] bg-white rounded-lg shadow border border-gray-200 flex-col md:flex-row">
         {/* Left: Work Order List */}
-        <div className="w-1/3 border-r overflow-y-auto p-2 bg-gray-50">
+        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r overflow-y-auto p-2 bg-gray-50">
           <div className="mb-2 flex flex-col gap-2">
             <input
               type="text"
               placeholder="Search title, unit, technician, or status..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="mb-2 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:px-3"
             />
           </div>
           <div>
@@ -334,9 +334,9 @@ const Complaints: React.FC = () => {
                 <div
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
-                  className={`relative p-4 mb-3 rounded-lg cursor-pointer border transition-colors duration-150 shadow-sm bg-white overflow-hidden
+                  className={`relative p-3 md:p-4 mb-3 rounded-lg cursor-pointer border transition-colors duration-150 shadow-sm bg-white overflow-hidden
                     ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'}`}
-                  style={{ minHeight: '72px' }}
+                  style={{ minHeight: '56px' }}
                 >
                   {/* Priority tag right-aligned at top */}
                   {order.priority && (
@@ -354,7 +354,7 @@ const Complaints: React.FC = () => {
                     <span className="absolute bottom-3 right-4 px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white z-10">Open</span>
                   )}
                   <div className="flex flex-col">
-                    <div className="font-semibold text-gray-900 text-sm truncate pr-16">{order.title}</div>
+                    <div className="font-semibold text-gray-900 text-sm truncate pr-10 md:pr-16">{order.title}</div>
                     <div className="flex items-center gap-2 mt-1">
                       {/* Type tag */}
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize
@@ -370,7 +370,7 @@ const Complaints: React.FC = () => {
           </div>
         </div>
         {/* Right: Work Order Details */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-2 md:p-6 overflow-y-auto">
           {!selectedOrder ? (
             <div className="text-gray-400 text-center mt-24">Select a work order to view details</div>
           ) : (

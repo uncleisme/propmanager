@@ -221,7 +221,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
   );
 
   return (
-    <div className="space-y-6 max-w-screen-lg mx-auto min-h-screen flex flex-col pb-8">
+    <div className="space-y-6 max-w-screen-lg mx-auto min-h-screen flex flex-col pb-8 px-2 sm:px-4">
       {/* Error Message */}
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -310,15 +310,15 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
       </div>
 
       {/* Licenses Table */}
-      <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="flex-1 overflow-x-auto w-full bg-white rounded-lg shadow-sm border border-gray-200 text-xs sm:text-sm scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Type</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Expiration</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -340,23 +340,23 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
               filteredLicenses.map((license, idx) => {
                 return (
                   <tr key={license.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Award className="w-5 h-5 text-purple-500 mr-2" />
+                        <Award className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mr-2" />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{license.name}</div>
-                          <div className="text-xs text-gray-500">#{license.licenseNumber}</div>
+                          <div className="text-xs sm:text-sm font-medium text-gray-900">{license.name}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500">#{license.licenseNumber}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{license.type}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">{license.type}</td>
+                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
                       {formatDate(license.expirationDate)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap">
                       {getStatusBadge(license)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleView(license)}
@@ -389,8 +389,11 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
         </table>
       </div>
 
+      {/* Mobile horizontal scroll helper */}
+      <div className="block sm:hidden text-center text-gray-400 text-xs mt-1">Swipe left/right to see more columns</div>
+
       {/* Pagination Controls and Total Count */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2 text-xs sm:text-sm">
         <div>
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -414,8 +417,8 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
-            <div className="p-6 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col text-xs sm:text-sm">
+            <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: '70vh' }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                   {modalType === "view" ? "License Details" : modalType === "add" ? "Add License" : "Edit License"}
@@ -472,14 +475,14 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
               )}
 
               {(modalType === "add" || modalType === "edit") && (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name*</label>
                     <input
                       name="name"
                       defaultValue={modalType === "edit" && selectedLicense ? selectedLicense.name : ""}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-2 py-2 sm:px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
