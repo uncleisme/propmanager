@@ -309,22 +309,21 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
-      {/* Licenses Table */}
-      <div className="flex-1 overflow-x-auto w-full bg-white rounded-lg shadow-sm border border-gray-200 text-xs sm:text-sm scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-        <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-          <thead className="bg-gray-50">
+      {/* Licenses Table for desktop/tablet */}
+      <div className="hidden sm:block w-full h-96 overflow-y-auto bg-white rounded-lg shadow-sm border border-gray-200">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Type</th>
-              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Expiration</th>
-              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center">
+                <td colSpan={4} className="px-6 py-4 text-center">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
@@ -332,61 +331,88 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
               </tr>
             ) : filteredLicenses.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                   No licenses found
                 </td>
               </tr>
             ) : (
-              filteredLicenses.map((license, idx) => {
-                return (
-                  <tr key={license.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Award className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mr-2" />
-                        <div>
-                          <div className="text-xs sm:text-sm font-medium text-gray-900">{license.name}</div>
-                          <div className="text-[10px] sm:text-xs text-gray-500">#{license.licenseNumber}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">{license.type}</td>
-                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
-                      {formatDate(license.expirationDate)}
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap">
-                      {getStatusBadge(license)}
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleView(license)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(license)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(license.id!)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+              filteredLicenses.map((license, idx) => (
+                <tr key={license.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{license.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{license.licenseNumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(license)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleView(license)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="View"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(license)}
+                        className="text-yellow-600 hover:text-yellow-900"
+                        title="Edit"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(license.id!)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Card view for mobile */}
+      <div className="sm:hidden">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : filteredLicenses.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">No licenses found</div>
+        ) : (
+          filteredLicenses.map((license) => (
+            <div key={license.id} className="bg-white rounded-lg shadow p-3 mb-3 border border-gray-200">
+              <div className="font-bold text-gray-900 text-base">{license.name}</div>
+              <div className="text-xs text-gray-500">License #: {license.licenseNumber}</div>
+              <div className="text-xs text-gray-500">Status: {getStatusBadge(license)}</div>
+              <div className="flex space-x-2 mt-2">
+                <button
+                  onClick={() => handleView(license)}
+                  className="text-blue-600 hover:text-blue-900"
+                  title="View"
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleEdit(license)}
+                  className="text-yellow-600 hover:text-yellow-900"
+                  title="Edit"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(license.id!)}
+                  className="text-red-600 hover:text-red-900"
+                  title="Delete"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Mobile horizontal scroll helper */}

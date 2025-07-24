@@ -210,7 +210,7 @@ const Layout: React.FC<LayoutProps> = ({
       )}
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed z-50 inset-y-0 left-0 flex-col w-56 h-screen bg-[#292745] text-white lg:hidden transition-transform duration-[2000ms] ease-in-out transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}
+        className={`fixed z-50 inset-y-0 left-0 flex-col w-56 h-screen bg-[#292745] text-white lg:hidden transition-transform duration-[1000ms] ease-in-out transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}
         style={{ pointerEvents: sidebarOpen ? 'auto' : 'none' }}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-800">

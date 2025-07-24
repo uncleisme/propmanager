@@ -307,10 +307,10 @@ useEffect(() => {
     />
   </div>
 
-  {/* Contacts Table */}
-  <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
+  {/* Contacts Table for desktop/tablet */}
+  <div className="hidden sm:block w-full h-96 overflow-y-auto bg-white rounded-lg shadow-sm border border-gray-200">
     <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
+      <thead className="bg-gray-50 sticky top-0 z-10">
         <tr>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
@@ -322,7 +322,7 @@ useEffect(() => {
       <tbody className="bg-white divide-y divide-gray-200">
         {loading ? (
           <tr>
-            <td colSpan={4} className="px-6 py-4 text-center">
+            <td colSpan={5} className="px-6 py-4 text-center">
               <div className="flex justify-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
               </div>
@@ -330,7 +330,7 @@ useEffect(() => {
           </tr>
         ) : filteredContacts.length === 0 ? (
           <tr>
-            <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+            <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
               No contacts found
             </td>
           </tr>
@@ -371,6 +371,49 @@ useEffect(() => {
         )}
       </tbody>
     </table>
+  </div>
+
+  {/* Card view for mobile */}
+  <div className="sm:hidden">
+    {loading ? (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    ) : filteredContacts.length === 0 ? (
+      <div className="text-center text-gray-500 py-8">No contacts found</div>
+    ) : (
+      filteredContacts.map((contact) => (
+        <div key={contact.id} className="bg-white rounded-lg shadow p-3 mb-3 border border-gray-200">
+          <div className="font-bold text-gray-900 text-base">{contact.name}</div>
+          <div className="text-xs text-gray-500">Email: {contact.email}</div>
+          <div className="text-xs text-gray-500">Phone: {contact.phone}</div>
+          {contact.type && <div className="text-xs text-gray-500">Type: {contact.type}</div>}
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={() => handleView(contact)}
+              className="text-blue-600 hover:text-blue-900"
+              title="View"
+            >
+              <Eye className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleEdit(contact)}
+              className="text-yellow-600 hover:text-yellow-900"
+              title="Edit"
+            >
+              <Edit className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleDelete(contact.id)}
+              className="text-red-600 hover:text-red-900"
+              title="Delete"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      ))
+    )}
   </div>
   {/* Pagination Controls and Total Count */}
 <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">

@@ -250,29 +250,17 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
-      {/* Contracts Table */}
-      <div className="flex-1 overflow-auto w-full bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Contracts Table for desktop/tablet */}
+      <div className="hidden sm:block w-full h-96 overflow-y-auto bg-white rounded-lg shadow-sm border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Service Provider
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Value
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                End Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Provider</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -291,73 +279,106 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
                 </td>
               </tr>
             ) : (
-              filteredContracts.map((contract, idx) => {
-                // const days = getDaysUntilExpiration(contract.end_date);
-                return (
-                  <tr
-                    key={contract.id}
-                    className={
-                      idx % 2 === 0
-                        ? "bg-white"
-                        : "bg-gray-50 hover:bg-gray-100"
-                    }
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 text-blue-500 mr-2" />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{contract.title}</div>
-                        </div>
+              filteredContracts.map((contract, idx) => (
+                <tr key={contract.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <FileText className="w-5 h-5 text-blue-500 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{contract.title}</div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button
+                      onClick={() => handleVendorClick(contract.contactId)}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200"
+                    >
+                      {getContactName(contract.contactId)}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${contract.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(contract.endDate)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(contract)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
                       <button
-                        onClick={() => handleVendorClick(contract.contactId)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200"
+                        onClick={() => handleView(contract)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="View"
                       >
-                        {getContactName(contract.contactId)}
+                        <Eye className="w-5 h-5" />
                       </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${contract.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(contract.endDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(contract)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleView(contract)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(contract)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(contract.id!)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+                      <button
+                        onClick={() => handleEdit(contract)}
+                        className="text-yellow-600 hover:text-yellow-900"
+                        title="Edit"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(contract.id!)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Card view for mobile */}
+      <div className="sm:hidden">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : filteredContracts.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">No contracts found</div>
+        ) : (
+          filteredContracts.map((contract) => (
+            <div key={contract.id} className="bg-white rounded-lg shadow p-3 mb-3 border border-gray-200">
+              <div className="font-bold text-gray-900 text-base">{contract.title}</div>
+              <div className="text-xs text-gray-500">Service Provider: {getContactName(contract.contactId)}</div>
+              <div className="text-xs text-gray-500">Value: ${contract.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div className="text-xs text-gray-500">Status: {getStatusBadge(contract)}</div>
+              <div className="flex space-x-2 mt-2">
+                <button
+                  onClick={() => handleView(contract)}
+                  className="text-blue-600 hover:text-blue-900"
+                  title="View"
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleEdit(contract)}
+                  className="text-yellow-600 hover:text-yellow-900"
+                  title="Edit"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(contract.id!)}
+                  className="text-red-600 hover:text-red-900"
+                  title="Delete"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Pagination Controls and Total Count */}
