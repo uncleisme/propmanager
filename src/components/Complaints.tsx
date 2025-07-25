@@ -300,21 +300,21 @@ const Complaints: React.FC = () => {
   return (
     <>
       {/* Page Title and Add Button (separate from main container) */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between md:flex-row flex-col">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Work Orders</h1>
-          <p className="text-gray-600">Monitor and manage all jobs and complaints</p>
+          <h1 className="text-3xl text-center font-bold text-gray-900 md:text-left">Work Orders</h1>
+          <p className="text-gray-600 text-center md:text-left mb-2">Monitor and manage all jobs and complaints</p>
         </div>
         <button
           onClick={handleAdd}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+          className="bg-blue-600 text-white px-2 py-1 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
         >
           <Plus className="w-4 h-4" />
           <span>Add Work Order</span>
         </button>
       </div>
       {/* Main Content: Two Columns */}
-      <div className="flex flex-1 min-h-0 h-[80vh] bg-white rounded-lg shadow border border-gray-200 flex-col md:flex-row">
+      <div className="flex flex-1 min-h-0 h-[80vh] bg-gray-50 rounded-lg shadow border border-gray-200 flex-col md:flex-row mt-2">
         {/* Left: Work Order List */}
         <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r overflow-y-auto p-2 bg-gray-50">
           <div className="mb-2 flex flex-col gap-2">

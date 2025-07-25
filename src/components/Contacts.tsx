@@ -267,7 +267,7 @@ useEffect(() => {
 </div>
 
   {/* CSV Import Instructions */}
- <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+ <div className="bg-blue-900 border border-blue-200 rounded-lg p-4 mb-2 mt-2">
   <button
     onClick={() => setShowImportInstructions(!showImportInstructions)}
     className="flex items-center justify-between w-full text-left"
@@ -296,7 +296,7 @@ useEffect(() => {
 </div> 
 
   {/* Search Bar */}
-  <div className="relative w-full max-w-md">
+  <div className="relative w-full max-w-md mb-2 bg-green-500">
     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
       <Search className="w-5 h-5 text-gray-400" />
     </div>
@@ -309,16 +309,16 @@ useEffect(() => {
     />
   </div>
 
-  {/* Contacts Table (MUI Table, all screen sizes) */}
+  {/* Contacts Table */}
   <div className="overflow-y-auto">
   <table className="min-w-full table-auto">
-    <thead className="bg-yellow-500 text-gray-700 uppercase">
-      <tr>
-        <th className="px-4 py-3 border-b">Name</th>
-        <th className="px-4 py-3 border-b hidden md:table-cell">Email</th>
-        <th className="px-4 py-3 border-b">Phone</th>
-        <th className="px-4 py-3 border-b hidden md:table-cell">Type</th>
-        <th className="px-4 py-3 border-b hidden md:table-cell">Actions</th>
+    <thead className="bg-yellow-500">
+      <tr className="text-gray-700 lowercase">
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Type</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Actions</th>
       </tr>
     </thead>
     <tbody className="bg-white divide-y divide-gray-200">

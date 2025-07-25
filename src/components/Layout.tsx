@@ -333,7 +333,7 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
         {/* Main Content */}
-        <main className="flex-1 max-w-7xl w-full mx-auto bg-red-500 overflow-y-auto">
+        <main className="flex-1 max-w-7xl w-full mx-auto overflow-y-auto mx-2">
           {children}
         </main>
         <footer className="w-full py-4 px-8 bg-white text-center text-xs text-gray-400 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-2">

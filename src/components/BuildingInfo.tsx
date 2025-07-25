@@ -208,7 +208,7 @@ const addNewMember = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <div className="flex items-center justify-between md:flex-row flex-col">
         <div>
           <h1 className="text-3xl text-center font-bold text-gray-900 md:text-left">Building Information</h1>

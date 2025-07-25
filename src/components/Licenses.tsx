@@ -221,7 +221,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
   );
 
   return (
-    <div className="bg-green-500 space-y-6">
+    <div>
       {/* Error Message */}
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -262,7 +262,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
     {/* Add License Button */}
     <button
       onClick={handleAdd}
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+      className="bg-blue-600 text-white px-2 py-1 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
     >
       <Plus className="w-4 h-4" />
       <span>Add License</span>
@@ -271,7 +271,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
 </div>
 
       {/* CSV Import Instructions (collapsible, like Contacts) */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2 mt-2">
   <button
     onClick={() => setShowImportInstructions(!showImportInstructions)}
     className="flex items-center justify-between w-full text-left"
@@ -304,7 +304,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
 
 
       {/* Search Bar */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md mb-2">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="w-5 h-5 text-gray-400" />
         </div>
@@ -322,7 +322,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
       {/* Licenses Table*/}
       <div className="hidden sm:block w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-yellow-500">
+          <thead className="bg-yellow-500 text-gray-700 uppercase">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
