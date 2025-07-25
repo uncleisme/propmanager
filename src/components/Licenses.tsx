@@ -232,39 +232,44 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
       )}
 
       {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Licenses</h1>
-          <p className="text-gray-600">Manage all licenses and permits</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          {/* CSV Import Button */}
-          <div className="relative">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleCSVImport}
-              disabled={importing}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              id="csv-import-licenses"
-            />
-            <label
-              htmlFor="csv-import-licenses"
-              className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Upload className="w-4 h-4" />
-              <span>{importing ? 'Importing...' : 'Import CSV'}</span>
-            </label>
-          </div>
-          <button
-            onClick={handleAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add License</span>
-          </button>
-        </div>
-      </div>
+      <div className="flex items-center justify-between md:flex-row flex-col">
+  <div>
+    <h1 className="text-3xl text-center font-bold text-gray-900 md:text-left">Licenses</h1>
+    <p className="text-gray-600 text-center md:text-left">Manage all licenses and permits</p>
+  </div>
+  
+  {/* Button Container */}
+  <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 mt-4 md:mt-0">
+    {/* CSV Import Button */}
+    <div className="relative">
+      <input
+        type="file"
+        accept=".csv"
+        onChange={handleCSVImport}
+        disabled={importing}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        id="csv-import-licenses"
+      />
+      <label
+        htmlFor="csv-import-licenses"
+        className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <Upload className="w-4 h-4" />
+        <span>{importing ? 'Importing...' : 'Import CSV'}</span>
+      </label>
+    </div>
+
+    {/* Add License Button */}
+    <button
+      onClick={handleAdd}
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+    >
+      <Plus className="w-4 h-4" />
+      <span>Add License</span>
+    </button>
+  </div>
+</div>
+
       {/* CSV Import Instructions (collapsible, like Contacts) */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
         <button
@@ -309,10 +314,10 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
-      {/* Licenses Table for desktop/tablet (MUI Table) */}
+      {/* Licenses Table*/}
       <div className="hidden sm:block w-full h-96 overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-1">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
@@ -414,9 +419,6 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
           ))
         )}
       </div>
-
-      {/* Mobile horizontal scroll helper */}
-      <div className="block sm:hidden text-center text-gray-400 text-xs mt-1">Swipe left/right to see more columns</div>
 
       {/* Pagination Controls and Total Count */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2 text-xs sm:text-sm">

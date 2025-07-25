@@ -311,7 +311,7 @@ useEffect(() => {
   </div>
 
   {/* Contacts Table (MUI Table, all screen sizes) */}
-  <div className="overflow-x-auto">
+  <div className="overflow-y-auto">
   <table className="min-w-full table-auto">
     <thead className="bg-yellow-500 text-gray-700 uppercase">
       <tr>
