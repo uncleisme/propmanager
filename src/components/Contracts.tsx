@@ -17,7 +17,7 @@ import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } fro
 
 
 interface DashboardProps {
-  user: User | null; // ✅ Declare the prop
+  user: User | null;
 }
 
 const Contracts: React.FC<DashboardProps> = ({ user }) => {

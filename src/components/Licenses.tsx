@@ -272,33 +272,36 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
 
       {/* CSV Import Instructions (collapsible, like Contacts) */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
-        <button
-          onClick={() => setShowImportInstructions(!showImportInstructions)}
-          className="flex items-center justify-between w-full text-left"
-          type="button"
-        >
-          <h3 className="text-sm font-medium text-blue-800">
-            CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
-          </h3>
-          <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
-        </button>
-        <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
-          <div className="pt-2">
-            <p className="text-sm text-blue-700 mb-2">
-              Your CSV file should contain the following columns (in any order):
-            </p>
-            <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
-              name,type,issuer,issueDate,expirationDate,licenseNumber,status,contactId,notes
-            </div>
-            <p className="text-xs text-blue-600 mt-2">
-              • <strong>Required:</strong> name, type, issuer, issueDate, expirationDate, licenseNumber, status<br/>
-              • <strong>Optional:</strong> contactId, notes<br/>
-              • <strong>Date format:</strong> YYYY-MM-DD (e.g., 2024-12-31)<br/>
-              • <strong>Example:</strong> Fire Safety,Fire,City Council,2023-01-01,2024-01-01,FS-123,active,123,Annual inspection
-            </p>
-          </div>
-        </div>
+  <button
+    onClick={() => setShowImportInstructions(!showImportInstructions)}
+    className="flex items-center justify-between w-full text-left"
+  >
+    <h3 className="text-sm font-medium text-blue-800">
+      CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
+    </h3>
+    <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+  </button>
+  
+  <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
+    <div className="pt-2">
+      <p className="text-sm text-blue-700 mb-2">
+        Your CSV file should contain the following columns (in any order):
+      </p>
+      <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
+        name,type,issuer,issuedate,expirationdate,
+        licensenumber,status,contactid,notes
       </div>
+      <p className="text-xs text-blue-600 mt-2">
+        • <strong>Required:</strong> name, type, issuer, 
+           issuedate, expirationdate, licensenumber, status<br/>
+        • <strong>Optional:</strong> contactid, notes<br/>
+        • <strong>Example:</strong> John Doe,contractor,
+           Acme Corp,2021-01-01,2025-01-01,1234567890,active,123 Main St,VIP client
+      </p>
+    </div>
+  </div>
+</div>
+
 
       {/* Search Bar */}
       <div className="relative w-full max-w-md">
@@ -314,10 +317,12 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
+      
+
       {/* Licenses Table*/}
-      <div className="hidden sm:block w-full h-96 overflow-y-auto">
+      <div className="hidden sm:block w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-1">
+          <thead className="bg-yellow-500">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
@@ -388,7 +393,7 @@ const Licenses: React.FC<DashboardProps> = ({ user }) => {
           <div className="text-center text-gray-500 py-8">No licenses found</div>
         ) : (
           filteredLicenses.map((license) => (
-            <div key={license.id} className="bg-white rounded-lg shadow p-3 mb-3 border border-gray-200">
+            <div key={license.id} className="bg-green-500 rounded-lg shadow p-3 mb-3 border border-gray-200">
               <div className="font-bold text-gray-900 text-base">{license.name}</div>
               <div className="text-xs text-gray-500">License #: {license.licenseNumber}</div>
               <div className="text-xs text-gray-500">Status: {getStatusBadge(license)}</div>

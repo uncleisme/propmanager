@@ -271,7 +271,6 @@ useEffect(() => {
   <button
     onClick={() => setShowImportInstructions(!showImportInstructions)}
     className="flex items-center justify-between w-full text-left"
-    type="button"
   >
     <h3 className="text-sm font-medium text-blue-800">
       CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})

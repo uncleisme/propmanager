@@ -272,7 +272,7 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
       </aside>
       {/* Main content area */}
-      <div className="flex-1 bg-blue-100">
+      <div className="flex-1">
         {/* Header */}
         <header className="sticky top-0 z-20 bg-white shadow flex items-center justify-between h-16 px-8">
           <div className="flex items-center gap-4">
@@ -333,7 +333,7 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
         {/* Main Content */}
-        <main className="flex-1 p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-8 max-w-7xl w-full mx-auto bg-white overflow-y-auto">
           {children}
         </main>
         <footer className="w-full py-4 px-8 bg-white text-center text-xs text-gray-400 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-2">
