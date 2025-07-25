@@ -232,39 +232,40 @@ useEffect(() => {
   )}
 
   {/* Header Section */}
-  <div className="flex items-center justify-between flex">
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-      <p className="text-gray-600">Manage all contacts</p>
-    </div>
-    <div className="flex items-center space-x-3">
-      {/* CSV Import Button */}
-      <div className="relative">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleCSVImport}
-          disabled={importing}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-          id="csv-import-contacts"
-        />
-        <label
-          htmlFor="csv-import-contacts"
-          className={`bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Upload className="w-4 h-4" />
-          <span>{importing ? 'Importing...' : 'Import CSV'}</span>
-        </label>
-      </div>
-      <button
-        onClick={handleAdd}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
-      >
-        <Plus className="w-4 h-4" />
-        <span>Add Contact</span>
-      </button>
-    </div>
+  <div className="flex flex-col md:flex-row items-center justify-between">
+  <div className="text-center md:text-left">
+    <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
+    <p className="text-gray-600">Manage all contacts</p>
   </div>
+  <div className="flex flex-col md:flex-row mt-4 md:mt-0 space-y-4 md:space-y-0 md:space-x-4">
+    {/* CSV Import Button */}
+    <div className="relative">
+      <input
+        type="file"
+        accept=".csv"
+        onChange={handleCSVImport}
+        disabled={importing}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        id="csv-import-contacts"
+      />
+      <label
+        htmlFor="csv-import-contacts"
+        className={`bg-green-600 text-white px-2 py-1 rounded-lg flex items-center hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <Upload className="w-4 h-4" />
+        <span>{importing ? 'Importing...' : 'Import CSV'}</span>
+      </label>
+    </div>
+    <button
+      onClick={handleAdd}
+      className="bg-blue-600 text-white px-2 py-1 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+    >
+      <Plus className="w-4 h-4" />
+      <span>Add Contact</span>
+    </button>
+  </div>
+</div>
+
   {/* CSV Import Instructions */}
  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
   <button
@@ -311,69 +312,70 @@ useEffect(() => {
 
   {/* Contacts Table (MUI Table, all screen sizes) */}
   <div className="overflow-x-auto">
-    <table className="min-w-full bg-white border border-gray-200 text-sm text-left">
-      <thead className="bg-gray-100 text-gray-700 uppercase">
+  <table className="min-w-full table-auto">
+    <thead className="bg-yellow-500 text-gray-700 uppercase">
+      <tr>
+        <th className="px-4 py-3 border-b">Name</th>
+        <th className="px-4 py-3 border-b hidden md:table-cell">Email</th>
+        <th className="px-4 py-3 border-b">Phone</th>
+        <th className="px-4 py-3 border-b hidden md:table-cell">Type</th>
+        <th className="px-4 py-3 border-b hidden md:table-cell">Actions</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white divide-y divide-gray-200">
+      {loading ? (
         <tr>
-          <th className="px-4 py-3 border-b">Name</th>
-          <th className="px-4 py-3 border-b">Email</th>
-          <th className="px-4 py-3 border-b">Phone</th>
-          <th className="px-4 py-3 border-b hidden md:table-cell">Type</th>
-          <th className="px-4 py-3 border-b hidden md:block">Actions</th>
+          <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center">
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          </td>
         </tr>
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {loading ? (
-          <tr>
-            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center">
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+      ) : filteredContacts.length === 0 ? (
+        <tr>
+          <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+            No contacts found
+          </td>
+        </tr>
+      ) : (
+        filteredContacts.map((contact) => (
+          <tr key={contact.id} className="hover:bg-gray-100">
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{contact.email}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.phone}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{contact.type}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium hidden md:table-cell">
+              <div className="flex gap-2 md:gap-8 flex-col md:flex-row">
+                <button
+                  onClick={() => handleView(contact)}
+                  className="text-blue-500 hover:text-blue-700"
+                  title="View"
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleEdit(contact)}
+                  className="text-yellow-500 hover:text-yellow-700"
+                  title="Edit"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(contact.id)}
+                  className="text-red-600 hover:text-red-800"
+                  title="Delete"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
               </div>
             </td>
           </tr>
-        ) : filteredContacts.length === 0 ? (
-          <tr>
-            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-              No contacts found
-            </td>
-          </tr>
-        ) : (
-          filteredContacts.map((contact) => (
-            <tr key={contact.id} className="hover:bg-gray-100">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.phone}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{contact.type}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => handleView(contact)}
-                    style={{ color: '#2563eb' }}
-                    title="View"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(contact)}
-                    style={{ color: '#ca8a04' }}
-                    title="Edit"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(contact.id)}
-                    style={{ color: '#dc2626' }}
-                    title="Delete"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
 
   {/* Pagination Controls and Total Count */}
 <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">

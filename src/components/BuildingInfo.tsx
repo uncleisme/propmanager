@@ -459,10 +459,7 @@ const addNewMember = () => {
 
           {/* Financial Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <DollarSign className="w-5 h-5 mr-2" />
-              Financial Information
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">Financial Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Maintenance Fee (RM)</label>
@@ -491,10 +488,7 @@ const addNewMember = () => {
 
           {/* Insurance Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Shield className="w-5 h-5 mr-2" />
-              Insurance Information
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">Insurance Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Company</label>

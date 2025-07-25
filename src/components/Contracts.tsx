@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import { Contract, Contact } from "../types";
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
-// Remove Papa import
-// import Papa from 'papaparse';
+
 
 interface DashboardProps {
   user: User | null; // ✅ Declare the prop
@@ -217,16 +216,16 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
       )}
 
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between md:flex-row flex-col">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contracts</h1>
-          <p className="text-gray-600">Monitor and manage service provider contracts</p>
+          <h1 className="text-3xl text-center font-bold text-gray-900 md:text-left">Contracts</h1>
+          <p className="text-gray-600 text-center md:text-left">Monitor and manage service provider contracts</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex">
           {/* Add Contract Button */}
           <button
             onClick={handleAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+            className="bg-blue-600 text-white px-4 py-1 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
             <span>Add Contract</span>
@@ -248,10 +247,10 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
-      {/* Contracts Table for desktop/tablet (MUI Table) */}
+      {/* Contracts Table */}
       <div className="hidden sm:block w-full h-96 overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-yellow-500 text-gray-700 uppercase">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Provider</th>
@@ -348,7 +347,7 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
               <div className="font-bold text-gray-900 text-base">{contract.title}</div>
               <div className="text-xs text-gray-500">Service Provider: {getContactName(contract.contactId)}</div>
               <div className="text-xs text-gray-500">Value: ${contract.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              <div className="text-xs text-gray-500">Status: {getStatusBadge(contract)}</div>
+              <div className="text-xs text-gray-500 mt-2">{getStatusBadge(contract)}</div>
               <div className="flex space-x-2 mt-2">
                 <button
                   onClick={() => handleView(contract)}
