@@ -208,7 +208,7 @@ const addNewMember = () => {
   }
 
   return (
-    <div className="space-y-6 bg-green-500">
+    <div className="space-y-6">
       <div className="flex items-center justify-between md:flex-row flex-col">
         <div>
           <h1 className="text-3xl text-center font-bold text-gray-900 md:text-left">Building Information</h1>
@@ -249,7 +249,7 @@ const addNewMember = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Building Typeo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Building Type</label>
                 <select
                   value={formData.buildingType}
                   onChange={(e) => setFormData({ ...formData, buildingType: e.target.value as BuildingInfo['buildingType'] })}
@@ -655,103 +655,98 @@ const addNewMember = () => {
         buildingInfo ? (
           <div className="space-y-6">
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Building2 className="w-5 h-5 mr-2" />
+            <div className="bg-white rounded-lg shadow-sm p-6 shadow-xl">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">
                 Basic Information
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Building Name</p>
-                  <p className="text-lg font-semibold text-gray-900">{buildingInfo.buildingName}</p>
+                  <p className="text-lg font-semibold text-blue-900">{buildingInfo.buildingName}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Building Type</p>
-                  <p className="text-lg text-gray-900 capitalize">{buildingInfo.buildingType.replace('_', ' ')}</p>
+                  <p className="text-lg text-blue-900 capitalize">{buildingInfo.buildingType.replace('_', ' ')}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Year Built</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.yearBuilt}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.yearBuilt}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Units</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.totalUnits}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.totalUnits}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Total Floors</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.totalFloors}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.totalFloors}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Parking Spaces</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.parkingSpaces}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.parkingSpaces}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-500 mb-2">Address</p>
                 <div className="flex items-start space-x-2">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <p className="text-gray-900">{buildingInfo.buildingAddress}</p>
+                  <p className=" text-lg text-blue-900">{buildingInfo.buildingAddress}</p>
                 </div>
               </div>
             </div>
 
             {/* Property Management */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Property Management
-              </h2>
+            <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Property Management</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Manager Name</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerName || 'Not specified'}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.propertyManagerName || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Management Company</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerCompany || 'Not specified'}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.propertyManagerCompany || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Phone</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerPhone || 'Not specified'}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.propertyManagerPhone || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-lg text-gray-900">{buildingInfo.propertyManagerEmail || 'Not specified'}</p>
+                  <p className="text-lg text-blue-900">{buildingInfo.propertyManagerEmail || 'Not specified'}</p>
                 </div>
               </div>
             </div>
 
             {/* JMB Information */}
 {(buildingInfo.jmbName || buildingInfo.jmbMembers?.length > 0) && (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h2 className="text-xl font-semibold text-gray-900 mb-4">Joint Management Body (JMB)</h2>
+  <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Joint Management Body (JMB)</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {buildingInfo.jmbName && (
         <div className="md:col-span-2">
           <p className="text-sm font-medium text-gray-500">JMB Name</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmbName}</p>
+          <p className="text-lg text-blue-900">{buildingInfo.jmbName}</p>
         </div>
       )}
       {buildingInfo.jmbPhone && (
         <div>
           <p className="text-sm font-medium text-gray-500">Phone</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmbPhone}</p>
+          <p className="text-lg text-blue-900">{buildingInfo.jmbPhone}</p>
         </div>
       )}
       {buildingInfo.jmbEmail && (
         <div>
           <p className="text-sm font-medium text-gray-500">Email</p>
-          <p className="text-lg text-gray-900">{buildingInfo.jmbEmail}</p>
+          <p className="text-lg text-blue-900">{buildingInfo.jmbEmail}</p>
         </div>
       )}
       {buildingInfo?.jmbMembers?.length > 0 && (
         <div className="md:col-span-2">
           <p className="text-sm font-medium text-gray-500 mb-2">JMB Members</p>
           <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-auto w-full overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="bg-yellow-500">
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
                       Name
                     </th>
@@ -763,7 +758,7 @@ const addNewMember = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-gray-500">
                   {buildingInfo.jmbMembers.map((member, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -788,47 +783,41 @@ const addNewMember = () => {
 )}
 
             {/* Financial Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <DollarSign className="w-5 h-5 mr-2" />
-                Financial Information
-              </h2>
+            <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Financial Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Monthly Maintenance Fee</p>
-                  <p className="text-lg text-gray-900">RM {buildingInfo.maintenanceFee.toFixed(2)}</p>
+                  <p className="text-lg text-blue-900">RM {buildingInfo.maintenanceFee.toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Sinking Fund</p>
-                  <p className="text-lg text-gray-900">RM {buildingInfo.sinkingFund.toFixed(2)}</p>
+                  <p className="text-lg text-blue-900">RM {buildingInfo.sinkingFund.toFixed(2)}</p>
                 </div>
               </div>
             </div>
 
             {/* Insurance Information */}
             {(buildingInfo.insuranceCompany || buildingInfo.insurancePolicyNumber) && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Shield className="w-5 h-5 mr-2" />
-                  Insurance Information
-                </h2>
+              <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Insurance Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {buildingInfo.insuranceCompany && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Insurance Company</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.insuranceCompany}</p>
+                      <p className="text-lg text-blue-900">{buildingInfo.insuranceCompany}</p>
                     </div>
                   )}
                   {buildingInfo.insurancePolicyNumber && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Policy Number</p>
-                      <p className="text-lg text-gray-900">{buildingInfo.insurancePolicyNumber}</p>
+                      <p className="text-lg text-blue-900">{buildingInfo.insurancePolicyNumber}</p>
                     </div>
                   )}
                   {buildingInfo.insuranceExpiry && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Expiry Date</p>
-                      <p className="text-lg text-gray-900">{new Date(buildingInfo.insuranceExpiry).toLocaleDateString()}</p>
+                      <p className="text-lg text-blue-900">{new Date(buildingInfo.insuranceExpiry).toLocaleDateString()}</p>
                     </div>
                   )}
                 </div>
@@ -837,13 +826,13 @@ const addNewMember = () => {
 
             {/* Facilities */}
             {buildingInfo.facilities && buildingInfo.facilities.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Facilities</h2>
+              <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Facilities</h2>
                 <div className="flex flex-wrap gap-2">
                   {buildingInfo.facilities.map((facility, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-900"
                     >
                       {facility}
                     </span>
@@ -854,8 +843,8 @@ const addNewMember = () => {
 
             {/* Security Features */}
             {buildingInfo.securityFeatures && buildingInfo.securityFeatures.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Features</h2>
+              <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Security Features</h2>
                 <div className="flex flex-wrap gap-2">
                   {buildingInfo.securityFeatures.map((feature, index) => (
                     <span
@@ -871,8 +860,8 @@ const addNewMember = () => {
 
             {/* Notes */}
             {buildingInfo.notes && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Additional Notes</h2>
+                <div className="bg-white rounded-lg shadow-sm shadow-xl p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center md:text-left">Additional Notes</h2>
                 <p className="text-gray-700 whitespace-pre-line">{buildingInfo.notes}</p>
               </div>
             )}
