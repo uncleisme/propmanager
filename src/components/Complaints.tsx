@@ -434,7 +434,7 @@ const Complaints: React.FC = () => {
           </div>
         </div>
         {/* Right: Work Order Details */}
-        <div className="flex-1 p-2 md:p-6 overflow-y-auto">
+        <div className="flex-1 p-2 md:p-6 overflow-y-auto bg-gray-500">
           {!selectedOrder ? (
             <div className="text-gray-400 text-center mt-24">
               <div className="text-lg font-medium mb-2">
@@ -479,18 +479,18 @@ const Complaints: React.FC = () => {
               </div>
               <div className="mb-4">
                 <div className="font-medium text-gray-700 mb-1">Comment</div>
-                <div className="bg-gray-50 border border-gray-200 rounded p-3 text-gray-900 text-sm min-h-[48px] whitespace-pre-line">
+                <div className="bg-gray-50 rounded p-3 text-gray-900 text-sm min-h-[48px] whitespace-pre-line">
                   {selectedOrder.comment ? selectedOrder.comment : <span className="text-gray-400">No comment</span>}
                 </div>
               </div>
               <div className="mb-4">
                 <div className="font-medium text-gray-700 mb-1">Photo</div>
                 {selectedOrder?.photoUrl ? (
-                  <div className="flex justify-center items-center bg-gray-100 border border-gray-200 rounded-lg p-2">
+                  <div className="flex justify-center items-center bg-gray-100 rounded-lg p-2">
                     <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="max-h-64 rounded shadow" />
                   </div>
                 ) : (
-                  <div className="text-gray-400 text-sm italic text-center bg-gray-50 border border-gray-200 rounded p-4">No photo uploaded</div>
+                  <div className="text-gray-400 text-sm italic text-center bg-gray-50 rounded p-4">No photo uploaded</div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
