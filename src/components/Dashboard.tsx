@@ -273,7 +273,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
         return (
           <div
             key={index}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative min-w-0 hover:bg-gray-100 font-sans text-base"
+                  className="bg-white rounded-lg shadow-lg hover:shadow-xl p-4 sm:p-6 relative min-w-0 hover:bg-gray-50 font-sans text-base transition-all duration-200"
                   onMouseEnter={() => setHoveredCard(index)}
                   onMouseLeave={() => setHoveredCard(null)}
           >

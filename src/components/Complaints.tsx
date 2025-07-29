@@ -13,7 +13,7 @@ interface WorkOrder {
   scheduledDate?: string;
   scheduledStart?: string;
   scheduledEnd?: string;
-  technicianId?: string;
+  assignedTo?: string; // Profile ID of technician
   createdAt: string;
   resolvedAt?: string;
   comment?: string;
@@ -22,7 +22,8 @@ interface WorkOrder {
 
 const Complaints: React.FC = () => {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
+  const [technicians, setTechnicians] = useState<{ id: string; full_name: string | null; email: string; type: string }[]>([]);
+  const [contacts, setContacts] = useState<{ id: string; name: string; type: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -36,7 +37,7 @@ const Complaints: React.FC = () => {
     scheduledDate: '',
     scheduledStart: '',
     scheduledEnd: '',
-    technicianId: '',
+    assignedTo: '',
     comment: '',
     photoUrl: '',
   });
@@ -53,27 +54,67 @@ const Complaints: React.FC = () => {
       // Fetch work orders
       const { data: woData, error: woError } = await supabase
         .from('work_order')
-        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
+        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,createdAt,resolvedAt,comment,photoUrl')
         .order('createdAt', { ascending: false });
       if (woError) {
       setLoading(false);
         return;
       }
       setWorkOrders(woData || []);
-      // Fetch contacts for technician name resolution
-      const { data: contactsData } = await supabase
+      // Fetch technicians from profiles table - filter by type 'technician'
+      const { data: techniciansData, error: techniciansError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, type')
+        .eq('type', 'technician');
+      
+      console.log('Technicians data:', techniciansData);
+      console.log('Technicians count:', techniciansData?.length);
+      
+      if (techniciansError) {
+        console.error('Error fetching technicians:', techniciansError);
+      }
+      
+      // Fetch contacts from contacts table
+      const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
-        .select('id, name');
+        .select('id, name, type');
+      
+      console.log('Contacts data:', contactsData);
+      console.log('Contacts count:', contactsData?.length);
+      
+      if (contactsError) {
+        console.error('Error fetching contacts:', contactsError);
+      }
+      
+      setTechnicians(techniciansData || []);
       setContacts(contactsData || []);
       setLoading(false);
     };
     fetchData();
   }, []);
 
-  const getTechnicianName = (id?: string) => {
+  // Reset pagination when switching tabs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, []);
+
+  const getTechnicianName = (id?: string, orderType?: string) => {
     if (!id) return '';
-    const contact = contacts.find(c => c.id === id);
-    return contact ? contact.name : '';
+    
+    if (orderType === 'complaint') {
+      const technician = technicians.find(t => t.id === id);
+      return technician ? technician.full_name || technician.email : '';
+    } else {
+      const contact = contacts.find(c => c.id === id);
+      return contact ? contact.name : '';
+    }
+  };
+
+  // Handle form changes
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const newForm = { ...form, [name]: value === null ? '' : value };
+    setForm(newForm);
   };
 
   // Status badge mapping
@@ -116,7 +157,7 @@ const Complaints: React.FC = () => {
       scheduledDate: '',
       scheduledStart: '',
       scheduledEnd: '',
-      technicianId: '',
+      assignedTo: '',
       comment: '',
       photoUrl: '',
     });
@@ -143,7 +184,7 @@ const Complaints: React.FC = () => {
       scheduledDate: (order.scheduledDate ?? '') || '',
       scheduledStart: (order.scheduledStart ?? '') || '',
       scheduledEnd: (order.scheduledEnd ?? '') || '',
-      technicianId: (order.technicianId ?? '') || '',
+      assignedTo: (order.assignedTo ?? '') || '',
       comment: order.comment || '',
       photoUrl: order.photoUrl || '',
     });
@@ -159,15 +200,10 @@ const Complaints: React.FC = () => {
     // Refresh table
     const { data: woData } = await supabase
       .from('work_order')
-      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
+      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,createdAt,resolvedAt,comment,photoUrl')
       .order('createdAt', { ascending: false });
     setWorkOrders(woData || []);
     setLoading(false);
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value === null ? '' : value }));
   };
 
   // Handle photo upload
@@ -198,7 +234,7 @@ const Complaints: React.FC = () => {
       scheduledDate: form.scheduledDate || undefined,
       scheduledStart: form.scheduledStart || undefined,
       scheduledEnd: form.scheduledEnd || undefined,
-      technicianId: form.technicianId || undefined,
+      assignedTo: form.assignedTo || undefined,
       createdAt: modalType === 'add' ? new Date().toISOString() : undefined,
       comment: form.comment || undefined,
       photoUrl: form.photoUrl || undefined,
@@ -232,21 +268,24 @@ const Complaints: React.FC = () => {
     setLoading(true);
     const { data: woData } = await supabase
       .from('work_order')
-      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,technicianId,createdAt,resolvedAt,comment,photoUrl')
+      .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,createdAt,resolvedAt,comment,photoUrl')
       .order('createdAt', { ascending: false });
     setWorkOrders(woData || []);
     setLoading(false);
   };
 
-  // Filter work orders by search only
+  // Filter work orders by search and tab
   const filteredWorkOrders = workOrders.filter(order => {
-    const techName = getTechnicianName(order.technicianId).toLowerCase();
-    return (
+    const techName = getTechnicianName(order.assignedTo, order.type).toLowerCase();
+    const matchesSearch = (
       order.title.toLowerCase().includes(search.toLowerCase()) ||
-      (order.propertyUnit || '').toLowerCase().includes(search.toLowerCase()) ||
-      techName.includes(search.toLowerCase()) ||
-      order.status.toLowerCase().includes(search.toLowerCase())
+      order.description.toLowerCase().includes(search.toLowerCase()) ||
+      order.propertyUnit?.toLowerCase().includes(search.toLowerCase()) ||
+      order.status.toLowerCase().includes(search.toLowerCase()) ||
+      techName.includes(search.toLowerCase())
     );
+    
+    return matchesSearch;
   });
   const totalEntries = filteredWorkOrders.length;
   const totalPages = Math.ceil(totalEntries / pageSize) || 1;
@@ -293,12 +332,22 @@ const Complaints: React.FC = () => {
     if (!error) {
       setWorkOrders(prev => prev.map(wo => wo.id === selectedOrder.id ? { ...wo, status, resolvedAt: updateFields.resolvedAt } : wo));
       setSelectedOrder(prev => prev ? { ...prev, status, resolvedAt: updateFields.resolvedAt } : prev);
+      
+      // If status is completed, switch to completed tab
+      // This logic is removed as per the edit hint
     }
     setLoading(false);
   };
 
   return (
     <>
+      {/* Success Notification */}
+      {errorMsg && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+          {errorMsg}
+        </div>
+      )}
+      
       {/* Page Title and Add Button (separate from main container) */}
       <div className="flex items-center justify-between md:flex-row flex-col">
         <div>
@@ -313,6 +362,7 @@ const Complaints: React.FC = () => {
           <span>Add Work Order</span>
         </button>
       </div>
+      
       {/* Main Content: Two Columns */}
       <div className="flex flex-1 min-h-0 h-[80vh] bg-gray-50 rounded-lg shadow border border-gray-200 flex-col md:flex-row mt-2">
         {/* Left: Work Order List */}
@@ -320,7 +370,7 @@ const Complaints: React.FC = () => {
           <div className="mb-2 flex flex-col gap-2">
             <input
               type="text"
-              placeholder="Search title, unit, technician, or status..."
+              placeholder="Search work orders..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="mb-2 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:px-3"
@@ -328,14 +378,17 @@ const Complaints: React.FC = () => {
           </div>
           <div>
             {filteredWorkOrders.length === 0 ? (
-              <div className="text-gray-500 text-center py-8">No work order found</div>
+              <div className="text-gray-500 text-center py-8">
+                No work orders found
+              </div>
             ) : (
+              // Card view for all work orders
               filteredWorkOrders.map(order => (
                 <div
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
                   className={`relative p-3 md:p-4 mb-3 rounded-lg cursor-pointer border transition-colors duration-150 shadow-sm bg-white overflow-hidden
-                    ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'}`}
+                    ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-200 bg-blue-50' : 'border-gray-100 hover:bg-blue-50 hover:border-gray-200'}`}
                   style={{ minHeight: '56px' }}
                 >
                   {/* Priority tag right-aligned at top */}
@@ -363,6 +416,17 @@ const Complaints: React.FC = () => {
                         <span className="text-xs text-gray-500">{order.propertyUnit}</span>
                       )}
                     </div>
+                    {/* Technician/Contact information */}
+                    {order.assignedTo && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs text-gray-400">
+                          {order.type === 'complaint' ? 'Technician:' : 'Contact:'}
+                        </span>
+                        <span className="text-xs text-blue-600 font-medium">
+                          {getTechnicianName(order.assignedTo, order.type)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -372,14 +436,21 @@ const Complaints: React.FC = () => {
         {/* Right: Work Order Details */}
         <div className="flex-1 p-2 md:p-6 overflow-y-auto">
           {!selectedOrder ? (
-            <div className="text-gray-400 text-center mt-24">Select a work order to view details</div>
+            <div className="text-gray-400 text-center mt-24">
+              <div className="text-lg font-medium mb-2">
+                Select a work order
+              </div>
+              <div className="text-sm text-gray-500">
+                Choose a work order from the list to view and manage its details
+              </div>
+            </div>
           ) : (
             <div className="max-w-xl mx-auto">
               {/* Status Buttons at the top */}
               <div className="flex space-x-3 mb-6">
                 <button
                   onClick={() => handleStatusChange('open')}
-                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
+                  className={`flex-1 py-2 rounded-lg font-semibold transition-colors duration-150 ${selectedOrder.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
                 >Open</button>
                 <button
                   onClick={() => handleStatusChange('in-progress')}
@@ -412,7 +483,7 @@ const Complaints: React.FC = () => {
                   {selectedOrder.comment ? selectedOrder.comment : <span className="text-gray-400">No comment</span>}
                 </div>
               </div>
-              <div className="mb-6">
+              <div className="mb-4">
                 <div className="font-medium text-gray-700 mb-1">Photo</div>
                 {selectedOrder?.photoUrl ? (
                   <div className="flex justify-center items-center bg-gray-100 border border-gray-200 rounded-lg p-2">
@@ -436,8 +507,12 @@ const Complaints: React.FC = () => {
                   <div className="text-gray-900 text-sm">{selectedOrder.scheduledEnd || '-'}</div>
                 </div>
                 <div>
-                  <div className="font-medium text-gray-700 mb-1">Technician</div>
-                  <div className="text-gray-900 text-sm">{getTechnicianName(selectedOrder.technicianId) || '-'}</div>
+                  <div className="font-medium text-gray-700 mb-1">
+                    {selectedOrder.type === 'complaint' ? 'Technician' : 'Contact'}
+                  </div>
+                  <div className="text-gray-900 text-sm">
+                    {getTechnicianName(selectedOrder?.assignedTo, selectedOrder?.type) || '-'}
+                  </div>
                 </div>
               </div>
               <div className="mb-4">
@@ -452,6 +527,7 @@ const Complaints: React.FC = () => {
           )}
         </div>
       </div>
+
       {/* Add Work Order Modal (unchanged) */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -470,6 +546,7 @@ const Complaints: React.FC = () => {
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
+              
               {modalType === 'view' ? (
                 <div className="space-y-4">
                   <div>
@@ -502,14 +579,14 @@ const Complaints: React.FC = () => {
                   </div>
                   {selectedOrder?.type === 'complaint' && (
                     <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                        <div className="text-gray-900 text-sm">{selectedOrder?.priority || '-'}</div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
-                        <div className="text-gray-900 text-sm">{selectedOrder?.propertyUnit || '-'}</div>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <div className="text-gray-900 text-sm">{selectedOrder?.priority || '-'}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
+                      <div className="text-gray-900 text-sm">{selectedOrder?.propertyUnit || '-'}</div>
+                    </div>
                     </>
                   )}
                   <div className="grid grid-cols-2 gap-4">
@@ -525,184 +602,233 @@ const Complaints: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                       <div className="text-gray-900 text-sm">{selectedOrder?.scheduledEnd || '-'}</div>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {selectedOrder?.type === 'complaint' ? 'Technician' : 'Contact'}
+                      </label>
+                      <div className="text-gray-900 text-sm">
+                        {getTechnicianName(selectedOrder?.assignedTo, selectedOrder?.type) || '-'}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Technician</label>
-                    <div className="text-gray-900 text-sm">{getTechnicianName(selectedOrder?.technicianId) || '-'}</div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
+                  <div className="mb-4">
+                    <div className="font-medium text-gray-700 mb-1">Created At</div>
                     <div className="text-gray-900 text-sm">{selectedOrder?.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : '-'}</div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Resolved At</label>
+                  <div className="mb-4">
+                    <div className="font-medium text-gray-700 mb-1">Resolved At</div>
                     <div className="text-gray-900 text-sm">{selectedOrder?.resolvedAt ? new Date(selectedOrder.resolvedAt).toLocaleString() : '-'}</div>
                   </div>
                 </div>
               ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    name="type"
-                    value={form.type}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="job">Job</option>
-                    <option value="complaint">Complaint</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                  <select
-                    name="title"
-                    value={form.title ?? ''}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select title</option>
-                    {WORK_ORDER_TITLES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    name="description"
-                    value={form.description ?? ''}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
-                  <textarea
-                    name="comment"
-                    value={form.comment ?? ''}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {form.photoUrl && (
-                    <img src={form.photoUrl} alt="Work Order Photo" className="mt-2 max-h-32 rounded" />
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-                  <select
-                    name="status"
-                    value={form.status ?? ''}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select status</option>
-                    <option value="open">Open</option>
-                    <option value="in-progress">Work In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-                {form.type === 'complaint' && (
-                  <>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                     <select
-                        name="priority"
-                        value={form.priority}
-                        onChange={handleFormChange}
+                      name="type"
+                      value={form.type}
+                      onChange={handleFormChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                        <option value="">Select priority</option>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
+                      <option value="job">Job</option>
+                      <option value="complaint">Complaint</option>
                     </select>
                   </div>
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
-                      <input
-                        name="propertyUnit"
-                        value={form.propertyUnit ?? ''}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <select
+                      name="title"
+                      value={form.title ?? ''}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select title</option>
+                      {WORK_ORDER_TITLES.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      name="description"
+                      value={form.description ?? ''}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                    <textarea
+                      name="comment"
+                      value={form.comment ?? ''}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {form.photoUrl && (
+                      <img src={form.photoUrl} alt="Work Order Photo" className="mt-2 max-h-32 rounded" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                    <select
+                      name="status"
+                      value={form.status ?? ''}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select status</option>
+                      <option value="open">Open</option>
+                      <option value="in-progress">Work In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  {form.type === 'complaint' && (
+                    <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <select
+                          name="priority"
+                          value={form.priority}
+                          onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                          <option value="">Select priority</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Property Unit</label>
+                        <input
+                          name="propertyUnit"
+                          value={form.propertyUnit ?? ''}
+                          onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      </div>
+                    </>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                    <input
+                        type="date"
+                        name="scheduledDate"
+                        value={form.scheduledDate ?? ''}
                         onChange={handleFormChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                      <input
+                        type="time"
+                        name="scheduledStart"
+                        value={form.scheduledStart ?? ''}
+                        onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                  </>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
-                  <input
-                      type="date"
-                      name="scheduledDate"
-                      value={form.scheduledDate ?? ''}
-                      onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-                    <input
-                      type="time"
-                      name="scheduledStart"
-                      value={form.scheduledStart ?? ''}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                      <input
+                        type="time"
+                        name="scheduledEnd"
+                        value={form.scheduledEnd ?? ''}
+                        onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-                    <input
-                      type="time"
-                      name="scheduledEnd"
-                      value={form.scheduledEnd ?? ''}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {form.type === 'complaint' ? 'Assign Technician' : 'Assign Contact'} (optional)
+                    </label>
+                    {/* Debug info - remove this later */}
+                    <div className="text-xs text-blue-500 mb-1 italic ">
+                      {form.type === 'complaint' 
+                        ? `${technicians.length} technicians found` 
+                        : `${contacts.length} contacts found`
+                      }
+                    </div>
+                    <select
+                      name="assignedTo"
+                      value={form.assignedTo ?? ''}
                       onChange={handleFormChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    >
+                      <option value="">Unassigned</option>
+                      {form.type === 'complaint' ? (
+                        // Show technicians for complaint type
+                        technicians.length > 0 ? (
+                          technicians.map(tech => {
+                            console.log('Rendering technician:', tech);
+                            return (
+                              <option key={tech.id} value={tech.id}>
+                                {tech.full_name || tech.email}
+                              </option>
+                            );
+                          })
+                        ) : (
+                          <option value="" disabled>No technicians available</option>
+                        )
+                      ) : (
+                        // Show contacts for job type
+                        contacts.length > 0 ? (
+                          contacts.map(contact => {
+                            console.log('Rendering contact:', contact);
+                            return (
+                              <option key={contact.id} value={contact.id}>
+                                {contact.name}
+                              </option>
+                            );
+                          })
+                        ) : (
+                          <option value="" disabled>No contacts available</option>
+                        )
+                      )}
+                    </select>
+                    {form.type === 'complaint' && technicians.length === 0 && (
+                      <p className="text-sm text-orange-600 mt-1">
+                        No technicians found. Please add technicians to the profiles table with type 'technician'.
+                      </p>
+                    )}
+                    {form.type === 'job' && contacts.length === 0 && (
+                      <p className="text-sm text-orange-600 mt-1">
+                        No contacts found. Please add contacts to the contacts table.
+                      </p>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign Technician (optional)</label>
-                  <select
-                    name="technicianId"
-                    value={form.technicianId ?? ''}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Unassigned</option>
-                    {contacts.map(tech => (
-                      <option key={tech.id} value={tech.id}>{tech.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    {modalType === 'edit' ? 'Save Changes' : 'Add Work Order'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      {modalType === 'edit' ? 'Save Changes' : 'Add Work Order'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               )}
             </div>
           </div>

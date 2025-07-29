@@ -19,7 +19,7 @@ const SchedulerProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       const { data: contactsData, error: contactsErr } = await supabase
         .from('contacts')
         .select('*')
-        .in('type', ['serviceProvider', 'contractor', 'supplier', 'technician']);
+        .in('type', ['serviceProvider', 'contractor', 'supplier']);
       if (jobsErr) throw jobsErr;
       if (contactsErr) throw contactsErr;
       setJobs(jobsData || []);

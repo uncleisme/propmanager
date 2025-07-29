@@ -7,6 +7,16 @@ export interface User {
   contactId?: string;
 }
 
+export interface Profile {
+  id: string;
+  full_name: string;
+  avatar_url: string;
+  email: string;
+  type: 'admin' | 'technician';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -14,7 +24,7 @@ export interface Contact {
   email: string;
   phone: string;
   address: string;
-  type: 'contractor' | 'supplier' | 'serviceProvider' | 'technician' | 'resident' | 'government' | 'others';
+  type: 'contractor' | 'supplier' | 'serviceProvider' | 'resident' | 'government' | 'others';
   notes?: string;
   createdAt: string;
 }
@@ -230,6 +240,17 @@ export interface Job {
   scheduledEnd: string;
   technicianId?: string;
   complaintId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkOrder {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  assignedTo?: string; // Profile ID of technician
   createdAt: string;
   updatedAt: string;
 }

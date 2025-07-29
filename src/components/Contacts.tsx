@@ -498,7 +498,6 @@ useEffect(() => {
                   <option value="contractor">Contractor</option>
                   <option value="supplier">Supplier</option>
                   <option value="serviceProvider">Service Provider</option>
-                  <option value="technician">Technician</option>
                   <option value="resident">Resident</option>
                   <option value="government">Government</option>
                   <option value="others">Others</option>
