@@ -20,7 +20,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [loading, setLoading] = useState(true);
   const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({
     overview: false,
     buildingInfo: false,
@@ -255,27 +255,10 @@ const Dashboard: React.FC<DashboardProps> = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-                // Tooltip logic for all cards
-                const showTooltip = hoveredCard === index && typeof window !== 'undefined' && window.innerWidth > 640;
-                // Compute details for tooltip
-                let prevValue = null;
-                let percent = null;
-                if (stat.title === 'Open Jobs') {
-                  prevValue = activeJobsPrev.length;
-                } else if (stat.title === 'Open Complaints') {
-                  // Example: you can add prevValue/percent for complaints if you want
-                  prevValue = null;
-                  percent = stat.trend;
-                } else {
-                  prevValue = null;
-                  percent = stat.trend;
-                }
         return (
           <div
             key={index}
                   className="bg-white rounded-lg shadow-lg hover:shadow-xl p-4 sm:p-6 relative min-w-0 hover:bg-gray-50 font-sans text-base transition-all duration-200"
-                  onMouseEnter={() => setHoveredCard(index)}
-                  onMouseLeave={() => setHoveredCard(null)}
           >
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
@@ -298,17 +281,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
                       <span className="invisible">placeholder</span>
                     )}
             </div>
-                  {/* Tooltip for all cards */}
-            {showTooltip && (
-              <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-50" style={{ transform: 'translate(-50%, -100%)' }}>
-                      <div className="bg-white border border-gray-200 rounded shadow-lg p-3 text-xs text-blue-600 min-w-[180px] font-sans text-base">
-                        <div className="mb-1 font-semibold">{stat.title ? stat.title + ' Details' : 'Metric Details'}</div>
-                        <div>Current: <span className="font-bold text-gray-900">{stat.value}</span></div>
-                        <div>Previous: <span className="font-bold text-gray-900">{prevValue != null ? prevValue : 0}</span></div>
-                        <div>Change: <span className="font-bold text-gray-900">{percent && percent !== '' && percent !== '0%' ? percent : '-'}</span></div>
-              </div>
-              </div>
-            )}
+
           </div>
         );
       })}

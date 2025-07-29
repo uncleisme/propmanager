@@ -364,17 +364,17 @@ const Complaints: React.FC = () => {
       </div>
       
       {/* Main Content: Two Columns */}
-      <div className="flex flex-1 min-h-0 h-[80vh] bg-gray-50 rounded-lg shadow border border-gray-200 flex-col md:flex-row mt-2">
+      <div className="flex flex-1 min-h-0 h-[80vh] inset-shadow-2xs bg-blue-100 rounded-lg flex-col md:flex-row mt-2 mb-6">
         {/* Left: Work Order List */}
-        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r overflow-y-auto p-2 bg-gray-50">
+        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-50 overflow-y-auto p-2 bg-gray-50">
           <div className="mb-2 flex flex-col gap-2">
-            <input
-              type="text"
-              placeholder="Search work orders..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="mb-2 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:px-3"
-            />
+                          <input
+                type="text"
+                placeholder="Search work orders..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="mb-2 px-2 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:px-3"
+              />
           </div>
           <div>
             {filteredWorkOrders.length === 0 ? (
@@ -388,7 +388,7 @@ const Complaints: React.FC = () => {
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
                   className={`relative p-3 md:p-4 mb-3 rounded-lg cursor-pointer border transition-colors duration-150 shadow-sm bg-white overflow-hidden
-                    ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-200 bg-blue-50' : 'border-gray-100 hover:bg-blue-50 hover:border-gray-200'}`}
+                    ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-400 border-blue-200 bg-blue-50' : 'border-gray-300 hover:bg-blue-50 hover:border-gray-400'}`}
                   style={{ minHeight: '56px' }}
                 >
                   {/* Priority tag right-aligned at top */}
@@ -434,7 +434,7 @@ const Complaints: React.FC = () => {
           </div>
         </div>
         {/* Right: Work Order Details */}
-        <div className="flex-1 p-2 md:p-6 overflow-y-auto bg-gray-500">
+        <div className="flex-1 p-2 md:p-6 overflow-y-auto">
           {!selectedOrder ? (
             <div className="text-gray-400 text-center mt-24">
               <div className="text-lg font-medium mb-2">
@@ -450,19 +450,19 @@ const Complaints: React.FC = () => {
               <div className="flex space-x-3 mb-6">
                 <button
                   onClick={() => handleStatusChange('open')}
-                  className={`flex-1 py-2 rounded-lg font-semibold transition-colors duration-150 ${selectedOrder.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
+                  className={`flex-1 py-2 rounded-lg font-semibold transition-colors duration-150 ${selectedOrder.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-gray-300 hover:bg-blue-50'}`}
                 >Open</button>
                 <button
                   onClick={() => handleStatusChange('in-progress')}
-                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'in-progress' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'}`}
+                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'in-progress' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-orange-700 border-gray-300 hover:bg-orange-50'}`}
                 >In Progress</button>
                 <button
                   onClick={() => handleStatusChange('completed')}
-                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'completed' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-700 border-green-300 hover:bg-green-50'}`}
+                  className={`flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 ${selectedOrder.status === 'completed' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-700 border-gray-300 hover:bg-green-50'}`}
                 >Done</button>
                 <button
                   onClick={() => handleEdit(selectedOrder)}
-                  className="flex-1 py-2 rounded-lg font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                  className="flex-1 py-2 rounded-lg font-semibold border border-gray-400 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
                 >Edit</button>
               </div>
               <div className="flex items-center justify-between mb-4">
@@ -628,7 +628,7 @@ const Complaints: React.FC = () => {
                       name="type"
                       value={form.type}
                       onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="job">Job</option>
                       <option value="complaint">Complaint</option>
@@ -641,7 +641,7 @@ const Complaints: React.FC = () => {
                       value={form.title ?? ''}
                       onChange={handleFormChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select title</option>
                       {WORK_ORDER_TITLES.map((t) => (
@@ -655,7 +655,7 @@ const Complaints: React.FC = () => {
                       name="description"
                       value={form.description ?? ''}
                       onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -664,7 +664,7 @@ const Complaints: React.FC = () => {
                       name="comment"
                       value={form.comment ?? ''}
                       onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -673,7 +673,7 @@ const Complaints: React.FC = () => {
                       type="file"
                       accept="image/*"
                       onChange={handlePhotoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     {form.photoUrl && (
                       <img src={form.photoUrl} alt="Work Order Photo" className="mt-2 max-h-32 rounded" />
@@ -686,7 +686,7 @@ const Complaints: React.FC = () => {
                       value={form.status ?? ''}
                       onChange={handleFormChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select status</option>
                       <option value="open">Open</option>
@@ -702,7 +702,7 @@ const Complaints: React.FC = () => {
                           name="priority"
                           value={form.priority}
                           onChange={handleFormChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                           <option value="">Select priority</option>
                         <option value="low">Low</option>
@@ -717,7 +717,7 @@ const Complaints: React.FC = () => {
                           name="propertyUnit"
                           value={form.propertyUnit ?? ''}
                           onChange={handleFormChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       </div>
                     </>
@@ -730,7 +730,7 @@ const Complaints: React.FC = () => {
                         name="scheduledDate"
                         value={form.scheduledDate ?? ''}
                         onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                     <div>
@@ -740,7 +740,7 @@ const Complaints: React.FC = () => {
                         name="scheduledStart"
                         value={form.scheduledStart ?? ''}
                         onChange={handleFormChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -750,7 +750,7 @@ const Complaints: React.FC = () => {
                         name="scheduledEnd"
                         value={form.scheduledEnd ?? ''}
                         onChange={handleFormChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -769,7 +769,7 @@ const Complaints: React.FC = () => {
                       name="assignedTo"
                       value={form.assignedTo ?? ''}
                       onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Unassigned</option>
                       {form.type === 'complaint' ? (
