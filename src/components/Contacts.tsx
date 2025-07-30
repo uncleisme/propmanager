@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Eye, Edit, Trash2, Plus, X, Search, Upload } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, X, Search, Upload, MoreVertical } from "lucide-react";
 import Papa from 'papaparse';
 import { User } from '@supabase/supabase-js';
 
-
 interface DashboardProps {
-  user: User | null; // ✅ Declare the prop
+  user: User | null;
 }
 
 interface Contact {
@@ -29,21 +28,20 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // You can change this to any number
+  const [pageSize] = useState(10);
   const [totalContacts, setTotalContacts] = useState(0);
   const [importing, setImporting] = useState(false);
   const [showImportInstructions, setShowImportInstructions] = useState(false);
-
+  const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
-
     const from = (currentPage - 1) * pageSize;
     const to = from + pageSize - 1;
 
     const { data, error, count } = await supabase
       .from("contacts")
-      .select("*", { count: "exact" }) // important: include count
+      .select("*", { count: "exact" })
       .range(from, to);
 
     if (!error && data) {
@@ -52,15 +50,12 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
     } else {
       setErrorMsg(error?.message || "Failed to load contacts.");
     }
-
     setLoading(false);
   }, [currentPage, pageSize]);
 
-
-useEffect(() => {
-  fetchContacts();
-}, [fetchContacts]);
-
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
 
   const handleAdd = () => {
     setModalType("add");
@@ -127,86 +122,22 @@ useEffect(() => {
     fetchContacts();
   };
 
-  const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleActionMenuToggle = (contactId: number) => {
+    setOpenActionMenu(openActionMenu === contactId ? null : contactId);
+  };
 
-    if (!file.name.endsWith('.csv')) {
-      setErrorMsg('Please select a CSV file');
-      return;
-    }
-
-    setImporting(true);
-    setErrorMsg('');
-
-    try {
-      const text = await file.text();
-      const parseResult = Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header) => header.trim().toLowerCase(),
-      });
-      if (parseResult.errors.length > 0) {
-        throw new Error(`CSV parsing error: ${parseResult.errors[0].message}`);
-      }
-      const data = parseResult.data as any[];
-      if (data.length === 0) {
-        throw new Error('CSV file is empty or contains no valid data');
-      }
-      const requiredHeaders = ['name', 'email', 'phone'];
-      const headers = Object.keys(data[0]);
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-      if (missingHeaders.length > 0) {
-        throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
-      }
-      const allowedTypes = ['contractor', 'supplier', 'serviceProvider', 'resident', 'government', 'others'];
-      const typeMap: Record<string, string> = {
-        'contractor': 'contractor',
-        'supplier': 'supplier',
-        'service provider': 'service provider',
-        'serviceprovider': 'service provider',
-        'resident': 'resident',
-        'residents': 'resident',
-        'government': 'government',
-        'others': 'others',
-      };
-      const contactsToImport: any[] = [];
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
-        let typeValue = row.type?.trim().toLowerCase() || '';
-        typeValue = typeMap[typeValue] || null;
-        if (typeValue && !allowedTypes.includes(typeValue)) typeValue = null;
-        const contactData: any = {
-          name: row.name?.trim() || '',
-          email: row.email?.trim() || '',
-          phone: row.phone?.trim() || '',
-          address: row.address?.trim() || null,
-          type: typeValue,
-          company: row.company?.trim() || null,
-          notes: row.notes?.trim() || null,
-        };
-        if (!contactData.name || !contactData.email || !contactData.phone) {
-          throw new Error(`Row ${i + 2}: Missing required fields (name, email, phone)`);
-        }
-        contactsToImport.push(contactData);
-      }
-      if (contactsToImport.length === 0) {
-        throw new Error('No valid contacts found in CSV');
-      }
-      const { data: insertedData, error } = await supabase
-        .from('contacts')
-        .insert(contactsToImport)
-        .select();
-      if (error) throw error;
-      if (insertedData) {
-        setContacts(prev => [...insertedData, ...prev]);
-      }
-      alert(`Successfully imported ${contactsToImport.length} contacts`);
-    } catch (error) {
-      setErrorMsg(error instanceof Error ? error.message : 'Failed to import CSV');
-    } finally {
-      setImporting(false);
-      event.target.value = '';
+  const handleActionClick = (action: string, contact: Contact) => {
+    setOpenActionMenu(null);
+    switch (action) {
+      case 'view':
+        handleView(contact);
+        break;
+      case 'edit':
+        handleEdit(contact);
+        break;
+      case 'delete':
+        handleDelete(contact.id);
+        break;
     }
   };
 
@@ -220,342 +151,398 @@ useEffect(() => {
   );
 
   return (
-
     <div>
-  {/* Error Message */}
-  {errorMsg && (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-      <p className="text-red-700 font-medium">
-        <span className="font-semibold">Error:</span> {errorMsg}
-      </p>
-    </div>
-  )}
-
-  {/* Header Section */}
-  <div className="flex flex-col md:flex-row items-center justify-between">
-  <div className="text-center md:text-left">
-    <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-    <p className="text-gray-600">Manage all contacts</p>
-  </div>
-  <div className="flex flex-col md:flex-row mt-4 md:mt-0 space-y-4 md:space-y-0 md:space-x-4">
-    {/* CSV Import Button */}
-    <div className="relative">
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleCSVImport}
-        disabled={importing}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        id="csv-import-contacts"
-      />
-      <label
-        htmlFor="csv-import-contacts"
-        className={`bg-green-600 text-white px-2 py-1 rounded-lg flex items-center hover:bg-green-700 transition-colors duration-200 cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <Upload className="w-4 h-4" />
-        <span>{importing ? 'Importing...' : 'Import CSV'}</span>
-      </label>
-    </div>
-    <button
-      onClick={handleAdd}
-      className="bg-blue-600 text-white px-2 py-1 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
-    >
-      <Plus className="w-4 h-4" />
-      <span>Add Contact</span>
-    </button>
-  </div>
-</div>
-
-  {/* CSV Import Instructions */}
- <div className="bg-blue-900 border border-blue-200 rounded-lg p-4 mb-2 mt-2">
-  <button
-    onClick={() => setShowImportInstructions(!showImportInstructions)}
-    className="flex items-center justify-between w-full text-left"
-  >
-    <h3 className="text-sm font-medium text-blue-800">
-      CSV Import Instructions (click to {showImportInstructions ? 'hide' : 'show'})
-    </h3>
-    <svg className={`w-4 h-4 transition-transform ${showImportInstructions ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.846a.75.75 0 01-1.02 0l-4.25-3.846a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
-  </button>
-  
-  <div className={`transition-all duration-200 ease-in-out overflow-hidden ${showImportInstructions ? 'max-h-96 mt-2' : 'max-h-0'}`}>
-    <div className="pt-2">
-      <p className="text-sm text-blue-700 mb-2">
-        Your CSV file should contain the following columns (in any order):
-      </p>
-      <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">
-        name,email,phone,address,type,company,notes
-      </div>
-      <p className="text-xs text-blue-600 mt-2">
-        • <strong>Required:</strong> name, email, phone<br/>
-        • <strong>Optional:</strong> address, type, company, notes<br/>
-        • <strong>Example:</strong> John Doe,john@example.com,1234567890,123 Main St,contractor,Acme Corp,VIP client
-      </p>
-    </div>
-  </div>
-</div> 
-
-  {/* Search Bar */}
-  <div className="relative w-full max-w-md mb-2 bg-green-500">
-    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <Search className="w-5 h-5 text-gray-400" />
-    </div>
-    <input
-      type="text"
-      placeholder="Search by name, email, or phone..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    />
-  </div>
-
-  {/* Contacts Table */}
-  <div className="overflow-y-auto">
-  <table className="min-w-full table-auto">
-    <thead className="bg-yellow-500">
-      <tr className="text-gray-700 lowercase">
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Type</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Actions</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-      {loading ? (
-        <tr>
-          <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center">
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          </td>
-        </tr>
-      ) : filteredContacts.length === 0 ? (
-        <tr>
-          <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-            No contacts found
-          </td>
-        </tr>
-      ) : (
-        filteredContacts.map((contact) => (
-          <tr key={contact.id} className="hover:bg-gray-100">
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{contact.email}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.phone}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{contact.type}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium hidden md:table-cell">
-              <div className="flex gap-2 md:gap-8 flex-col md:flex-row">
-                <button
-                  onClick={() => handleView(contact)}
-                  className="text-blue-500 hover:text-blue-700"
-                  title="View"
-                >
-                  <Eye className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleEdit(contact)}
-                  className="text-yellow-500 hover:text-yellow-700"
-                  title="Edit"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(contact.id)}
-                  className="text-red-600 hover:text-red-800"
-                  title="Delete"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
-
-
-  {/* Pagination Controls and Total Count */}
-<div className="flex flex-col md:flex-row md:justify-between md:items-center mt-4 gap-2">
-  <div>
-    <button
-      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-      disabled={currentPage === 1}
-      className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-    >
-      Prev
-    </button>
-    <span className="mx-2">Page {currentPage} of {Math.ceil(totalContacts / pageSize) || 1}</span>
-    <button
-      onClick={() => setCurrentPage((p) => (p * pageSize < totalContacts ? p + 1 : p))}
-      disabled={currentPage * pageSize >= totalContacts}
-      className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
-    >
-      Next
-    </button>
-  </div>
-  <div className="text-sm text-gray-600">Total: {totalContacts} entries</div>
-</div>
-
-
-  {/* Modal */}
-  {showModal && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {modalType === "view" ? "Contact Details" : modalType === "add" ? "Add Contact" : "Edit Contact"}
-            </h2>
-            <button
-              onClick={() => setShowModal(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-
-          {modalType === "view" && selectedContact && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Name</p>
-                  <p className="text-sm text-gray-900">{selectedContact.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
-                  <p className="text-sm text-gray-900">{selectedContact.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
-                  <p className="text-sm text-gray-900">{selectedContact.phone}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Type</p>
-                  <p className="text-sm text-gray-900">{selectedContact.type || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Company</p>
-                  <p className="text-sm text-gray-900">{selectedContact.company || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Address</p>
-                  <p className="text-sm text-gray-900">{selectedContact.address || '-'}</p>
-                </div>
-              </div>
-              {selectedContact.notes && (
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Notes</p>
-                  <p className="text-sm text-gray-600">{selectedContact.notes}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {(modalType === "add" || modalType === "edit") && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <input
-                    name="name"
-                    defaultValue={modalType === "edit" && selectedContact ? selectedContact.name : ""}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    name="email"
-                    type="email"
-                    defaultValue={modalType === "edit" && selectedContact ? selectedContact.email : ""}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input
-                  name="phone"
-                  defaultValue={modalType === "edit" && selectedContact ? selectedContact.phone : ""}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select
-                  name="type"
-                  defaultValue={modalType === "edit" && selectedContact ? selectedContact.type || "" : ""}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select type</option>
-                  <option value="contractor">Contractor</option>
-                  <option value="supplier">Supplier</option>
-                  <option value="serviceProvider">Service Provider</option>
-                  <option value="resident">Resident</option>
-                  <option value="government">Government</option>
-                  <option value="others">Others</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                  <input
-                    name="company"
-                    defaultValue={modalType === "edit" && selectedContact ? selectedContact.company || "" : ""}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <input
-                    name="address"
-                    defaultValue={modalType === "edit" && selectedContact ? selectedContact.address || "" : ""}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea
-                  name="notes"
-                  rows={3}
-                  defaultValue={modalType === "edit" && selectedContact ? selectedContact.notes || "" : ""}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                >
-                  {modalType === "add" ? "Add Contact" : "Save Changes"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+        <div className="text-center md:text-left">
+          <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
+          <p className="text-gray-600">Manage all contacts</p>
+        </div>
+        <div className="flex flex-col md:flex-row mt-4 md:mt-0 space-y-4 md:space-y-0 md:space-x-4">
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors duration-200"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Contact</span>
+          </button>
         </div>
       </div>
+
+      {/* Search Bar */}
+      <div className="relative w-full max-w-md mb-6">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="w-5 h-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search by name, email, or phone..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      {/* Contacts Table */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Contact Info
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                  Type
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                  Company
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 whitespace-nowrap text-center">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-gray-500">Loading contacts...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredContacts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 whitespace-nowrap text-center">
+                    <div className="text-gray-500">
+                      <div className="text-lg font-medium mb-2">No contacts found</div>
+                      <div className="text-sm">Try adjusting your search or add a new contact</div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredContacts.map((contact) => (
+                  <tr key={contact.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    {/* Contact Name & Avatar */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-sm font-medium text-blue-600">
+                              {contact.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                          <div className="text-sm text-gray-500">{contact.email}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Contact Info */}
+                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                      <div className="text-sm text-gray-900">{contact.phone}</div>
+                      {contact.address && (
+                        <div className="text-sm text-gray-500 truncate max-w-xs" title={contact.address}>
+                          {contact.address}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Type */}
+                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {contact.type ? (
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize
+                          ${contact.type === 'contractor' ? 'bg-blue-100 text-blue-800' :
+                            contact.type === 'supplier' ? 'bg-green-100 text-green-800' :
+                            contact.type === 'serviceProvider' ? 'bg-purple-100 text-purple-800' :
+                            contact.type === 'resident' ? 'bg-orange-100 text-orange-800' :
+                            contact.type === 'government' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'}`}>
+                          {contact.type}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </td>
+
+                    {/* Company */}
+                    <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+                      <div className="text-sm text-gray-900">
+                        {contact.company || '-'}
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="relative">
+                        <button
+                          onClick={() => handleActionMenuToggle(contact.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-150"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        
+                        {/* Dropdown Menu */}
+                        {openActionMenu === contact.id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                            <div className="py-1">
+                              <button
+                                onClick={() => handleActionClick('view', contact)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
+                              >
+                                <Eye className="w-4 h-4 mr-3" />
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => handleActionClick('edit', contact)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-150"
+                              >
+                                <Edit className="w-4 h-4 mr-3" />
+                                Edit Contact
+                              </button>
+                              <button
+                                onClick={() => handleActionClick('delete', contact)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
+                              >
+                                <Trash2 className="w-4 h-4 mr-3" />
+                                Delete Contact
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Click outside to close dropdown */}
+      {openActionMenu !== null && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setOpenActionMenu(null)}
+        />
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {modalType === "view" ? "Contact Details" : modalType === "add" ? "Add Contact" : "Edit Contact"}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {modalType === "view" && selectedContact && (
+                <div className="space-y-6">
+                  {/* Basic Information Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                      Basic Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Name</p>
+                        <p className="text-sm text-gray-900 font-medium">{selectedContact.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Email</p>
+                        <p className="text-sm text-gray-900 font-medium">{selectedContact.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Phone</p>
+                        <p className="text-sm text-gray-900 font-medium">{selectedContact.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Type</p>
+                        <p className="text-sm text-gray-900 font-medium capitalize">{selectedContact.type || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Company & Address Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                      Company & Address
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Company</p>
+                        <p className="text-sm text-gray-900">{selectedContact.company || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Address</p>
+                        <p className="text-sm text-gray-900">{selectedContact.address || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information Section */}
+                  {selectedContact.notes && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                        Additional Information
+                      </h3>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+                        <p className="text-sm text-gray-600 whitespace-pre-line">{selectedContact.notes}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(modalType === "add" || modalType === "edit") && (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Basic Information Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                      Basic Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                        <input
+                          name="name"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.name : ""}
+                          required
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          placeholder="Enter full name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input
+                          name="email"
+                          type="email"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.email : ""}
+                          required
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        <input
+                          name="phone"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.phone : ""}
+                          required
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                        <select
+                          name="type"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.type || "" : ""}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        >
+                          <option value="">Select type</option>
+                          <option value="contractor">Contractor</option>
+                          <option value="supplier">Supplier</option>
+                          <option value="serviceProvider">Service Provider</option>
+                          <option value="resident">Resident</option>
+                          <option value="government">Government</option>
+                          <option value="others">Others</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Company & Address Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                      Company & Address
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                        <input
+                          name="company"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.company || "" : ""}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          placeholder="Enter company name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                        <input
+                          name="address"
+                          defaultValue={modalType === "edit" && selectedContact ? selectedContact.address || "" : ""}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          placeholder="Enter address"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                      Additional Information
+                    </h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                      <textarea
+                        name="notes"
+                        rows={4}
+                        defaultValue={modalType === "edit" && selectedContact ? selectedContact.notes || "" : ""}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        placeholder="Add any additional notes or comments about this contact..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-center space-x-4 mt-8">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-6 py-3 border-2 border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors duration-200 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium shadow-sm"
+                    >
+                      {modalType === "add" ? "Add Contact" : "Update Contact"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )}
-</div>
   );
 };
 
-export default Contacts;
+export default Contacts; 
