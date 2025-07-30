@@ -234,9 +234,13 @@ const addNewMember = () => {
       )}
 
       {editing ? (
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Building Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Building Information Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+              Basic Building Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Building Name *</label>
@@ -245,15 +249,16 @@ const addNewMember = () => {
                   required
                   value={formData.buildingName}
                   onChange={(e) => setFormData({ ...formData, buildingName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Enter building name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Building Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Building Type</label>
                 <select
                   value={formData.buildingType}
                   onChange={(e) => setFormData({ ...formData, buildingType: e.target.value as BuildingInfo['buildingType'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
                   <option value="condominium">Condominium</option>
                   <option value="apartment">Apartment</option>
@@ -263,62 +268,70 @@ const addNewMember = () => {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Building Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Building Address *</label>
                 <textarea
                   rows={3}
                   required
                   value={formData.buildingAddress}
                   onChange={(e) => setFormData({ ...formData, buildingAddress: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Enter complete building address"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Total Units</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Total Units</label>
                 <input
                   type="number"
                   min="1"
                   value={formData.totalUnits}
                   onChange={(e) => setFormData({ ...formData, totalUnits: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Number of units"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Total Floors</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Total Floors</label>
                 <input
                   type="number"
                   min="1"
                   value={formData.totalFloors}
                   onChange={(e) => setFormData({ ...formData, totalFloors: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Number of floors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year Built</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Year Built</label>
                 <input
                   type="number"
                   min="1900"
                   max={new Date().getFullYear()}
                   value={formData.yearBuilt}
                   onChange={(e) => setFormData({ ...formData, yearBuilt: parseInt(e.target.value) || new Date().getFullYear() })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Year of construction"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Parking Spaces</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Parking Spaces</label>
                 <input
                   type="number"
                   min="0"
                   value={formData.parkingSpaces}
                   onChange={(e) => setFormData({ ...formData, parkingSpaces: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Number of parking spaces"
                 />
               </div>
             </div>
           </div>
 
-          {/* Property Management Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">Property Management</h2>
+          {/* Property Management Information Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
+              Property Management
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
@@ -326,50 +339,58 @@ const addNewMember = () => {
                   type="text"
                   value={formData.propertyManagerName}
                   onChange={(e) => setFormData({ ...formData, propertyManagerName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Property manager name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Management Company</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Management Company</label>
                 <input
                   type="text"
                   value={formData.propertyManagerCompany}
                   onChange={(e) => setFormData({ ...formData, propertyManagerCompany: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Management company name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Manager Phone</label>
                 <input
                   type="tel"
                   value={formData.propertyManagerPhone}
                   onChange={(e) => setFormData({ ...formData, propertyManagerPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Manager phone number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Manager Email</label>
                 <input
                   type="email"
                   value={formData.propertyManagerEmail}
                   onChange={(e) => setFormData({ ...formData, propertyManagerEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Manager email address"
                 />
               </div>
             </div>
           </div>
 
-          {/* JMB Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Joint Management Body (JMB)</h2>
+          {/* JMB Information Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+              Joint Management Body (JMB)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">JMB Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">JMB Name</label>
                 <input
                   type="text"
                   value={formData.jmbName}
                   onChange={(e) => setFormData({ ...formData, jmbName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="JMB organization name"
                 />
               </div>
         {/* JMB Members Section */}
@@ -381,14 +402,14 @@ const addNewMember = () => {
   <div className="space-y-4">
     {/* Current Members List */}
     {formData.jmbMembers.map((member, index) => (
-      <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg">
+      <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-white rounded-lg border border-gray-200">
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
           <input
             type="text"
             value={member.name || ''}
             onChange={(e) => handleMemberChange(index, { ...member, name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             placeholder="Member name"
           />
         </div>
@@ -398,7 +419,7 @@ const addNewMember = () => {
             type="tel"
             value={member.phone || ''}
             onChange={(e) => handleMemberChange(index, { ...member, phone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             placeholder="Phone number"
           />
         </div>
@@ -409,7 +430,7 @@ const addNewMember = () => {
               type="email"
               value={member.email || ''}
               onChange={(e) => handleMemberChange(index, { ...member, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               placeholder="Email address"
             />
           </div>
@@ -437,29 +458,34 @@ const addNewMember = () => {
   </div>
 </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">JMB Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">JMB Phone</label>
                 <input
                   type="tel"
                   value={formData.jmbPhone}
                   onChange={(e) => setFormData({ ...formData, jmbPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="JMB phone number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">JMB Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">JMB Email</label>
                 <input
                   type="email"
                   value={formData.jmbEmail}
                   onChange={(e) => setFormData({ ...formData, jmbEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="JMB email address"
                 />
               </div>
             </div>
           </div>
 
-          {/* Financial Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">Financial Information</h2>
+          {/* Financial Information Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+              Financial Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Maintenance Fee (RM)</label>
@@ -469,26 +495,31 @@ const addNewMember = () => {
                   step="0.01"
                   value={formData.maintenanceFee}
                   onChange={(e) => setFormData({ ...formData, maintenanceFee: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Monthly maintenance fee"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sinking Fund (RM)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sinking Fund (RM)</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={formData.sinkingFund}
                   onChange={(e) => setFormData({ ...formData, sinkingFund: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Sinking fund amount"
                 />
               </div>
             </div>
           </div>
 
-          {/* Insurance Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">Insurance Information</h2>
+          {/* Insurance Information Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-indigo-500 rounded-full mr-3"></span>
+              Insurance Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Company</label>
@@ -496,33 +527,38 @@ const addNewMember = () => {
                   type="text"
                   value={formData.insuranceCompany}
                   onChange={(e) => setFormData({ ...formData, insuranceCompany: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Insurance company name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Policy Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Policy Number</label>
                 <input
                   type="text"
                   value={formData.insurancePolicyNumber}
                   onChange={(e) => setFormData({ ...formData, insurancePolicyNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  placeholder="Insurance policy number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Expiry Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Insurance Expiry Date</label>
                 <input
                   type="date"
                   value={formData.insuranceExpiry}
                   onChange={(e) => setFormData({ ...formData, insuranceExpiry: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 />
               </div>
             </div>
           </div>
 
-          {/* Facilities */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Facilities</h2>
+          {/* Facilities Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
+              Facilities
+            </h3>
             <div className="space-y-4">
               <div className="flex space-x-2">
                 <input
@@ -530,13 +566,13 @@ const addNewMember = () => {
                   value={newFacility}
                   onChange={(e) => setNewFacility(e.target.value)}
                   placeholder="Add a facility (e.g., Swimming Pool, Gym, BBQ Area)"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFacility())}
                 />
                 <button
                   type="button"
                   onClick={addFacility}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -561,9 +597,12 @@ const addNewMember = () => {
             </div>
           </div>
 
-          {/* Security Features */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Features</h2>
+          {/* Security Features Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
+              Security Features
+            </h3>
             <div className="space-y-4">
               <div className="flex space-x-2">
                 <input
@@ -571,13 +610,13 @@ const addNewMember = () => {
                   value={newSecurityFeature}
                   onChange={(e) => setNewSecurityFeature(e.target.value)}
                   placeholder="Add a security feature (e.g., 24/7 Security, CCTV, Access Card)"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSecurityFeature())}
                 />
                 <button
                   type="button"
                   onClick={addSecurityFeature}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -602,47 +641,48 @@ const addNewMember = () => {
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Additional Notes</h2>
+          {/* Notes Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-teal-500 rounded-full mr-3"></span>
+              Additional Notes
+            </h3>
             <textarea
               rows={4}
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               placeholder="Any additional information about the building..."
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving...' : 'Save Information'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(false);
-                setSubmitError(null);
-                if (buildingInfo) {
-                  // Reset form data to original values
-                  fetchBuildingInfo();
-                }
-              }}
-              disabled={isSubmitting}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-400 transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              <X className="w-4 h-4" />
-              <span>Cancel</span>
-            </button>
-          </div>
+                     {/* Action Buttons */}
+           <div className="flex justify-center space-x-4 mt-8 mb-12">
+             <button
+               type="button"
+               onClick={() => {
+                 setEditing(false);
+                 setSubmitError(null);
+                 if (buildingInfo) {
+                   // Reset form data to original values
+                   fetchBuildingInfo();
+                 }
+               }}
+               disabled={isSubmitting}
+               className="px-6 py-3 border-2 border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors duration-200 font-medium"
+             >
+               Cancel
+             </button>
+             <button
+               type="submit"
+               disabled={isSubmitting}
+               className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors duration-200 font-medium shadow-sm ${
+                 isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+               }`}
+             >
+               {isSubmitting ? 'Saving...' : 'Save Information'}
+             </button>
+           </div>
         </form>
       ) : (
         // View Mode
