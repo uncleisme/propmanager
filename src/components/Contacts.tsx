@@ -127,43 +127,52 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
     e.preventDefault();
     console.log('Form submitted, modalType:', modalType);
     setErrorMsg("");
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const name = formData.get("name") as string;
-    const address = formData.get("address") as string;
-    const phone = formData.get("phone") as string;
-    const type = formData.get("type") as string;
-    const company = formData.get("company") as string;
-    const email = formData.get("email") as string;
-    const notes = formData.get("notes") as string;
+    
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      const name = formData.get("name") as string;
+      const address = formData.get("address") as string;
+      const phone = formData.get("phone") as string;
+      const type = formData.get("type") as string;
+      const company = formData.get("company") as string;
+      const email = formData.get("email") as string;
+      const notes = formData.get("notes") as string;
 
-    const contactData = { name, address, phone, type, company, email, notes };
-    console.log('Contact data to save:', contactData);
+      const contactData = { name, address, phone, type, company, email, notes };
+      console.log('Contact data to save:', contactData);
 
-    if (modalType === "add") {
-      console.log('Adding new contact');
-      const { error } = await supabase.from("contacts").insert([contactData]);
-      if (error) {
-        console.error('Add error:', error);
-        setErrorMsg(error.message);
-        return;
+      if (modalType === "add") {
+        console.log('Adding new contact');
+        const { data, error } = await supabase.from("contacts").insert([contactData]).select();
+        if (error) {
+          console.error('Add error:', error);
+          setErrorMsg(`Failed to add contact: ${error.message}`);
+          return;
+        }
+        console.log('Contact added successfully:', data);
+        setShowModal(false);
+        fetchContacts();
+      } else if (modalType === "edit" && selectedContact) {
+        console.log('Updating contact with ID:', selectedContact.id);
+        const { data, error } = await supabase
+          .from("contacts")
+          .update(contactData)
+          .eq("id", selectedContact.id)
+          .select();
+        if (error) {
+          console.error('Update error:', error);
+          setErrorMsg(`Failed to update contact: ${error.message}`);
+          return;
+        }
+        console.log('Contact updated successfully:', data);
+        setShowModal(false);
+        fetchContacts();
       }
-      console.log('Contact added successfully');
-    } else if (modalType === "edit" && selectedContact) {
-      console.log('Updating contact with ID:', selectedContact.id);
-      const { error } = await supabase
-        .from("contacts")
-        .update(contactData)
-        .eq("id", selectedContact.id);
-      if (error) {
-        console.error('Update error:', error);
-        setErrorMsg(error.message);
-        return;
-      }
-      console.log('Contact updated successfully');
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setErrorMsg(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    setShowModal(false);
-    fetchContacts();
   };
 
   // Filter contacts by search
