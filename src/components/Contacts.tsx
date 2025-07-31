@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Eye, Edit, Trash2, Plus, X, Search, Upload, MoreVertical } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, X, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Papa from 'papaparse';
 import { User } from '@supabase/supabase-js';
 
@@ -32,7 +32,6 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [totalContacts, setTotalContacts] = useState(0);
   const [importing, setImporting] = useState(false);
   const [showImportInstructions, setShowImportInstructions] = useState(false);
-  const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -57,6 +56,11 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
     fetchContacts();
   }, [fetchContacts]);
 
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
   const handleAdd = () => {
     setModalType("add");
     setSelectedContact(null);
@@ -70,18 +74,50 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   };
 
   const handleEdit = (contact: Contact) => {
+    console.log('Edit button clicked for contact:', contact);
     setModalType("edit");
     setSelectedContact(contact);
     setShowModal(true);
   };
 
   const handleDelete = async (id: number) => {
+    console.log('Delete button clicked for contact ID:', id);
     setErrorMsg("");
+    
+    // First, check if this contact is referenced by any contracts
+    const { data: contractsData, error: contractsError } = await supabase
+      .from("contracts")
+      .select("id, title, status")
+      .eq("contactId", id);
+    
+    if (contractsError) {
+      console.error('Error checking contracts:', contractsError);
+      setErrorMsg("Error checking contract references");
+      return;
+    }
+    
+    const referencedContracts = contractsData || [];
+    
+    if (referencedContracts.length > 0) {
+      // Contact is referenced by contracts
+      const contractList = referencedContracts.map(c => `"${c.title}" (${c.status})`).join('\n• ');
+      const message = `This contact cannot be deleted because it is referenced by ${referencedContracts.length} contract(s):\n\n• ${contractList}\n\nPlease either:\n1. Delete the contracts first, or\n2. Update the contracts to use a different contact.`;
+      
+      if (window.confirm(message)) {
+        // User confirmed, but we still can't delete due to FK constraint
+        setErrorMsg("Contact cannot be deleted while it has active contracts. Please remove the contract references first.");
+      }
+      return;
+    }
+    
+    // No contracts reference this contact, proceed with deletion
     if (window.confirm("Delete this contact?")) {
       const { error } = await supabase.from("contacts").delete().eq("id", id);
       if (error) {
+        console.error('Delete error:', error);
         setErrorMsg(error.message);
       } else {
+        console.log('Contact deleted successfully');
         fetchContacts();
       }
     }
@@ -89,6 +125,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Form submitted, modalType:', modalType);
     setErrorMsg("");
     const form = e.currentTarget;
     const formData = new FormData(form);
@@ -101,44 +138,32 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
     const notes = formData.get("notes") as string;
 
     const contactData = { name, address, phone, type, company, email, notes };
+    console.log('Contact data to save:', contactData);
 
     if (modalType === "add") {
+      console.log('Adding new contact');
       const { error } = await supabase.from("contacts").insert([contactData]);
       if (error) {
+        console.error('Add error:', error);
         setErrorMsg(error.message);
         return;
       }
+      console.log('Contact added successfully');
     } else if (modalType === "edit" && selectedContact) {
+      console.log('Updating contact with ID:', selectedContact.id);
       const { error } = await supabase
         .from("contacts")
         .update(contactData)
         .eq("id", selectedContact.id);
       if (error) {
+        console.error('Update error:', error);
         setErrorMsg(error.message);
         return;
       }
+      console.log('Contact updated successfully');
     }
     setShowModal(false);
     fetchContacts();
-  };
-
-  const handleActionMenuToggle = (contactId: number) => {
-    setOpenActionMenu(openActionMenu === contactId ? null : contactId);
-  };
-
-  const handleActionClick = (action: string, contact: Contact) => {
-    setOpenActionMenu(null);
-    switch (action) {
-      case 'view':
-        handleView(contact);
-        break;
-      case 'edit':
-        handleEdit(contact);
-        break;
-      case 'delete':
-        handleDelete(contact.id);
-        break;
-    }
   };
 
   // Filter contacts by search
@@ -183,25 +208,50 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         />
       </div>
 
+      {/* Error Message Display */}
+      {errorMsg && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700 whitespace-pre-line">{errorMsg}</div>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={() => setErrorMsg("")}
+                className="inline-flex text-red-400 hover:text-red-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Contacts Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                  Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                  Contact Info
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                  Type
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 hidden md:table-cell">
                   Company
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Email
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                  Phone
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                   Actions
                 </th>
               </tr>
@@ -209,7 +259,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 whitespace-nowrap text-center">
+                  <td colSpan={5} className="px-4 sm:px-6 py-12 whitespace-nowrap text-center">
                     <div className="flex justify-center items-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="ml-3 text-gray-500">Loading contacts...</span>
@@ -218,7 +268,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
                 </tr>
               ) : filteredContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 whitespace-nowrap text-center">
+                  <td colSpan={5} className="px-4 sm:px-6 py-12 whitespace-nowrap text-center">
                     <div className="text-gray-500">
                       <div className="text-lg font-medium mb-2">No contacts found</div>
                       <div className="text-sm">Try adjusting your search or add a new contact</div>
@@ -228,95 +278,60 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
               ) : (
                 filteredContacts.map((contact) => (
                   <tr key={contact.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    {/* Contact Name & Avatar */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
-                              {contact.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
-                          <div className="text-sm text-gray-500">{contact.email}</div>
-                        </div>
+                    {/* Name */}
+                    <td className="px-4 sm:px-6 py-1 sm:py-4 whitespace-nowrap w-1/4">
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-xs" title={contact.name}>
+                        {contact.name}
                       </div>
-                    </td>
-
-                    {/* Contact Info */}
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                      <div className="text-sm text-gray-900">{contact.phone}</div>
-                      {contact.address && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs" title={contact.address}>
-                          {contact.address}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Type */}
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                      {contact.type ? (
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize
-                          ${contact.type === 'contractor' ? 'bg-blue-100 text-blue-800' :
-                            contact.type === 'supplier' ? 'bg-green-100 text-green-800' :
-                            contact.type === 'serviceProvider' ? 'bg-purple-100 text-purple-800' :
-                            contact.type === 'resident' ? 'bg-orange-100 text-orange-800' :
-                            contact.type === 'government' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'}`}>
-                          {contact.type}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
-                    </td>
-
-                    {/* Company */}
-                    <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
-                      <div className="text-sm text-gray-900">
+                      {/* Company name stacked under name on mobile */}
+                      <div className="text-xs text-gray-500 mt-1 md:hidden">
                         {contact.company || '-'}
                       </div>
                     </td>
 
+                    {/* Company */}
+                    <td className="px-4 sm:px-6 py-1 sm:py-4 whitespace-nowrap w-1/6 hidden md:table-cell">
+                      <div className="text-sm text-gray-900 truncate max-w-xs" title={contact.company || '-'}>
+                        {contact.company || '-'}
+                      </div>
+                    </td>
+
+                    {/* Email */}
+                    <td className="px-4 sm:px-6 py-1 sm:py-4 whitespace-nowrap hidden lg:table-cell">
+                      <div className="text-sm text-gray-900 truncate max-w-xs" title={contact.email}>
+                        {contact.email}
+                      </div>
+                    </td>
+
+                    {/* Phone */}
+                    <td className="px-4 sm:px-6 py-1 sm:py-4 whitespace-nowrap hidden xl:table-cell">
+                      <div className="text-sm text-gray-900">{contact.phone}</div>
+                    </td>
+
                     {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="relative">
+                    <td className="px-4 sm:px-6 py-1 sm:py-4 whitespace-nowrap text-right text-sm font-medium w-24">
+                      <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleActionMenuToggle(contact.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-150"
+                          onClick={() => handleView(contact)}
+                          className="p-1 sm:p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors duration-150"
+                          title="View Details"
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </button>
-                        
-                        {/* Dropdown Menu */}
-                        {openActionMenu === contact.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                            <div className="py-1">
-                              <button
-                                onClick={() => handleActionClick('view', contact)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
-                              >
-                                <Eye className="w-4 h-4 mr-3" />
-                                View Details
-                              </button>
-                              <button
-                                onClick={() => handleActionClick('edit', contact)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-150"
-                              >
-                                <Edit className="w-4 h-4 mr-3" />
-                                Edit Contact
-                              </button>
-                              <button
-                                onClick={() => handleActionClick('delete', contact)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
-                              >
-                                <Trash2 className="w-4 h-4 mr-3" />
-                                Delete Contact
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        <button
+                          onClick={() => handleEdit(contact)}
+                          className="p-1 sm:p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-md transition-colors duration-150"
+                          title="Edit Contact"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(contact.id)}
+                          className="p-1 sm:p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-150"
+                          title="Delete Contact"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -327,13 +342,33 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Click outside to close dropdown */}
-      {openActionMenu !== null && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setOpenActionMenu(null)}
-        />
-      )}
+      {/* Pagination Controls and Total Count */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-6 gap-4">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Previous
+          </button>
+          <span className="text-sm text-gray-700">
+            Page {currentPage} of {Math.ceil(totalContacts / pageSize) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => (p * pageSize < totalContacts ? p + 1 : p))}
+            disabled={currentPage * pageSize >= totalContacts}
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            Next
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </button>
+        </div>
+        <div className="text-sm text-gray-600">
+          Total: {totalContacts} entries
+        </div>
+      </div>
 
       {/* Modal */}
       {showModal && (

@@ -393,8 +393,17 @@ const Complaints: React.FC = () => {
       alert('Error updating work order: ' + error.message);
     } else {
       console.log('Work order updated successfully');
-      setWorkOrders(prev => prev.map(wo => wo.id === selectedOrder.id ? { ...wo, status, resolvedAt: updateFields.resolvedAt } : wo));
-      setSelectedOrder(prev => prev ? { ...prev, status, resolvedAt: updateFields.resolvedAt } : prev);
+      
+      // Store current state for refresh
+      const currentTab = activeTab;
+      const currentSearch = search;
+      
+      // Refresh data from database
+      await fetchData();
+      
+      // Restore current state
+      setActiveTab(currentTab);
+      setSearch(currentSearch);
       
       // Auto-switch tabs based on new status
       if (status === 'ready-for-review') {
