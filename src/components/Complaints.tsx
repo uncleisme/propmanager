@@ -167,7 +167,7 @@ const Complaints: React.FC = () => {
       type: 'job',
       title: '',
       description: '',
-      status: '',
+      status: 'open', // Default to 'open' status for new work orders
       priority: '',
       propertyUnit: '',
       scheduledDate: '',
@@ -248,7 +248,7 @@ const Complaints: React.FC = () => {
         type: form.type,
         title: form.title,
         description: form.description,
-        status: form.status || 'open',
+        status: form.status || 'open', // Always start with 'open' status for new work orders
         priority: form.priority || null,
         propertyUnit: form.propertyUnit || null,
         scheduledDate: form.scheduledDate || null,
@@ -370,10 +370,6 @@ const Complaints: React.FC = () => {
         const confirmed = window.confirm('No comment attached. Are you sure you want to mark this job done?');
         if (!confirmed) return;
       }
-      
-      // For now, use 'completed' as the database status since 'ready-for-review' is not supported yet
-      // This will move the work order directly to completed status
-      status = 'completed';
     }
     
     setLoading(true);
@@ -400,8 +396,21 @@ const Complaints: React.FC = () => {
       setWorkOrders(prev => prev.map(wo => wo.id === selectedOrder.id ? { ...wo, status, resolvedAt: updateFields.resolvedAt } : wo));
       setSelectedOrder(prev => prev ? { ...prev, status, resolvedAt: updateFields.resolvedAt } : prev);
       
-      if (status === 'completed') {
+      // Auto-switch tabs based on new status
+      if (status === 'ready-for-review') {
+        setActiveTab('ready-for-review');
+      } else if (status === 'completed') {
         setActiveTab('completed');
+      } else if (['open', 'in-progress'].includes(status)) {
+        setActiveTab('active');
+      }
+      
+      // Clear selected order if it's no longer visible in the current tab
+      // This ensures the details panel is cleared when orders move between tabs
+      const updatedOrder = { ...selectedOrder, status, resolvedAt: updateFields.resolvedAt };
+      const isOrderInCurrentTab = filteredWorkOrders.some(wo => wo.id === updatedOrder.id);
+      if (!isOrderInCurrentTab) {
+        setSelectedOrder(null);
       }
     }
     setLoading(false);
@@ -590,8 +599,8 @@ const Complaints: React.FC = () => {
           ) : (
             <div className="max-w-xl mx-auto">
                              {/* Status Buttons */}
-               {activeTab === 'active' && (
-                 <div className="flex space-x-3 mb-6">
+                             {activeTab === 'active' && (
+                <div className="flex space-x-3 mb-6">
                                    <button
                   onClick={() => handleStatusChange('open')}
                   className={`flex-1 py-2 rounded-lg font-semibold transition-colors duration-150 ${(selectedOrder.status || '') === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-gray-300 hover:bg-blue-50'}`}
@@ -606,13 +615,30 @@ const Complaints: React.FC = () => {
                    >Mark as Completed</button>
                  </div>
                )}
+               
+               {activeTab === 'completed' && (
+                 <div className="flex space-x-3 mb-6">
+                   <button
+                     onClick={() => handleStatusChange('open')}
+                     className="flex-1 py-2 rounded-lg font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                   >Back to Active</button>
+                   <button
+                     onClick={() => handleStatusChange('ready-for-review')}
+                     className="flex-1 py-2 rounded-lg font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                   >Back to Review</button>
+                   <button
+                     onClick={() => handleEdit(selectedOrder)}
+                     className="flex-1 py-2 rounded-lg font-semibold border border-gray-400 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                   >Edit</button>
+                 </div>
+               )}
               
               {activeTab === 'ready-for-review' && (
                 <div className="flex space-x-3 mb-6">
                   <button
-                    onClick={() => handleStatusChange('in-progress')}
+                    onClick={() => handleStatusChange('open')}
                     className="flex-1 py-2 rounded-lg font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150"
-                  >Back to In Progress</button>
+                  >Back to Active</button>
                   <button
                     onClick={() => handleStatusChange('completed')}
                     className="flex-1 py-2 rounded-lg font-semibold border transition-colors duration-150 bg-green-600 text-white border-green-600 hover:bg-green-700"
@@ -654,6 +680,18 @@ const Complaints: React.FC = () => {
                        Add a comment before marking as done
                      </div>
                    </div>
+                 ) : activeTab === 'ready-for-review' ? (
+                   <div className="space-y-2">
+                     <textarea
+                       value={selectedOrder.comment || ''}
+                       onChange={(e) => handleCommentChange(e.target.value)}
+                       placeholder="Add additional comments or notes..."
+                       className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm min-h-[80px]"
+                     />
+                     <div className="text-xs text-gray-500">
+                       You can add additional comments before confirming completion
+                     </div>
+                   </div>
                  ) : (
                    <div className="bg-gray-50 rounded p-3 text-gray-900 text-sm min-h-[48px] whitespace-pre-line">
                      {selectedOrder.comment ? selectedOrder.comment : <span className="text-gray-400">No comment</span>}
@@ -673,6 +711,23 @@ const Complaints: React.FC = () => {
                      />
                      <div className="text-xs text-gray-500">
                        Upload a photo before marking as done
+                     </div>
+                     {selectedOrder?.photoUrl && (
+                       <div className="flex justify-center items-center bg-gray-100 rounded-lg p-2">
+                         <img src={selectedOrder.photoUrl} alt="Work Order Photo" className="max-h-32 rounded shadow" />
+                       </div>
+                     )}
+                   </div>
+                 ) : activeTab === 'ready-for-review' ? (
+                   <div className="space-y-2">
+                     <input
+                       type="file"
+                       accept="image/*"
+                       onChange={handlePhotoChange}
+                       className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                     />
+                     <div className="text-xs text-gray-500">
+                       You can upload additional photos before confirming completion
                      </div>
                      {selectedOrder?.photoUrl && (
                        <div className="flex justify-center items-center bg-gray-100 rounded-lg p-2">
@@ -838,6 +893,7 @@ const Complaints: React.FC = () => {
                         <option value="">Select Status</option>
                         <option value="open">Open</option>
                         <option value="in-progress">In Progress</option>
+                        <option value="ready-for-review">Ready for Review</option>
                         <option value="completed">Completed</option>
                       </select>
                     </div>
