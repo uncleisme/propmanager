@@ -17,6 +17,7 @@ import MoveRequests from './components/MoveRequests';
 import Security from './components/Security';
 import Cleaning from './components/Cleaning';
 import LiftMaintenance from './components/LiftMaintenance';
+import BreakdownHistory from './components/BreakdownHistory';
 import UserSettings from './components/UserSettings';
 import SystemSettings from './components/SystemSettings';
 import WaterUtility from './components/WaterUtility';
@@ -119,7 +120,8 @@ const App: React.FC = () => {
       case 'move-requests': return <MoveRequests user={user} />;
       case 'security': return <Security user={user} />;
       case 'cleaning': return <Cleaning user={user} />;
-      case 'lift-maintenance': return <LiftMaintenance user={user} />;
+      case 'lift-maintenance': return <LiftMaintenance user={user} onViewChange={setCurrentView} />;
+      case 'breakdown-history': return <BreakdownHistory user={user} onBack={() => setCurrentView('lift-maintenance')} />;
       case 'user-settings': return <UserSettings user={user} />;
       case 'system-settings': return <SystemSettings />;
       case 'water-utility': return <WaterUtility user={user} />;

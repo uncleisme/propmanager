@@ -242,6 +242,20 @@ export interface LiftMaintenance {
   updatedAt: string;
 }
 
+export interface BreakdownHistory {
+  id: string;
+  liftId: number;
+  breakdownDate: string;
+  breakdownTime: string;
+  attendedDate?: string;
+  attendedTime?: string;
+  reason: 'hardware' | 'system' | 'power-failure' | 'others';
+  technicianId?: string;
+  attachmentUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Technician {
   id: string;
   name: string;
@@ -289,4 +303,4 @@ export interface SchedulerContextType {
   error: string | null;
 }
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance';
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history';

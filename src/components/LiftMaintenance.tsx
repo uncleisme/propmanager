@@ -7,9 +7,10 @@ import Papa from 'papaparse';
 
 interface LiftMaintenanceProps {
   user: User | null;
+  onViewChange?: (view: string) => void;
 }
 
-const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
+const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user, onViewChange }) => {
   const [liftAssets, setLiftAssets] = useState<LiftMaintenance[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -234,7 +235,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays <= 30 && diffDays >= 0;
       case 'breakdowns':
-        // Placeholder for future breakdown tracking
+        // This case is no longer used for filtering
         return false;
       default:
         return true; // 'all' filter
@@ -367,12 +368,8 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
            </div>
          </div>
          <div 
-           className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
-             activeFilter === 'breakdowns' 
-               ? 'border-orange-300 bg-orange-50' 
-               : 'border-gray-200 hover:border-orange-200'
-           }`}
-           onClick={() => setActiveFilter('breakdowns')}
+           className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-orange-200"
+           onClick={() => onViewChange?.('breakdown-history')}
          >
            <div className="flex items-center justify-between">
              <div>
@@ -419,7 +416,6 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
                <span className="mr-2">
                  {activeFilter === 'overdue-cf' && '⚠️ Overdue CF'}
                  {activeFilter === 'due-cf' && '📅 Due for CF Renewal'}
-                 {activeFilter === 'breakdowns' && '🔧 This Month Breakdowns'}
                </span>
                <button
                  onClick={() => setActiveFilter('all')}
