@@ -48,7 +48,6 @@ const menuSections = [
       { id: 'security' as ViewType, icon: Shield, label: 'Security' },
       { id: 'cleaning' as ViewType, icon: Sparkles, label: 'Cleaning' },
       { id: 'lift-maintenance' as ViewType, icon: ArrowUpDown, label: 'Lift Maintenance' },
-      { id: 'breakdown-history' as ViewType, icon: AlertTriangle, label: 'Breakdown History' },
     ]
   },
   {

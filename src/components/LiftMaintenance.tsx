@@ -331,6 +331,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user, onViewChange })
              <div>
                <p className="text-sm font-medium text-gray-600">Active Assets</p>
                <p className="text-2xl font-bold text-blue-600">{activeAssets}</p>
+               <p className="text-xs text-gray-500 mt-1">Click to view</p>
              </div>
              <ArrowUpDown className="w-8 h-8 text-blue-500" />
            </div>
@@ -347,6 +348,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user, onViewChange })
              <div>
                <p className="text-sm font-medium text-gray-600">Due for CF Renewal</p>
                <p className="text-2xl font-bold text-yellow-600">{dueForCFRenewal}</p>
+               <p className="text-xs text-gray-500 mt-1">Click to view</p>
              </div>
              <Calendar className="w-8 h-8 text-yellow-500" />
            </div>
@@ -363,6 +365,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user, onViewChange })
              <div>
                <p className="text-sm font-medium text-gray-600">Overdue CF</p>
                <p className="text-2xl font-bold text-red-600">{overdueCFRenewal}</p>
+               <p className="text-xs text-gray-500 mt-1">Click to view</p>
              </div>
              <AlertCircle className="w-8 h-8 text-red-500" />
            </div>
@@ -375,6 +378,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user, onViewChange })
              <div>
                <p className="text-sm font-medium text-gray-600">This Month Breakdowns</p>
                <p className="text-2xl font-bold text-orange-600">{thisMonthBreakdowns}</p>
+               <p className="text-xs text-gray-500 mt-1">Click to view</p>
              </div>
              <Settings className="w-8 h-8 text-orange-500" />
            </div>
