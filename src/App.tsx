@@ -25,6 +25,7 @@ import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
 import SchedulerModule from './components/Scheduler';
 import SchedulerProvider from './components/SchedulerContext';
+import StaffManagement from './components/StaffManagement';
 
 import { ViewType } from './types';
 type AppViewType = ViewType | 'scheduler';
@@ -128,6 +129,7 @@ const App: React.FC = () => {
       case 'electricity-utility': return <ElectricityUtility user={user} />;
       case 'reporting': return <Reporting user={user} />;
       case 'scheduler': return <SchedulerModule />;
+      case 'staff-management': return <StaffManagement user={user} />;
       default: return <Dashboard user={user} />;
     }
   };

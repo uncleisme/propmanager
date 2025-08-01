@@ -303,4 +303,56 @@ export interface SchedulerContextType {
   error: string | null;
 }
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history';
+export interface Staff {
+  id: string;
+  employeeId: string;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  department: 'maintenance' | 'security' | 'cleaning' | 'administration' | 'management';
+  hireDate: string;
+  salary?: number;
+  status: 'active' | 'inactive' | 'terminated';
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  address?: string;
+  nationality?: string;
+  identificationNumber?: string;
+  visaExpiryDate?: string;
+  permitExpiryDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeaveRequest {
+  id: string;
+  staffId: string;
+  leaveType: 'annual' | 'sick' | 'emergency' | 'maternity' | 'paternity' | 'unpaid';
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+  reason?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  attachmentUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffAttendance {
+  id: string;
+  staffId: string;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  totalHours?: number;
+  status: 'present' | 'absent' | 'late' | 'half_day' | 'on_leave';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management';
