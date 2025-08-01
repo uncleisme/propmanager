@@ -245,7 +245,7 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <button
           onClick={() => onViewChange?.('maintenance-assets')}
           className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow text-left"
@@ -288,6 +288,17 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
             <h3 className="ml-3 text-lg font-semibold text-gray-900">History</h3>
           </div>
           <p className="text-gray-600 text-sm">View maintenance history and reports</p>
+        </button>
+
+        <button
+          onClick={() => onViewChange?.('maintenance-config')}
+          className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow text-left"
+        >
+          <div className="flex items-center mb-3">
+            <Settings className="h-6 w-6 text-gray-500" />
+            <h3 className="ml-3 text-lg font-semibold text-gray-900">Automation</h3>
+          </div>
+          <p className="text-gray-600 text-sm">Configure work order auto-generation settings</p>
         </button>
       </div>
 

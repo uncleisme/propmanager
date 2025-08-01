@@ -33,6 +33,8 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
   const [selectedSchedule, setSelectedSchedule] = useState<MaintenanceSchedule | null>(null);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [automationRunning, setAutomationRunning] = useState(false);
+  const [automationResult, setAutomationResult] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     assetId: '',
@@ -48,7 +50,8 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
     assignedTo: '',
     instructions: '',
     checklist: [] as Array<{ id: string; item: string; required: boolean }>,
-    isActive: true
+    isActive: true,
+    autoGenerateWorkOrders: true
   });
 
   useEffect(() => {
@@ -130,6 +133,27 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
     }
   };
 
+  const runMaintenanceAutomation = async () => {
+    setAutomationRunning(true);
+    setError('');
+    try {
+      const { data, error } = await supabase.rpc('run_maintenance_automation', { days_ahead: 7 });
+      
+      if (error) throw error;
+      
+      setAutomationResult(data);
+      
+      // Refresh schedules to show updated next due dates
+      await fetchSchedules();
+      
+    } catch (err: any) {
+      setError('Failed to run maintenance automation: ' + err.message);
+      console.error('Error running automation:', err);
+    } finally {
+      setAutomationRunning(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -146,18 +170,55 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
             <p className="text-gray-600 mt-1">Create and manage recurring maintenance schedules</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Schedule
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={runMaintenanceAutomation}
+            disabled={automationRunning}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            {automationRunning ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            ) : (
+              <CheckCircle className="h-4 w-4 mr-2" />
+            )}
+            {automationRunning ? 'Running...' : 'Run Automation'}
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Schedule
+          </button>
+        </div>
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
           {error}
+        </div>
+      )}
+
+      {automationResult && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
+          <div className="flex items-center mb-2">
+            <CheckCircle className="h-5 w-5 mr-2" />
+            <span className="font-medium">Automation completed successfully!</span>
+          </div>
+          <div className="text-sm space-y-1">
+            <p>• {automationResult.tasks_created} new maintenance tasks created</p>
+            <p>• {automationResult.tasks_marked_overdue} tasks marked as overdue</p>
+            <p>• {automationResult.tasks_synced_from_work_orders} tasks synced from completed work orders</p>
+            <p className="text-xs text-green-600 mt-2">
+              Last run: {new Date(automationResult.timestamp).toLocaleString()}
+            </p>
+          </div>
+          <button 
+            onClick={() => setAutomationResult(null)}
+            className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -365,6 +426,22 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="autoGenerateWorkOrders"
+                  checked={formData.autoGenerateWorkOrders}
+                  onChange={(e) => setFormData({ ...formData, autoGenerateWorkOrders: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="autoGenerateWorkOrders" className="text-sm font-medium text-gray-700">
+                  Automatically generate work orders for maintenance tasks
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 ml-7">
+                When enabled, work orders will be automatically created when maintenance tasks are scheduled from this PM schedule.
+              </p>
 
               <div className="flex justify-end space-x-3">
                 <button
