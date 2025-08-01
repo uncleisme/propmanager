@@ -26,6 +26,9 @@ import Reporting from './components/Reporting';
 import SchedulerModule from './components/Scheduler';
 import SchedulerProvider from './components/SchedulerContext';
 import StaffManagement from './components/StaffManagement';
+import PreventiveMaintenance from './components/PreventiveMaintenance';
+import MaintenanceAssets from './components/MaintenanceAssets';
+import MaintenanceSchedules from './components/MaintenanceSchedules';
 
 import { ViewType } from './types';
 type AppViewType = ViewType | 'scheduler';
@@ -130,6 +133,11 @@ const App: React.FC = () => {
       case 'reporting': return <Reporting user={user} />;
       case 'scheduler': return <SchedulerModule />;
       case 'staff-management': return <StaffManagement user={user} />;
+      case 'preventive-maintenance': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
+      case 'maintenance-assets': return <MaintenanceAssets user={user} onViewChange={setCurrentView} />;
+      case 'maintenance-schedules': return <MaintenanceSchedules user={user} onViewChange={setCurrentView} />;
+      case 'maintenance-tasks': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
+      case 'maintenance-history': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
       default: return <Dashboard user={user} />;
     }
   };
