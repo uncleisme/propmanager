@@ -355,4 +355,120 @@ export interface StaffAttendance {
   updatedAt: string;
 }
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management';
+// Preventive Maintenance Types
+export interface AssetCategory {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceAsset {
+  id: string;
+  assetName: string;
+  assetCode?: string;
+  categoryId?: string;
+  category?: AssetCategory;
+  locationBuilding?: string;
+  locationFloor?: string;
+  locationRoom?: string;
+  makeModel?: string;
+  serialNumber?: string;
+  purchaseDate?: string;
+  warrantyExpiry?: string;
+  installationDate?: string;
+  specifications?: Record<string, any>;
+  status: 'active' | 'inactive' | 'retired' | 'maintenance';
+  criticality: 'low' | 'medium' | 'high' | 'critical';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceType {
+  id: string;
+  name: string;
+  description?: string;
+  category: 'preventive' | 'corrective' | 'predictive' | 'condition_based';
+  estimatedDuration?: number; // in minutes
+  requiredSkills?: string[];
+  safetyRequirements?: string[];
+  toolsRequired?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceSchedule {
+  id: string;
+  assetId: string;
+  asset?: MaintenanceAsset;
+  maintenanceTypeId?: string;
+  maintenanceType?: MaintenanceType;
+  scheduleName: string;
+  description?: string;
+  frequencyType: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'annual' | 'custom';
+  frequencyValue: number;
+  startDate: string;
+  endDate?: string;
+  nextDueDate: string;
+  lastCompletedDate?: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  estimatedDuration?: number; // in minutes
+  assignedTo?: string;
+  instructions?: string;
+  checklist?: Array<{ id: string; item: string; required: boolean }>;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceTask {
+  id: string;
+  scheduleId?: string;
+  schedule?: MaintenanceSchedule;
+  assetId: string;
+  asset?: MaintenanceAsset;
+  taskNumber: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'overdue';
+  scheduledDate: string;
+  scheduledStartTime?: string;
+  scheduledEndTime?: string;
+  assignedTo?: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  actualDuration?: number; // in minutes
+  completionNotes?: string;
+  checklistResults?: Array<{ id: string; item: string; completed: boolean; notes?: string }>;
+  partsUsed?: Array<{ name: string; quantity: number; cost: number }>;
+  laborCost?: number;
+  partsCost?: number;
+  totalCost?: number;
+  attachments?: string[];
+  createdBy?: string;
+  completedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceHistory {
+  id: string;
+  assetId: string;
+  asset?: MaintenanceAsset;
+  taskId?: string;
+  task?: MaintenanceTask;
+  actionType: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled' | 'overdue';
+  actionDate: string;
+  performedBy?: string;
+  details?: string;
+  oldValues?: Record<string, any>;
+  newValues?: Record<string, any>;
+  createdAt: string;
+}
+
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management' | 'preventive-maintenance' | 'maintenance-assets' | 'maintenance-schedules' | 'maintenance-tasks' | 'maintenance-history';
