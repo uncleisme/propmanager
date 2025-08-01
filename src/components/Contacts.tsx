@@ -165,7 +165,9 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         type: type && type.trim() !== '' ? type : null, 
         company: company || null, 
         email: email || '', 
-        notes: notes || null 
+        notes: notes || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       console.log('Contact data to save:', contactData);
 
