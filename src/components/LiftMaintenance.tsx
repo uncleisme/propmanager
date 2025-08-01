@@ -22,6 +22,7 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalAssets, setTotalAssets] = useState(0);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
 
   const fetchLiftAssets = async () => {
     setLoading(true);
@@ -210,11 +211,35 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
     });
   };
 
-  const filteredAssets = liftAssets.filter(asset =>
-    asset.assetName.toLowerCase().includes(search.toLowerCase()) ||
-    asset.locationBuilding?.toLowerCase().includes(search.toLowerCase()) ||
-    asset.contractorVendorName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAssets = liftAssets.filter(asset => {
+    // First apply search filter
+    const matchesSearch = asset.assetName.toLowerCase().includes(search.toLowerCase()) ||
+      asset.locationBuilding?.toLowerCase().includes(search.toLowerCase()) ||
+      asset.contractorVendorName?.toLowerCase().includes(search.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    // Then apply metric filter
+    switch (activeFilter) {
+      case 'overdue-cf':
+        if (!asset.nextCfDueDate) return false;
+        const overdueDate = new Date(asset.nextCfDueDate);
+        const today = new Date();
+        return overdueDate < today;
+      case 'due-cf':
+        if (!asset.nextCfDueDate) return false;
+        const dueDate = new Date(asset.nextCfDueDate);
+        const currentDate = new Date();
+        const diffTime = dueDate.getTime() - currentDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 30 && diffDays >= 0;
+      case 'breakdowns':
+        // Placeholder for future breakdown tracking
+        return false;
+      default:
+        return true; // 'all' filter
+    }
+  });
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -291,45 +316,73 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Assets</p>
-              <p className="text-2xl font-bold text-blue-600">{activeAssets}</p>
-            </div>
-            <ArrowUpDown className="w-8 h-8 text-blue-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Due for CF Renewal</p>
-              <p className="text-2xl font-bold text-yellow-600">{dueForCFRenewal}</p>
-            </div>
-            <Calendar className="w-8 h-8 text-yellow-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Overdue CF</p>
-              <p className="text-2xl font-bold text-red-600">{overdueCFRenewal}</p>
-            </div>
-            <AlertCircle className="w-8 h-8 text-red-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">This Month Breakdowns</p>
-              <p className="text-2xl font-bold text-orange-600">{thisMonthBreakdowns}</p>
-            </div>
-            <Settings className="w-8 h-8 text-orange-500" />
-          </div>
-        </div>
-      </div>
+             {/* Metrics */}
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+         <div 
+           className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+             activeFilter === 'all' 
+               ? 'border-blue-300 bg-blue-50' 
+               : 'border-gray-200 hover:border-blue-200'
+           }`}
+           onClick={() => setActiveFilter('all')}
+         >
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Active Assets</p>
+               <p className="text-2xl font-bold text-blue-600">{activeAssets}</p>
+             </div>
+             <ArrowUpDown className="w-8 h-8 text-blue-500" />
+           </div>
+         </div>
+         <div 
+           className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+             activeFilter === 'due-cf' 
+               ? 'border-yellow-300 bg-yellow-50' 
+               : 'border-gray-200 hover:border-yellow-200'
+           }`}
+           onClick={() => setActiveFilter('due-cf')}
+         >
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Due for CF Renewal</p>
+               <p className="text-2xl font-bold text-yellow-600">{dueForCFRenewal}</p>
+             </div>
+             <Calendar className="w-8 h-8 text-yellow-500" />
+           </div>
+         </div>
+         <div 
+           className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+             activeFilter === 'overdue-cf' 
+               ? 'border-red-300 bg-red-50' 
+               : 'border-gray-200 hover:border-red-200'
+           }`}
+           onClick={() => setActiveFilter('overdue-cf')}
+         >
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Overdue CF</p>
+               <p className="text-2xl font-bold text-red-600">{overdueCFRenewal}</p>
+             </div>
+             <AlertCircle className="w-8 h-8 text-red-500" />
+           </div>
+         </div>
+         <div 
+           className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+             activeFilter === 'breakdowns' 
+               ? 'border-orange-300 bg-orange-50' 
+               : 'border-gray-200 hover:border-orange-200'
+           }`}
+           onClick={() => setActiveFilter('breakdowns')}
+         >
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">This Month Breakdowns</p>
+               <p className="text-2xl font-bold text-orange-600">{thisMonthBreakdowns}</p>
+             </div>
+             <Settings className="w-8 h-8 text-orange-500" />
+           </div>
+         </div>
+       </div>
 
       {/* Import Instructions */}
       {showImportInstructions && (
@@ -344,19 +397,40 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="relative w-full max-w-md mb-6">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search by asset name, building, or contractor..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
+             {/* Search and Filter Bar */}
+       <div className="flex flex-col md:flex-row gap-4 mb-6">
+         <div className="relative flex-1 max-w-md">
+           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+             <Search className="w-5 h-5 text-gray-400" />
+           </div>
+           <input
+             type="text"
+             placeholder="Search by asset name, building, or contractor..."
+             value={search}
+             onChange={(e) => setSearch(e.target.value)}
+             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+           />
+         </div>
+         
+         {/* Active Filter Indicator */}
+         {activeFilter !== 'all' && (
+           <div className="flex items-center space-x-2">
+             <div className="flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+               <span className="mr-2">
+                 {activeFilter === 'overdue-cf' && '⚠️ Overdue CF'}
+                 {activeFilter === 'due-cf' && '📅 Due for CF Renewal'}
+                 {activeFilter === 'breakdowns' && '🔧 This Month Breakdowns'}
+               </span>
+               <button
+                 onClick={() => setActiveFilter('all')}
+                 className="text-blue-600 hover:text-blue-800"
+               >
+                 <X className="w-4 h-4" />
+               </button>
+             </div>
+           </div>
+         )}
+       </div>
 
       {/* Error Message Display */}
       {errorMsg && (
