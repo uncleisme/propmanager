@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import type { LiftMaintenance } from '../types';
 import { User } from '@supabase/supabase-js';
-import { ArrowUpDown, Plus, Search, Edit, Trash2, Eye, Calendar, MapPin, Settings, X, Upload, FileText, User as UserIcon, Building, Hash, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Plus, Search, Edit, Trash2, Eye, Calendar, MapPin, Settings, X, Upload, FileText, User as UserIcon, Building, Hash, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import Papa from 'papaparse';
 
 interface LiftMaintenanceProps {
@@ -236,6 +236,24 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
 
   const totalPages = Math.ceil(totalAssets / pageSize);
 
+  // Calculate metrics
+  const activeAssets = liftAssets.length;
+  const dueForCFRenewal = liftAssets.filter(asset => {
+    if (!asset.nextCfDueDate) return false;
+    const dueDate = new Date(asset.nextCfDueDate);
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 30 && diffDays >= 0;
+  }).length;
+  const overdueCFRenewal = liftAssets.filter(asset => {
+    if (!asset.nextCfDueDate) return false;
+    const dueDate = new Date(asset.nextCfDueDate);
+    const today = new Date();
+    return dueDate < today;
+  }).length;
+  const thisMonthBreakdowns = 0; // Placeholder for future breakdown tracking
+
   return (
     <div>
       {/* Header Section */}
@@ -270,6 +288,46 @@ const LiftMaintenance: React.FC<LiftMaintenanceProps> = ({ user }) => {
             <Plus className="w-4 h-4" />
             <span>Add Asset</span>
           </button>
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Assets</p>
+              <p className="text-2xl font-bold text-blue-600">{activeAssets}</p>
+            </div>
+            <ArrowUpDown className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Due for CF Renewal</p>
+              <p className="text-2xl font-bold text-yellow-600">{dueForCFRenewal}</p>
+            </div>
+            <Calendar className="w-8 h-8 text-yellow-500" />
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Overdue CF</p>
+              <p className="text-2xl font-bold text-red-600">{overdueCFRenewal}</p>
+            </div>
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">This Month Breakdowns</p>
+              <p className="text-2xl font-bold text-orange-600">{thisMonthBreakdowns}</p>
+            </div>
+            <Settings className="w-8 h-8 text-orange-500" />
+          </div>
         </div>
       </div>
 
