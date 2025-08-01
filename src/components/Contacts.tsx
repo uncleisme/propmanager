@@ -35,6 +35,25 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
+    
+    // Test query to check if table exists and get column info
+    const { data: testData, error: testError } = await supabase
+      .from("contacts")
+      .select("*")
+      .limit(1);
+    
+    if (testError) {
+      console.error('Error accessing contacts table:', testError);
+      setErrorMsg(`Database error: ${testError.message}`);
+      setLoading(false);
+      return;
+    }
+    
+    console.log('Contacts table accessible, sample data:', testData);
+    if (testData && testData.length > 0) {
+      console.log('Available columns:', Object.keys(testData[0]));
+    }
+    
     const from = (currentPage - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -139,7 +158,15 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
       const email = formData.get("email") as string;
       const notes = formData.get("notes") as string;
 
-      const contactData = { name, address, phone, type, company, email, notes };
+      const contactData = { 
+        name: name || '', 
+        address: address || null, 
+        phone: phone || '', 
+        type: type && type.trim() !== '' ? type : null, 
+        company: company || null, 
+        email: email || '', 
+        notes: notes || null 
+      };
       console.log('Contact data to save:', contactData);
 
       if (modalType === "add") {
@@ -155,9 +182,26 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         fetchContacts();
       } else if (modalType === "edit" && selectedContact) {
         console.log('Updating contact with ID:', selectedContact.id);
+        console.log('Contact data to update:', contactData);
+        
+        // First, let's check if the contact exists
+        const { data: existingContact, error: checkError } = await supabase
+          .from("contacts")
+          .select("*")
+          .eq("id", selectedContact.id)
+          .single();
+        
+        if (checkError) {
+          console.error('Error checking existing contact:', checkError);
+          setErrorMsg(`Failed to verify contact exists: ${checkError.message}`);
+          return;
+        }
+        
+        console.log('Existing contact found:', existingContact);
+        
         const { data, error } = await supabase
           .from("contacts")
-          .update(contactData)
+          .update({ ...contactData })
           .eq("id", selectedContact.id)
           .select();
         if (error) {
@@ -505,10 +549,10 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
                           defaultValue={modalType === "edit" && selectedContact ? selectedContact.type || "" : ""}
                           className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         >
-                          <option value="">Select type</option>
+                          <option value="">Select type (optional)</option>
                           <option value="contractor">Contractor</option>
                           <option value="supplier">Supplier</option>
-                          <option value="serviceProvider">Service Provider</option>
+                          <option value="service provider">Service Provider</option>
                           <option value="resident">Resident</option>
                           <option value="government">Government</option>
                           <option value="others">Others</option>

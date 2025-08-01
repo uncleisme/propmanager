@@ -221,6 +221,27 @@ export interface SecurityPerson {
   updatedAt: string;
 }
 
+export interface LiftMaintenance {
+  id: string;
+  assetName: string;
+  assetType: string;
+  makeModel?: string;
+  serialNumber?: string;
+  capacityKg?: number;
+  capacityPersons?: number;
+  installationDate?: string;
+  locationBuilding?: string;
+  locationFloor?: string;
+  locationBlock?: string;
+  doshRegistrationNumber?: string;
+  lastCfRenewalDate?: string;
+  nextCfDueDate?: string;
+  contractorVendorName?: string;
+  competentPersonAssigned?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Technician {
   id: string;
   name: string;
@@ -268,4 +289,4 @@ export interface SchedulerContextType {
   error: string | null;
 }
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning';
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance';
