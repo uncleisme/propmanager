@@ -154,6 +154,99 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Calculate next due date based on frequency
+      const startDate = new Date(formData.startDate);
+      let nextDueDate = new Date(startDate);
+      
+      switch (formData.frequencyType) {
+        case 'daily':
+          nextDueDate.setDate(nextDueDate.getDate() + formData.frequencyValue);
+          break;
+        case 'weekly':
+          nextDueDate.setDate(nextDueDate.getDate() + (formData.frequencyValue * 7));
+          break;
+        case 'monthly':
+          nextDueDate.setMonth(nextDueDate.getMonth() + formData.frequencyValue);
+          break;
+        case 'quarterly':
+          nextDueDate.setMonth(nextDueDate.getMonth() + (formData.frequencyValue * 3));
+          break;
+        case 'semi_annual':
+          nextDueDate.setMonth(nextDueDate.getMonth() + (formData.frequencyValue * 6));
+          break;
+        case 'annual':
+          nextDueDate.setFullYear(nextDueDate.getFullYear() + formData.frequencyValue);
+          break;
+      }
+
+      const scheduleData = {
+        "assetId": parseInt(formData.assetId),
+        "maintenanceTypeId": parseInt(formData.maintenanceTypeId),
+        "scheduleName": formData.scheduleName,
+        description: formData.description,
+        "frequencyType": formData.frequencyType,
+        "frequencyValue": formData.frequencyValue,
+        "startDate": formData.startDate,
+        "endDate": formData.endDate || null,
+        priority: formData.priority,
+        "estimatedDuration": formData.estimatedDuration,
+        "assignedTo": formData.assignedTo || null,
+        instructions: formData.instructions || null,
+        checklist: formData.checklist.length > 0 ? formData.checklist : null,
+        "isActive": formData.isActive,
+        "autoGenerateWorkOrders": formData.autoGenerateWorkOrders,
+        "nextDueDate": nextDueDate.toISOString().split('T')[0],
+        "createdBy": user?.id,
+        "createdAt": new Date().toISOString(),
+        "updatedAt": new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('maintenance_schedules')
+        .insert([scheduleData])
+        .select();
+
+      if (error) throw error;
+
+      // Reset form and close modal
+      setFormData({
+        assetId: '',
+        maintenanceTypeId: '',
+        scheduleName: '',
+        description: '',
+        frequencyType: 'monthly',
+        frequencyValue: 1,
+        startDate: '',
+        endDate: '',
+        priority: 'medium',
+        estimatedDuration: 60,
+        assignedTo: '',
+        instructions: '',
+        checklist: [],
+        isActive: true,
+        autoGenerateWorkOrders: true
+      });
+      
+      setShowModal(false);
+      setModalType(null);
+      
+      // Refresh schedules list
+      await fetchSchedules();
+      
+    } catch (err: any) {
+      setError('Failed to create schedule: ' + err.message);
+      console.error('Error creating schedule:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -332,8 +425,9 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
                 <label className="block text-sm font-medium text-gray-700">Schedule Name *</label>
                 <input
                   type="text"
@@ -443,23 +537,25 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
                 When enabled, work orders will be automatically created when maintenance tasks are scheduled from this PM schedule.
               </p>
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Schedule
-                </button>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:bg-blue-400"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {loading ? 'Creating...' : 'Create Schedule'}
+                  </button>
+                </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

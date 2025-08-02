@@ -375,22 +375,22 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Asset
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
                   Criticality
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
                   Actions
                 </th>
               </tr>
@@ -398,7 +398,7 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center">
+                  <td colSpan={6} className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                       <span className="ml-2">Loading...</span>
@@ -407,69 +407,72 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
                 </tr>
               ) : assets.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 py-3 text-center text-gray-500">
                     No assets found
                   </td>
                 </tr>
               ) : (
                 assets.map((asset) => (
                   <tr key={asset.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{asset.assetName}</div>
-                        <div className="text-sm text-gray-500">{asset.assetCode}</div>
+                        <div className="text-sm font-medium text-gray-900 truncate">{asset.assetName}</div>
+                        <div className="text-xs text-gray-500 truncate">{asset.assetCode}</div>
                         {asset.makeModel && (
-                          <div className="text-sm text-gray-500">{asset.makeModel}</div>
+                          <div className="text-xs text-gray-500 truncate">{asset.makeModel}</div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3">
                       {asset.category && (
                         <div className="flex items-center">
                           <div 
-                            className="w-3 h-3 rounded-full mr-2"
+                            className="w-2 h-2 rounded-full mr-1 flex-shrink-0"
                             style={{ backgroundColor: asset.category.color }}
                           ></div>
-                          <span className="text-sm text-gray-900">{asset.category.name}</span>
+                          <span className="text-sm text-gray-900 truncate">{asset.category.name}</span>
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                    <td className="px-3 py-3">
+                      <div className="text-sm text-gray-900 truncate max-w-32" title={`${asset.locationBuilding}${asset.locationFloor ? ` - Floor ${asset.locationFloor}` : ''}${asset.locationRoom ? ` - ${asset.locationRoom}` : ''}`}>
                         {asset.locationBuilding}
-                        {asset.locationFloor && ` - Floor ${asset.locationFloor}`}
+                        {asset.locationFloor && ` - F${asset.locationFloor}`}
                         {asset.locationRoom && ` - ${asset.locationRoom}`}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(asset.status)}`}>
+                    <td className="px-3 py-3">
+                      <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded-full border ${getStatusColor(asset.status)}`}>
                         {asset.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getCriticalityColor(asset.criticality)}`}>
+                    <td className="px-3 py-3">
+                      <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded-full border ${getCriticalityColor(asset.criticality)}`}>
                         {asset.criticality}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                    <td className="px-3 py-3 text-sm font-medium">
+                      <div className="flex space-x-1">
                         <button
                           onClick={() => openModal('view', asset)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="View"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
                         </button>
                         <button
                           onClick={() => openModal('edit', asset)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3" />
                         </button>
                         <button
                           onClick={() => handleDelete(asset.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Delete"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     </td>
