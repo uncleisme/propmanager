@@ -420,7 +420,9 @@ export interface MaintenanceSchedule {
   assignedTo?: string;
   instructions?: string;
   checklist?: Array<{ id: string; item: string; required: boolean }>;
+  autoGenerateWorkOrders: boolean;
   isActive: boolean;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
 }

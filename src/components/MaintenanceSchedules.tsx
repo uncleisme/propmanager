@@ -202,9 +202,7 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
         "isActive": formData.isActive,
         "autoGenerateWorkOrders": formData.autoGenerateWorkOrders,
         "nextDueDate": nextDueDate.toISOString().split('T')[0],
-        "createdBy": user?.id,
-        "createdAt": new Date().toISOString(),
-        "updatedAt": new Date().toISOString()
+        "createdBy": user?.id
       };
 
       const { data, error } = await supabase
