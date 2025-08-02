@@ -68,39 +68,39 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
       const { count: schedulesCount } = await supabase
         .from('maintenance_schedules')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('isActive', true);
 
       // Overdue tasks
       const { data: overdueData, count: overdueCount } = await supabase
         .from('maintenance_tasks')
         .select(`
           *,
-          asset:maintenance_assets(asset_name, location_building),
-          schedule:maintenance_schedules(schedule_name)
+          asset:maintenance_assets(assetName, locationBuilding),
+          schedule:maintenance_schedules(scheduleName)
         `, { count: 'exact' })
-        .lt('scheduled_date', today)
+        .lt('scheduledDate', today)
         .in('status', ['scheduled', 'in_progress']);
 
       // Today's tasks
       const { count: todayCount } = await supabase
         .from('maintenance_tasks')
         .select('*', { count: 'exact', head: true })
-        .eq('scheduled_date', today)
+        .eq('scheduledDate', today)
         .in('status', ['scheduled', 'in_progress']);
 
       // This week's tasks
       const { count: weekCount } = await supabase
         .from('maintenance_tasks')
         .select('*', { count: 'exact', head: true })
-        .gte('scheduled_date', today)
-        .lte('scheduled_date', weekFromNow)
+        .gte('scheduledDate', today)
+        .lte('scheduledDate', weekFromNow)
         .in('status', ['scheduled', 'in_progress']);
 
       // Completed this month
       const { count: completedCount } = await supabase
         .from('maintenance_tasks')
         .select('*', { count: 'exact', head: true })
-        .gte('scheduled_date', firstDayOfMonth)
+        .gte('scheduledDate', firstDayOfMonth)
         .eq('status', 'completed');
 
       // Upcoming tasks (next 7 days)
@@ -108,13 +108,13 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
         .from('maintenance_tasks')
         .select(`
           *,
-          asset:maintenance_assets(asset_name, location_building),
-          schedule:maintenance_schedules(schedule_name)
+          asset:maintenance_assets(assetName, locationBuilding),
+          schedule:maintenance_schedules(scheduleName)
         `)
-        .gte('scheduled_date', today)
-        .lte('scheduled_date', weekFromNow)
+        .gte('scheduledDate', today)
+        .lte('scheduledDate', weekFromNow)
         .in('status', ['scheduled', 'in_progress'])
-        .order('scheduled_date', { ascending: true })
+        .order('scheduledDate', { ascending: true })
         .limit(5);
 
       setStats({
@@ -320,9 +320,9 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{task.title}</h4>
                       <p className="text-sm text-gray-600">
-                        {task.asset?.asset_name} • {task.asset?.location_building}
+                        {task.asset?.assetName} • {task.asset?.locationBuilding}
                       </p>
-                      <p className="text-sm text-red-600">Due: {task.scheduled_date}</p>
+                      <p className="text-sm text-red-600">Due: {task.scheduledDate}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
@@ -360,9 +360,9 @@ const PreventiveMaintenance: React.FC<PreventiveMaintenanceProps> = ({ user, onV
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{task.title}</h4>
                       <p className="text-sm text-gray-600">
-                        {task.asset?.asset_name} • {task.asset?.location_building}
+                        {task.asset?.assetName} • {task.asset?.locationBuilding}
                       </p>
-                      <p className="text-sm text-gray-500">Due: {task.scheduled_date}</p>
+                      <p className="text-sm text-gray-500">Due: {task.scheduledDate}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>

@@ -46,7 +46,7 @@ const MaintenanceConfig: React.FC<MaintenanceConfigProps> = ({ user, onViewChang
       const { data, error } = await supabase
         .from('maintenance_config')
         .select('*')
-        .order('setting_key');
+        .order('settingKey');
 
       if (error) throw error;
 
@@ -54,7 +54,7 @@ const MaintenanceConfig: React.FC<MaintenanceConfigProps> = ({ user, onViewChang
       
       // Update form data with current settings
       const settingsMap = (data || []).reduce((acc, setting) => {
-        acc[setting.setting_key] = setting.setting_value;
+        acc[setting.settingKey] = setting.settingValue;
         return acc;
       }, {} as any);
       
@@ -79,11 +79,11 @@ const MaintenanceConfig: React.FC<MaintenanceConfigProps> = ({ user, onViewChang
         const { error } = await supabase
           .from('maintenance_config')
           .upsert({
-            setting_key: key,
-            setting_value: value,
-            updated_at: new Date().toISOString()
+            settingKey: key,
+            settingValue: value,
+            updatedAt: new Date().toISOString()
           }, {
-            onConflict: 'setting_key'
+            onConflict: 'settingKey'
           });
 
         if (error) throw error;

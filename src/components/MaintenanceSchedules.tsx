@@ -68,9 +68,9 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
         .select(`
           *,
           asset:maintenance_assets(*),
-          maintenance_type:maintenance_types(*)
+          maintenanceType:maintenance_types(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
       if (error) throw error;
       setSchedules(data || []);
@@ -88,7 +88,7 @@ const MaintenanceSchedules: React.FC<MaintenanceSchedulesProps> = ({ user, onVie
         .from('maintenance_assets')
         .select('*')
         .eq('status', 'active')
-        .order('asset_name');
+        .order('assetName');
 
       if (error) throw error;
       setAssets(data || []);

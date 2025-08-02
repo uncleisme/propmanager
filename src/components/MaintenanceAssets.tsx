@@ -79,13 +79,13 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
 
       // Apply filters
       if (search) {
-        query = query.or(`asset_name.ilike.%${search}%,asset_code.ilike.%${search}%,location_building.ilike.%${search}%,make_model.ilike.%${search}%`);
+        query = query.or(`assetName.ilike.%${search}%,assetCode.ilike.%${search}%,locationBuilding.ilike.%${search}%,makeModel.ilike.%${search}%`);
       }
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
       if (categoryFilter !== 'all') {
-        query = query.eq('category_id', categoryFilter);
+        query = query.eq('categoryId', categoryFilter);
       }
       if (criticalityFilter !== 'all') {
         query = query.eq('criticality', criticalityFilter);
@@ -95,7 +95,7 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
       const to = from + pageSize - 1;
 
       const { data, error, count } = await query
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(from, to);
 
       if (error) throw error;
@@ -130,17 +130,17 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
 
     try {
       const assetData = {
-        asset_name: formData.assetName,
-        asset_code: formData.assetCode || null,
-        category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
-        location_building: formData.locationBuilding || null,
-        location_floor: formData.locationFloor || null,
-        location_room: formData.locationRoom || null,
-        make_model: formData.makeModel || null,
-        serial_number: formData.serialNumber || null,
-        purchase_date: formData.purchaseDate || null,
-        warranty_expiry: formData.warrantyExpiry || null,
-        installation_date: formData.installationDate || null,
+        assetName: formData.assetName,
+        assetCode: formData.assetCode || null,
+        categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+        locationBuilding: formData.locationBuilding || null,
+        locationFloor: formData.locationFloor || null,
+        locationRoom: formData.locationRoom || null,
+        makeModel: formData.makeModel || null,
+        serialNumber: formData.serialNumber || null,
+        purchaseDate: formData.purchaseDate || null,
+        warrantyExpiry: formData.warrantyExpiry || null,
+        installationDate: formData.installationDate || null,
         specifications: formData.specifications,
         status: formData.status,
         criticality: formData.criticality,
