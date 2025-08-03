@@ -168,7 +168,7 @@ BEGIN
         UPDATE public.maintenance_tasks 
         SET 
             status = 'completed',
-            "actualEndTime" = COALESCE(NEW."completedAt", NOW()),
+            "actualEndTime" = COALESCE(NEW."resolvedAt", NOW()),
             "completedBy" = completed_by_text,
             "completionNotes" = COALESCE(NEW.comment, 'Completed via work order #' || NEW.id::TEXT),
             "updatedAt" = NOW()

@@ -156,7 +156,7 @@ const Scheduler: React.FC = () => {
       
       // Fetch maintenance tasks
       const { data: mtData, error: mtError } = await supabase
-        .from('maintenanceTasks')
+        .from('maintenance_tasks')
         .select(`
           id,
           taskNumber,

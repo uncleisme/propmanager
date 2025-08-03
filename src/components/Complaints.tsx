@@ -22,6 +22,19 @@ interface WorkOrder {
   photoUrl?: string;
 }
 
+interface Profile {
+  id: string;
+  full_name: string;
+  email: string;
+  type: string;
+}
+
+interface Contact {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface MaintenanceTask {
   id: number;
   taskNumber: string;
@@ -32,34 +45,41 @@ interface MaintenanceTask {
   scheduledDate: string;
   assetName?: string;
   locationBuilding?: string;
+  maintenanceAssets?: {
+    assetName?: string;
+    locationBuilding?: string;
+  };
 }
 
 const Complaints: React.FC = () => {
+  // State for work orders and related data
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>([]);
-  const [technicians, setTechnicians] = useState<{ id: string; full_name: string | null; email: string; type: string }[]>([]);
-  const [contacts, setContacts] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [technicians, setTechnicians] = useState<Profile[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Work order title options based on enum title.txt
-  const workOrderTitles = [
-    // Facilities / Maintenance
-    { value: 'Plumbing Issue', label: 'Plumbing Issue', category: 'Facilities / Maintenance' },
-    { value: 'Electrical Issue', label: 'Electrical Issue', category: 'Facilities / Maintenance' },
-    { value: 'Air Conditioning', label: 'Air Conditioning', category: 'Facilities / Maintenance' },
-    { value: 'Lighting Problem', label: 'Lighting Problem', category: 'Facilities / Maintenance' },
-    { value: 'Door or Lock Repair', label: 'Door or Lock Repair', category: 'Facilities / Maintenance' },
-    { value: 'Furniture Repair', label: 'Furniture Repair', category: 'Facilities / Maintenance' },
-    { value: 'Cleaning Request', label: 'Cleaning Request', category: 'Facilities / Maintenance' },
-    { value: 'Pest Control', label: 'Pest Control', category: 'Facilities / Maintenance' },
-    { value: 'Painting Request', label: 'Painting Request', category: 'Facilities / Maintenance' },
+  // Work order types for dropdown
+  const workOrderTypes = [
+    // Maintenance / Repairs
+    { value: 'Aircon Maintenance', label: 'Aircon Maintenance', category: 'Maintenance / Repairs' },
+    { value: 'Electrical', label: 'Electrical', category: 'Maintenance / Repairs' },
+    { value: 'Plumbing', label: 'Plumbing', category: 'Maintenance / Repairs' },
+    { value: 'Carpentry', label: 'Carpentry', category: 'Maintenance / Repairs' },
+    { value: 'Pest Control', label: 'Pest Control', category: 'Maintenance / Repairs' },
+    { value: 'Painting', label: 'Painting', category: 'Maintenance / Repairs' },
+    { value: 'Locksmith', label: 'Locksmith', category: 'Maintenance / Repairs' },
+    { value: 'Appliance Repair', label: 'Appliance Repair', category: 'Maintenance / Repairs' },
+    // Cleaning
+    { value: 'General Cleaning', label: 'General Cleaning', category: 'Cleaning' },
+    { value: 'Carpet Cleaning', label: 'Carpet Cleaning', category: 'Cleaning' },
+    { value: 'Window Cleaning', label: 'Window Cleaning', category: 'Cleaning' },
+    { value: 'Upholstery Cleaning', label: 'Upholstery Cleaning', category: 'Cleaning' },
     // IT / Technical
-    { value: 'Computer Issue', label: 'Computer Issue', category: 'IT / Technical' },
-    { value: 'Internet Problem', label: 'Internet Problem', category: 'IT / Technical' },
-    { value: 'Software Support', label: 'Software Support', category: 'IT / Technical' },
+    { value: 'Computer Setup', label: 'Computer Setup', category: 'IT / Technical' },
     { value: 'Printer Issue', label: 'Printer Issue', category: 'IT / Technical' },
+    { value: 'Internet Problem', label: 'Internet Problem', category: 'IT / Technical' },
     { value: 'Email or Account', label: 'Email or Account', category: 'IT / Technical' },
     { value: 'Network Problem', label: 'Network Problem', category: 'IT / Technical' },
     // Administrative / General Office
@@ -69,6 +89,8 @@ const Complaints: React.FC = () => {
     { value: 'Moving Assistance', label: 'Moving Assistance', category: 'Administrative / General Office' },
     { value: 'Other', label: 'Other', category: 'Administrative / General Office' },
   ];
+  
+  // Form state
   const [form, setForm] = useState({
     type: 'job',
     title: '',
@@ -84,6 +106,8 @@ const Complaints: React.FC = () => {
     comment: '',
     photoUrl: '',
   });
+  
+  // UI state
   const [search, setSearch] = useState('');
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>("add");
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
@@ -91,15 +115,17 @@ const Complaints: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'ready-for-review' | 'completed'>('active');
   const pageSize = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch work orders
       const { data: woData, error: woError } = await supabase
         .from('work_order')
         .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,technicianId,maintenanceTaskId,createdAt,resolvedAt,comment,photoUrl')
         .order('createdAt', { ascending: false });
       
       if (woError) {
+        console.error('Error fetching work orders:', woError);
         setLoading(false);
         return;
       }
@@ -107,7 +133,7 @@ const Complaints: React.FC = () => {
       
       // Fetch maintenance tasks for preventive maintenance work orders
       const { data: maintenanceTasksData, error: mtError } = await supabase
-        .from('maintenanceTasks')
+        .from('maintenance_tasks')
         .select(`
           id,
           taskNumber,
@@ -136,27 +162,48 @@ const Complaints: React.FC = () => {
         setMaintenanceTasks(flattenedTasks);
       }
       
-      const { data: techniciansData, error: techniciansError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, type')
-        .eq('type', 'technician');
+      // Fetch technicians and contacts in parallel
+      const [
+        { data: techniciansData, error: techniciansError },
+        { data: contactsData, error: contactsError }
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, email, type')
+          .eq('type', 'technician'),
+        supabase
+          .from('contacts')
+          .select('id, name, type')
+      ]);
       
-      const { data: contactsData, error: contactsError } = await supabase
-        .from('contacts')
-        .select('id, name, type');
+      if (techniciansError) {
+        console.error('Error fetching technicians:', techniciansError);
+      } else {
+        setTechnicians(techniciansData || []);
+      }
       
-      setTechnicians(techniciansData || []);
-      setContacts(contactsData || []);
+      if (contactsError) {
+        console.error('Error fetching contacts:', contactsError);
+      } else {
+        setContacts(contactsData || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchData:', error);
+    } finally {
       setLoading(false);
-    };
-    fetchData();
+    }
   }, []);
+  
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab]);
 
-  const getTechnicianName = (id?: string, orderType?: string) => {
+  const getTechnicianName = (id: string | undefined, orderType?: string) => {
     if (!id) return '';
     
     if (orderType === 'complaint') {
@@ -903,9 +950,9 @@ const Complaints: React.FC = () => {
                         required
                       >
                         <option value="">Select Issue Type</option>
-                        {workOrderTitles.map((title, index) => (
-                          <option key={index} value={title.value}>
-                            {title.label}
+                        {workOrderTypes.map((type, index) => (
+                          <option key={index} value={type.value}>
+                            {type.label}
                           </option>
                         ))}
                       </select>
