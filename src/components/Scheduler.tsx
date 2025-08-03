@@ -169,7 +169,7 @@ const Scheduler: React.FC = () => {
           scheduledEndTime,
           assignedTo,
           createdAt,
-          maintenanceAssets!inner(
+          maintenance_assets!inner(
             assetName,
             locationBuilding,
             locationFloor,
@@ -185,10 +185,10 @@ const Scheduler: React.FC = () => {
         // Flatten the data structure
         const flattenedTasks = (mtData || []).map((task: any) => ({
           ...task,
-          assetName: task.maintenanceAssets?.assetName,
-          locationBuilding: task.maintenanceAssets?.locationBuilding,
-          locationFloor: task.maintenanceAssets?.locationFloor,
-          locationRoom: task.maintenanceAssets?.locationRoom
+          assetName: task.maintenance_assets?.assetName,
+          locationBuilding: task.maintenance_assets?.locationBuilding,
+          locationFloor: task.maintenance_assets?.locationFloor,
+          locationRoom: task.maintenance_assets?.locationRoom
         }));
         setMaintenanceTasks(flattenedTasks);
       }
