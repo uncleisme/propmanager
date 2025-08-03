@@ -4,7 +4,7 @@ import { Plus, X, Eye, Edit, Trash2, Search } from 'lucide-react';
 
 interface WorkOrder {
   id: string;
-  type: 'job' | 'complaint';
+  type: 'job' | 'complaint' | 'preventive_maintenance';
   title: string;
   description: string;
   status: string;
@@ -15,14 +15,28 @@ interface WorkOrder {
   scheduledEnd?: string;
   assignedTo?: string;
   technicianId?: string;
+  maintenanceTaskId?: number;
   createdAt: string;
   resolvedAt?: string;
   comment?: string;
   photoUrl?: string;
 }
 
+interface MaintenanceTask {
+  id: number;
+  taskNumber: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  scheduledDate: string;
+  assetName?: string;
+  locationBuilding?: string;
+}
+
 const Complaints: React.FC = () => {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>([]);
   const [technicians, setTechnicians] = useState<{ id: string; full_name: string | null; email: string; type: string }[]>([]);
   const [contacts, setContacts] = useState<{ id: string; name: string; type: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +96,7 @@ const Complaints: React.FC = () => {
       setLoading(true);
       const { data: woData, error: woError } = await supabase
         .from('work_order')
-        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,technicianId,createdAt,resolvedAt,comment,photoUrl')
+        .select('id,type,title,description,status,priority,propertyUnit,scheduledDate,scheduledStart,scheduledEnd,assignedTo,technicianId,maintenanceTaskId,createdAt,resolvedAt,comment,photoUrl')
         .order('createdAt', { ascending: false });
       
       if (woError) {
@@ -90,6 +104,37 @@ const Complaints: React.FC = () => {
         return;
       }
       setWorkOrders(woData || []);
+      
+      // Fetch maintenance tasks for preventive maintenance work orders
+      const { data: maintenanceTasksData, error: mtError } = await supabase
+        .from('maintenanceTasks')
+        .select(`
+          id,
+          taskNumber,
+          title,
+          description,
+          status,
+          priority,
+          scheduledDate,
+          maintenanceAssets!inner(
+            assetName,
+            locationBuilding
+          )
+        `)
+        .in('status', ['scheduled', 'in_progress', 'overdue'])
+        .order('scheduledDate', { ascending: true });
+      
+      if (mtError) {
+        console.error('Error fetching maintenance tasks:', mtError);
+      } else {
+        // Flatten the data structure
+        const flattenedTasks = (maintenanceTasksData || []).map(task => ({
+          ...task,
+          assetName: task.maintenanceAssets?.assetName,
+          locationBuilding: task.maintenanceAssets?.locationBuilding
+        }));
+        setMaintenanceTasks(flattenedTasks);
+      }
       
       const { data: techniciansData, error: techniciansError } = await supabase
         .from('profiles')
