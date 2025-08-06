@@ -9,7 +9,6 @@ import BuildingInfo from './components/BuildingInfo';
 import Contacts from './components/Contacts';
 import Contracts from './components/Contracts';
 import Licenses from './components/Licenses';
-import Complaints from './components/Complaints';
 import Amenities from './components/Amenities';
 import Packages from './components/Packages';
 import Guests from './components/Guests';
@@ -23,15 +22,11 @@ import SystemSettings from './components/SystemSettings';
 import WaterUtility from './components/WaterUtility';
 import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
-import SchedulerModule from './components/Scheduler';
-import SchedulerProvider from './components/SchedulerContext';
 import StaffManagement from './components/StaffManagement';
-import PreventiveMaintenance from './components/PreventiveMaintenance';
 import MaintenanceAssets from './components/MaintenanceAssets';
-import MaintenanceSchedules from './components/MaintenanceSchedules';
 
 import { ViewType } from './types';
-type AppViewType = ViewType | 'scheduler';
+type AppViewType = ViewType;
 
 const App: React.FC = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -112,33 +107,27 @@ const App: React.FC = () => {
   // Dynamically render view
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'dashboard': return <Dashboard user={user} />;
-      case 'building-info': return <BuildingInfo user={user} />;
-      case 'contacts': return <Contacts user={user} />;
-      case 'contracts': return <Contracts user={user} />;
-      case 'licenses': return <Licenses user={user} />;
-      case 'complaints': return <Complaints user={user} />;
-      case 'amenities': return <Amenities user={user} />;
-      case 'packages': return <Packages user={user} />;
-      case 'guests': return <Guests user={user} />;
-      case 'move-requests': return <MoveRequests user={user} />;
-      case 'security': return <Security user={user} />;
-      case 'cleaning': return <Cleaning user={user} />;
-      case 'lift-maintenance': return <LiftMaintenance user={user} onViewChange={setCurrentView} />;
-      case 'breakdown-history': return <BreakdownHistory user={user} onBack={() => setCurrentView('lift-maintenance')} />;
-      case 'user-settings': return <UserSettings user={user} />;
+      case 'dashboard': return <Dashboard />;
+      case 'building-info': return <BuildingInfo />;
+      case 'contacts': return <Contacts />;
+      case 'contracts': return <Contracts />;
+      case 'licenses': return <Licenses />;
+      case 'amenities': return <Amenities />;
+      case 'packages': return <Packages />;
+      case 'guests': return <Guests />;
+      case 'move-requests': return <MoveRequests />;
+      case 'security': return <Security />;
+      case 'cleaning': return <Cleaning />;
+      case 'lift-maintenance': return <LiftMaintenance onViewChange={(view: string) => setCurrentView(view as AppViewType)} />;
+      case 'breakdown-history': return <BreakdownHistory onBack={() => setCurrentView('lift-maintenance')} />;
+      case 'user-settings': return <UserSettings />;
       case 'system-settings': return <SystemSettings />;
-      case 'water-utility': return <WaterUtility user={user} />;
-      case 'electricity-utility': return <ElectricityUtility user={user} />;
-      case 'reporting': return <Reporting user={user} />;
-      case 'scheduler': return <SchedulerModule />;
-      case 'staff-management': return <StaffManagement user={user} />;
-      case 'preventive-maintenance': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
-      case 'maintenance-assets': return <MaintenanceAssets user={user} onViewChange={setCurrentView} />;
-      case 'maintenance-schedules': return <MaintenanceSchedules user={user} onViewChange={setCurrentView} />;
-      case 'maintenance-tasks': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
-      case 'maintenance-history': return <PreventiveMaintenance user={user} onViewChange={setCurrentView} />;
-      default: return <Dashboard user={user} />;
+      case 'water-utility': return <WaterUtility />;
+      case 'electricity-utility': return <ElectricityUtility />;
+      case 'reporting': return <Reporting />;
+      case 'staff-management': return <StaffManagement />;
+      case 'maintenance-assets': return <MaintenanceAssets onViewChange={(view: string) => setCurrentView(view as AppViewType)} />;
+      default: return <Dashboard />;
     }
   };
 
@@ -161,16 +150,14 @@ const App: React.FC = () => {
 
   // Render main app layout
   return (
-    <SchedulerProvider>
-      <Layout
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        onLogout={handleLogout}
-        user={user}
-      >
-        {renderCurrentView()}
-      </Layout>
-    </SchedulerProvider>
+    <Layout
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      onLogout={handleLogout}
+      user={user}
+    >
+      {renderCurrentView()}
+    </Layout>
   );
 };
 

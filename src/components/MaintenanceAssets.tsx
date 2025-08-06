@@ -8,19 +8,9 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  Filter,
-  Package,
-  Building,
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
   X,
   Save,
-  ArrowLeft,
-  MapPin,
-  Settings,
-  Hash,
-  Tag
+  ArrowLeft
 } from 'lucide-react';
 
 interface MaintenanceAssetsProps {
@@ -674,7 +664,31 @@ const MaintenanceAssets: React.FC<MaintenanceAssetsProps> = ({ user, onViewChang
                         onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
                         disabled={modalType === 'view'}
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                      />   />
+                      </div>
+                    </div>
+  
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Make/Model</label>
+                      <input
+                        type="text"
+                        value={formData.makeModel}
+                        onChange={(e) => setFormData({ ...formData, makeModel: e.target.value })}
+                        disabled={modalType === 'view'}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       />
+                    </div>
+  
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Serial Number</label>
+                      <input
+                        type="text"
+                        value={formData.serialNumber}
+                        onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                        disabled={modalType === 'view'}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                      />
+                    </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Warranty Expiry</label>
