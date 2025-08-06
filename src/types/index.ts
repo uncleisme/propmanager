@@ -473,4 +473,4 @@ export interface MaintenanceHistory {
   createdAt: string;
 }
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management' | 'preventive-maintenance' | 'maintenance-assets' | 'maintenance-schedules' | 'maintenance-tasks' | 'maintenance-history';
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'complaints' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'scheduler' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management';
