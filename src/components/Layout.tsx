@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-  Building2, Users, FileText, Award, AlertTriangle, BarChart3, LogOut,
+  Building2, Users, FileText, Award, BarChart3, LogOut,
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon,
-  Shield, Sparkles, Calendar as CalendarIcon, Home, ArrowUpDown, UserCog
+  Shield, Sparkles, Home, ArrowUpDown, UserCog
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -30,7 +30,6 @@ const menuSections = [
       { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
       { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
       { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
-      { id: 'complaints' as ViewType, icon: AlertTriangle, label: 'Work Orders' },
     ]
   },
   {
@@ -62,7 +61,6 @@ const menuSections = [
     title: 'TOOLS',
     items: [
       { id: 'reporting' as ViewType, icon: BarChart3, label: 'Reporting' },
-      { id: 'scheduler' as ViewType, icon: CalendarIcon, label: 'Scheduler' },
     ]
   },
   {

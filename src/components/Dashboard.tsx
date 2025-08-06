@@ -1,18 +1,15 @@
-import { User } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
-import { Users, FileText, Award, AlertTriangle, Calendar, TrendingUp, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ArrowUpRight, ArrowDownRight, Wrench, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, Wrench, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
-import { BuildingInfo, Contact, Contract, License, Complaint, Package, Guest, MoveRequest } from '../types';
+import { BuildingInfo, Contract, License, Package, Guest, MoveRequest } from '../types';
 
 interface DashboardProps {}
 
 const Dashboard: React.FC<DashboardProps> = () => {
   const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
@@ -41,53 +38,49 @@ const Dashboard: React.FC<DashboardProps> = () => {
     pendingMoveRequests: 5,
     pendingGuestRequests: 5,
     recentActivity: 5,
-    scheduledJobs: 5,
-    openIssues: 5,
-    completedTasks: 5,
-    residents: 5,
-    moveRequests: 5,
-    pendingPickups: 5,
-    recentDeliveries: 5,
-    visitors: 5,
     expiringLicenses: 5,
     contracts: 5,
   } as Record<string, number>);
-  const handleLoadMore = (key: string, total: number) => setShowCounts(prev => ({ ...prev, [key]: Math.min(prev[key] + 5, total) }));
+
+  const handleLoadMore = (key: string, total: number) => {
+    setShowCounts(prev => ({
+      ...prev,
+      [key]: Math.min(prev[key] + 5, total)
+    }));
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      const [
-        { data: buildingData },
-        { data: contactsData }, 
-        { data: contractsData }, 
-        { data: licensesData }, 
-        { data: complaintsData },
-        { data: packagesData },
-        { data: guestsData },
-        { data: moveRequestsData },
-        { data: workOrdersData }
-      ] = await Promise.all([
-        supabase.from('buildingInfo').select('*').limit(1).single(),
-        supabase.from('contacts').select('*'),
-        supabase.from('contracts').select('*'),
-        supabase.from('licenses').select('*'),
-        supabase.from('complaints').select('*'),
-        supabase.from('packages').select('*'),
-        supabase.from('guests').select('*'),
-        supabase.from('moveRequests').select('*'),
-        supabase.from('work_order').select('id,type,status,createdAt,scheduledDate,title,propertyUnit,priority')
-      ]);
-      
-      setBuildingInfo(buildingData);
-      setContacts(contactsData || []);
-      setContracts(contractsData || []);
-      setLicenses(licensesData || []);
-      setComplaints(complaintsData || []);
-      setPackages(packagesData || []);
-      setGuests(guestsData || []);
-      setMoveRequests(moveRequestsData || []);
-      setWorkOrders(workOrdersData || []);
+      try {
+        const [
+          { data: buildingData },
+          { data: contractsData },
+          { data: licensesData },
+          { data: packagesData },
+          { data: guestsData },
+          { data: moveRequestsData },
+          { data: workOrdersData }
+        ] = await Promise.all([
+          supabase.from('buildingInfo').select('*').limit(1).single(),
+          supabase.from('contracts').select('*'),
+          supabase.from('licenses').select('*'),
+          supabase.from('packages').select('*'),
+          supabase.from('guests').select('*'),
+          supabase.from('moveRequests').select('*'),
+          supabase.from('work_order').select('id,type,status,createdAt,scheduledDate,title,propertyUnit,priority')
+        ]);
+        
+        setBuildingInfo(buildingData);
+        setContracts(contractsData || []);
+        setLicenses(licensesData || []);
+        setPackages(packagesData || []);
+        setGuests(guestsData || []);
+        setMoveRequests(moveRequestsData || []);
+        setWorkOrders(workOrdersData || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
       
       // Fetch utilities for current and previous month
       const now = new Date();
@@ -130,7 +123,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
     fetchAll();
   }, []);
 
-  const activeComplaints = complaints.filter(c => c.status === 'open' || c.status === 'in-progress');
   const activeJobs = workOrders.filter(
     (wo) => wo.type === 'job' && (
       wo.status === 'open' ||
@@ -139,13 +131,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
       wo.status === 'in_progress'
     )
   );
-
-  const expiringContracts = contracts.filter(contract => {
-    const endDate = contract.endDate;
-    if (!endDate) return false;
-    const days = getDaysUntilExpiration(endDate);
-    return days <= 30 && days >= 0;
-  });
 
   const expiringLicenses = licenses.filter(license => {
     const expirationDate = license.expirationDate;
@@ -183,13 +168,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
   const stats = [
     // Open Complaints and Open Jobs at the top
-    {
-      title: 'Open Complaints',
-      value: activeComplaints.length,
-      icon: AlertTriangle,
-      color: 'bg-red-500',
-      trend: '-8%'
-    },
     {
       title: 'Open Jobs',
       value: activeJobs.length,
