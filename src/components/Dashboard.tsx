@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, Wrench, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, Wrench, ChevronDown, ChevronRight, Plus, TrendingUp } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contract, License, Package, Guest, MoveRequest } from '../types';
