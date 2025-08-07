@@ -1,0 +1,478 @@
+import React, { useEffect, useState, useCallback } from "react";
+import { supabase } from "../utils/supabaseClient";
+import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
+import { User } from '@supabase/supabase-js';
+
+interface AssetListingProps {}
+
+interface Asset {
+  id: string;
+  asset_id: string;
+  asset_name: string;
+  asset_type: string;
+  location_id: string;
+  parent_asset_id: string;
+  manufacturer: string;
+  model_number: string;
+  serial_number: string;
+  installation_date: string;
+  status: 'Active' | 'Inactive' | 'Decommissioned';
+  created_at: string;
+  updated_at: string;
+}
+
+const AssetListing: React.FC<AssetListingProps> = () => {
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [search, setSearch] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string>("");
+  
+  const [formData, setFormData] = useState<Partial<Asset>>({
+    asset_id: '',
+    asset_name: '',
+    asset_type: '',
+    location_id: '',
+    parent_asset_id: '',
+    manufacturer: '',
+    model_number: '',
+    serial_number: '',
+    installation_date: new Date().toISOString().split('T')[0],
+    status: 'Active',
+  });
+
+  // Fetch assets from the database
+  const fetchAssets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("*")
+        .ilike('asset_name', `%${search}%`);
+
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (error: any) {
+      setErrorMsg(error.message || "Failed to load assets.");
+    } finally {
+      setLoading(false);
+    }
+  }, [search]);
+
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (modalType === "add") {
+        const { error } = await supabase
+          .from("assets")
+          .insert([{ ...formData }]);
+        if (error) throw error;
+      } else if (modalType === "edit" && selectedAsset?.id) {
+        const { error } = await supabase
+          .from("assets")
+          .update({ ...formData })
+          .eq("id", selectedAsset.id);
+        if (error) throw error;
+      }
+      setShowModal(false);
+      fetchAssets();
+    } catch (error: any) {
+      setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete asset
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this asset?")) {
+      try {
+        const { error } = await supabase
+          .from("assets")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+        fetchAssets();
+      } catch (error: any) {
+        setErrorMsg(error.message);
+      }
+    }
+  };
+
+  // Open modal for adding/editing/viewing
+  const openModal = (type: "add" | "edit" | "view", asset: Asset | null = null) => {
+    setModalType(type);
+    setSelectedAsset(asset);
+    if (asset) {
+      setFormData({
+        ...asset,
+        installation_date: asset.installation_date ? asset.installation_date.split('T')[0] : ''
+      });
+    } else {
+      setFormData({
+        asset_id: '',
+        asset_name: '',
+        asset_type: '',
+        location_id: '',
+        parent_asset_id: '',
+        manufacturer: '',
+        model_number: '',
+        serial_number: '',
+        installation_date: new Date().toISOString().split('T')[0],
+        status: 'Active',
+      });
+    }
+    setShowModal(true);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Asset Management</h1>
+        <button
+          onClick={() => openModal("add")}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-700"
+        >
+          <Plus size={18} className="mr-2" />
+          Add Asset
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search assets..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* Error message */}
+      {errorMsg && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {/* Assets table */}
+      {!loading && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Asset ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Installation Date
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {assets.length > 0 ? (
+                  assets.map((asset) => (
+                    <tr key={asset.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {asset.asset_id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {asset.asset_name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {asset.model_number}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {asset.asset_type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span 
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            asset.status === 'Active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : asset.status === 'Inactive'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {asset.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(asset.installation_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => openModal("view", asset)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          title="View"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => openModal("edit", asset)}
+                          className="text-indigo-600 hover:text-indigo-900 mr-3"
+                          title="Edit"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(asset.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                      No assets found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit/View Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">
+                {modalType === 'add' ? 'Add New Asset' : modalType === 'edit' ? 'Edit Asset' : 'Asset Details'}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Asset ID *
+                  </label>
+                  <input
+                    type="text"
+                    name="asset_id"
+                    value={formData.asset_id || ''}
+                    onChange={handleInputChange}
+                    required
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Asset Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="asset_name"
+                    value={formData.asset_name || ''}
+                    onChange={handleInputChange}
+                    required
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Asset Type *
+                  </label>
+                  <input
+                    type="text"
+                    name="asset_type"
+                    value={formData.asset_type || ''}
+                    onChange={handleInputChange}
+                    required
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location ID
+                  </label>
+                  <input
+                    type="text"
+                    name="location_id"
+                    value={formData.location_id || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Parent Asset ID
+                  </label>
+                  <input
+                    type="text"
+                    name="parent_asset_id"
+                    value={formData.parent_asset_id || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Manufacturer
+                  </label>
+                  <input
+                    type="text"
+                    name="manufacturer"
+                    value={formData.manufacturer || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Model Number
+                  </label>
+                  <input
+                    type="text"
+                    name="model_number"
+                    value={formData.model_number || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Serial Number
+                  </label>
+                  <input
+                    type="text"
+                    name="serial_number"
+                    value={formData.serial_number || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Installation Date
+                  </label>
+                  <input
+                    type="date"
+                    name="installation_date"
+                    value={formData.installation_date || ''}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status *
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status || 'Active'}
+                    onChange={handleInputChange}
+                    disabled={modalType === 'view'}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Decommissioned">Decommissioned</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+                {modalType !== 'view' && (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AssetListing;

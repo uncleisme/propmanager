@@ -30,6 +30,7 @@ const menuSections = [
       { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
       { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
       { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
+      { id: 'asset-listing' as ViewType, icon: Package, label: 'Asset Listing' },
     ]
   },
   {
