@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, Wrench, ChevronDown, ChevronRight, Plus, TrendingUp } from 'lucide-react';
+import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ChevronDown, ChevronRight, Plus, TrendingUp } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
 import { BuildingInfo, Contract, License, Package, Guest, MoveRequest } from '../types';
@@ -13,7 +13,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
-  const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
@@ -21,8 +20,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({
     overview: false,
     buildingInfo: false,
-    tasks: false,
-    maintenance: false,
     residents: false,
     utilities: false,
     packages: false,
@@ -34,10 +31,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
   // Add state for pagination for each list
   const [showCounts, setShowCounts] = React.useState<Record<string, number>>({
-    upcomingWorkOrders: 5,
-    pendingMoveRequests: 5,
-    pendingGuestRequests: 5,
-    recentActivity: 5,
+    pendingPickups: 5,
+    recentDeliveries: 5,
+    visitors: 5,
     expiringLicenses: 5,
     contracts: 5,
   } as Record<string, number>);
@@ -59,16 +55,14 @@ const Dashboard: React.FC<DashboardProps> = () => {
           { data: licensesData },
           { data: packagesData },
           { data: guestsData },
-          { data: moveRequestsData },
-          { data: workOrdersData }
+          { data: moveRequestsData }
         ] = await Promise.all([
           supabase.from('buildingInfo').select('*').limit(1).single(),
           supabase.from('contracts').select('*'),
           supabase.from('licenses').select('*'),
           supabase.from('packages').select('*'),
           supabase.from('guests').select('*'),
-          supabase.from('moveRequests').select('*'),
-          supabase.from('work_order').select('id,type,status,createdAt,scheduledDate,title,propertyUnit,priority')
+          supabase.from('moveRequests').select('*')
         ]);
         
         setBuildingInfo(buildingData);
@@ -77,7 +71,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
         setPackages(packagesData || []);
         setGuests(guestsData || []);
         setMoveRequests(moveRequestsData || []);
-        setWorkOrders(workOrdersData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -123,15 +116,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
     fetchAll();
   }, []);
 
-  const activeJobs = workOrders.filter(
-    (wo) => wo.type === 'job' && (
-      wo.status === 'open' ||
-      wo.status === 'in-progress' ||
-      wo.status === 'pending' ||
-      wo.status === 'in_progress'
-    )
-  );
-
   const expiringLicenses = licenses.filter(license => {
     const expirationDate = license.expirationDate;
     if (!expirationDate) return false;
@@ -150,31 +134,12 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
 
-  const activeJobsPrev = workOrders.filter(
-    (wo) => wo.type === 'job' && (
-      wo.status === 'open' ||
-      wo.status === 'in-progress' ||
-      wo.status === 'pending' ||
-      wo.status === 'in_progress'
-    ) && wo.createdAt && wo.createdAt.startsWith(prevMonthStr)
-  );
-
-  const jobsTrend = percentChange(activeJobs.length, activeJobsPrev.length);
   const waterTrend = percentChange(utilities.water, utilitiesPrev.water);
   const elecTrend = percentChange(utilities.electricity, utilitiesPrev.electricity);
   const elecTrendStr = (elecTrend > 0 ? '+' : '') + elecTrend + '%';
   const waterTrendStr = (waterTrend > 0 ? '+' : '') + waterTrend + '%';
-  const jobsTrendStr = (jobsTrend > 0 ? '+' : '') + jobsTrend + '%';
 
   const stats = [
-    // Open Complaints and Open Jobs at the top
-    {
-      title: 'Open Jobs',
-      value: activeJobs.length,
-      icon: Wrench,
-      color: 'bg-blue-600',
-      trend: jobsTrendStr
-    },
     // Water and Electricity metrics
     {
       title: 'Water',
@@ -311,158 +276,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
           </div>
         </section>
       )}
-
-      {/* TASKS & REQUESTS */}
-      <section className="bg-white rounded-xl shadow-md p-6 mb-10">
-        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleSection('tasks')}>
-          <Truck className="w-7 h-7 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Tasks & Requests</h2>
-          <span className="ml-auto">{collapsed.tasks ? <ChevronRight className="w-6 h-6 text-gray-400" /> : <ChevronDown className="w-6 h-6 text-gray-400" />}</span>
-        </div>
-        <div className="border-b border-gray-200 mb-4"></div>
-        <div style={{ maxHeight: collapsed.tasks ? 0 : '2000px', overflow: 'hidden', transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
-          {/* Upcoming Work Orders */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-md text-blue-600 mb-1">Upcoming Work Orders (Next 7 Days)</h3>
-            {(() => {
-              const today = new Date();
-              today.setHours(0,0,0,0);
-              const weekFromNow = new Date();
-              weekFromNow.setDate(today.getDate() + 7);
-              weekFromNow.setHours(23,59,59,999);
-              const upcoming = workOrders
-                .filter(wo =>
-                  (wo.type === 'job' || wo.type === 'complaint') &&
-                  wo.scheduledDate &&
-                  new Date(wo.scheduledDate).getTime() >= today.getTime() &&
-                  new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
-                )
-                .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
-                .slice(0, showCounts.upcomingWorkOrders);
-              if (upcoming.length === 0) {
-                return <p className="text-gray-400 text-xs sm:text-sm">No jobs or complaints scheduled in the next 7 days</p>;
-              }
-              return (
-                <>
-                  {upcoming.map(order => (
-                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 bg-gray-100 rounded-lg gap-1 sm:gap-0 mb-2 font-sans text-base">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800 text-xs sm:text-sm">[{order.type}] {order.title}</p>
-                        <p className="text-xs sm:text-sm text-gray-500">{order.propertyUnit || '-'}</p>
-                        <p className="text-xs sm:text-sm text-gray-500">Scheduled: {order.scheduledDate || '-'}</p>
-                      </div>
-                      <div className="flex items-center space-x-1 sm:space-x-2">
-                        {order.priority && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white`}>
-                            {order.priority}
-                          </span>
-                        )}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'open' ? 'bg-red-500 text-white' :
-                          order.status === 'in-progress' ? 'bg-blue-600 text-white' :
-                          'bg-emerald-500 text-white'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {workOrders.filter(wo =>
-                    (wo.type === 'job' || wo.type === 'complaint') &&
-                    wo.scheduledDate &&
-                    new Date(wo.scheduledDate).getTime() >= today.getTime() &&
-                    new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
-                  ).length > showCounts.upcomingWorkOrders && (
-                    <button onClick={() => handleLoadMore('upcomingWorkOrders', workOrders.filter(wo =>
-                      (wo.type === 'job' || wo.type === 'complaint') &&
-                      wo.scheduledDate &&
-                      new Date(wo.scheduledDate).getTime() >= today.getTime() &&
-                      new Date(wo.scheduledDate).getTime() <= weekFromNow.getTime()
-                    ).length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-          {/* Pending Approvals */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-md text-blue-600 mb-1">Pending Approvals</h3>
-            {/* Move Requests */}
-            <div className="mb-2">
-              <h4 className="font-semibold text-xs text-blue-600">Move Requests</h4>
-              {moveRequests.filter(r => r.status === 'pending').length === 0 ? (
-                <p className="text-gray-400 text-xs">No pending move requests</p>
-              ) : moveRequests.filter(r => r.status === 'pending').slice(0, showCounts.pendingMoveRequests).map(r => (
-                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                  <span className="text-gray-900">{r.residentName} ({r.unitNumber})</span>
-                  <span className="text-xs text-blue-600">Pending</span>
-                </div>
-              ))}
-              {moveRequests.filter(r => r.status === 'pending').length > showCounts.pendingMoveRequests && (
-                <button onClick={() => handleLoadMore('pendingMoveRequests', moveRequests.filter(r => r.status === 'pending').length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-              )}
-            </div>
-            {/* Guest Requests */}
-            <div>
-              <h4 className="font-semibold text-xs text-blue-600">Guest Requests</h4>
-              {guests.filter(g => g.status === 'pending').length === 0 ? (
-                <p className="text-gray-400 text-xs">No pending guest requests</p>
-              ) : guests.filter(g => g.status === 'pending').slice(0, showCounts.pendingGuestRequests).map(g => (
-                <div key={g.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                  <span className="text-gray-900">{g.visitorName} (Host: {g.hostName}, Unit: {g.hostUnit})</span>
-                  <span className="text-xs text-blue-600">Pending</span>
-                </div>
-              ))}
-              {guests.filter(g => g.status === 'pending').length > showCounts.pendingGuestRequests && (
-                <button onClick={() => handleLoadMore('pendingGuestRequests', guests.filter(g => g.status === 'pending').length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-              )}
-            </div>
-          </div>
-          {/* Recent Activity */}
-          <div>
-            <h3 className="font-semibold text-md text-blue-600 mb-1">Recent Activity</h3>
-            {(() => {
-              const recent = workOrders
-                .filter(wo =>
-                  (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
-                  wo.createdAt &&
-                  new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
-                )
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .slice(0, showCounts.recentActivity);
-              if (recent.length === 0) {
-                return <p className="text-gray-400 text-xs sm:text-sm">No recent completed jobs or complaints</p>;
-              }
-              return (
-                <>
-                  {recent.map(order => (
-                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 bg-gray-100 rounded mb-1 font-sans text-base">
-                      <span className="text-gray-800">({order.type}) {order.title}</span>
-                      <span className={`text-xs ${
-                        order.status === 'open' ? 'text-red-500' :
-                        order.status === 'in-progress' ? 'text-blue-600' :
-                        order.status === 'completed' || order.status === 'resolved' || order.status === 'closed' ? 'text-emerald-500' :
-                        'text-amber-500'
-                      }`}>{order.status}</span>
-                    </div>
-                  ))}
-                  {workOrders.filter(wo =>
-                    (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
-                    wo.createdAt &&
-                    new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
-                  ).length > showCounts.recentActivity && (
-                    <button onClick={() => handleLoadMore('recentActivity', workOrders.filter(wo =>
-                      (wo.status === 'completed' || wo.status === 'resolved' || wo.status === 'closed') &&
-                      wo.createdAt &&
-                      new Date(wo.createdAt).getTime() >= new Date().setDate(new Date().getDate() - 7)
-                    ).length)} className="mt-2 text-blue-600 hover:underline text-sm">Load More</button>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      </section>
 
       {/* PACKAGES & DELIVERIES */}
       <section className="bg-white rounded-xl shadow-md p-6 mb-10">
@@ -607,13 +420,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
         )}
         {/* Action Buttons */}
         <div className={`flex flex-col items-end mb-3 space-y-2 transition-all duration-300 ${quickActionOpen ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-4'}`}> 
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
-            style={{ minWidth: 180 }}
-            tabIndex={quickActionOpen ? 0 : -1}
-          >
-            + Add Work Order
-          </button>
           <button
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
             style={{ minWidth: 180 }}
