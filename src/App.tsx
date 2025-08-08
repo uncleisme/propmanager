@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from './utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
+// Layout and Auth Components
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
+
+// Feature Components
 import Dashboard from './components/Dashboard';
 import BuildingInfo from './components/BuildingInfo';
 import Contacts from './components/Contacts';
@@ -23,16 +27,19 @@ import WaterUtility from './components/WaterUtility';
 import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
 import StaffManagement from './components/StaffManagement';
+import AssetListing from './components/AssetListing';
 
 import { ViewType } from './types';
 type AppViewType = ViewType;
 
-const App: React.FC = () => {
+interface AppProps {}
+
+const App: React.FC<AppProps> = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [currentView, setCurrentView] = useState<AppViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
 
   // Handle authentication state
@@ -60,11 +67,13 @@ const App: React.FC = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isNewUser]);
 
   // Handle login
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -76,10 +85,10 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Handle registration
-  const handleRegister = async (full_name: string, email: string, password: string) => {
+  const handleRegister = useCallback(async (full_name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
@@ -96,39 +105,58 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Handle logout
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
-  // Dynamically render view
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'dashboard': return <Dashboard user={user} />;
-      case 'building-info': return <BuildingInfo user={user} />;
-      case 'contacts': return <Contacts user={user} />;
-      case 'contracts': return <Contracts user={user} />;
-      case 'licenses': return <Licenses user={user} />;
-      case 'amenities': return <Amenities user={user} />;
-      case 'packages': return <Packages user={user} />;
-      case 'guests': return <Guests user={user} />;
-      case 'move-requests': return <MoveRequests user={user} />;
-      case 'security': return <Security user={user} />;
-      case 'cleaning': return <Cleaning user={user} />;
-      case 'lift-maintenance': return <LiftMaintenance user={user} onViewChange={setCurrentView} />;
-      case 'breakdown-history': return <BreakdownHistory user={user} onBack={() => setCurrentView('lift-maintenance')} />;
-      case 'user-settings': return <UserSettings user={user} />;
-      case 'system-settings': return <SystemSettings />;
-      case 'water-utility': return <WaterUtility user={user} />;
-      case 'electricity-utility': return <ElectricityUtility user={user} />;
-      case 'reporting': return <Reporting user={user} />;
-      case 'staff-management': return <StaffManagement user={user} />;
+  // Dynamically render view based on current route
+  const renderCurrentView = useCallback(() => {
+    // Components that require the user prop
+    const componentsWithUser = {
+      'user-settings': <UserSettings user={user} />,
+      'security': <Security user={user} />,
+      'cleaning': <Cleaning user={user} />,
+      'breakdown-history': <BreakdownHistory user={user} onBack={() => setCurrentView('lift-maintenance')} />,
+      'staff-management': <StaffManagement user={user} />,
+      'asset-listing': <AssetListing user={user} />
+    };
 
-      default: return <Dashboard user={user} />;
+    // Components that don't need the user prop
+    const componentsWithoutUser = {
+      'dashboard': <Dashboard user={user} />,
+      'building-info': <BuildingInfo user={user} />,
+      'contacts': <Contacts user={user} />,
+      'contracts': <Contracts user={user} />,
+      'licenses': <Licenses user={user} />,
+      'amenities': <Amenities user={user} />,
+      'packages': <Packages user={user} />,
+      'guests': <Guests user={user} />,
+      'move-requests': <MoveRequests user={user} />,
+      'lift-maintenance': <LiftMaintenance user={user} onViewChange={(view) => setCurrentView(view as ViewType)} />,
+      'system-settings': <SystemSettings user={user} />,
+      'water-utility': <WaterUtility user={user} />,
+      'electricity-utility': <ElectricityUtility user={user} />,
+      'reporting': <Reporting user={user} />
+    };
+
+    // Check if the current view is in the componentsWithUser object
+    if (Object.prototype.hasOwnProperty.call(componentsWithUser, currentView)) {
+      return componentsWithUser[currentView as keyof typeof componentsWithUser];
     }
-  };
+
+    // Check if the current view is in the componentsWithoutUser object
+    if (Object.prototype.hasOwnProperty.call(componentsWithoutUser, currentView)) {
+      return componentsWithoutUser[currentView as keyof typeof componentsWithoutUser];
+    }
+
+    // Default to dashboard
+    return <Dashboard />;
+  }, [currentView, user]);
+
+
 
   // Render authentication views
   if (!authenticated) {
