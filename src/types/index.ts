@@ -347,7 +347,7 @@ export interface WorkOrder {
   contact_person?: string;
   contact_number?: string;
   contact_email?: string;
-  reference_work_order_id?: string; // reference to complaint work order
+  reference_text?: string; // free text reference field
   
   // Repair-specific fields
   unit_number?: string;
@@ -366,6 +366,9 @@ export interface WorkOrderHistory {
   description: string;
   performed_by: string;
   performed_at: string;
+  changed_by_profile?: {
+    full_name: string;
+  };
 }
 
 export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management' | 'asset-listing' | 'location-listing' | 'work-orders';

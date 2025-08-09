@@ -29,6 +29,7 @@ import Reporting from './components/Reporting';
 import StaffManagement from './components/StaffManagement';
 import AssetListing from './components/AssetListing';
 import LocationListing from './components/LocationListing';
+import WorkOrderManagement from './components/WorkOrderManagement';
 
 import { ViewType } from './types';
 type AppViewType = ViewType;
@@ -124,6 +125,7 @@ const App: React.FC<AppProps> = () => {
       'staff-management': <StaffManagement user={user} />,
       'asset-listing': <AssetListing user={user} />,
       'location-listing': <LocationListing user={user} />,
+      'work-orders': <WorkOrderManagement user={user} />,
       'lift-maintenance': <LiftMaintenance user={user} onViewChange={(view) => setCurrentView(view as ViewType)} />,
       'building-info': <BuildingInfo user={user} />
     };
