@@ -24,13 +24,19 @@ const menuSections = [
     ]
   },
   {
+    title: 'ASSET MANAGEMENT',
+    items: [
+      { id: 'asset-listing' as ViewType, icon: Package, label: 'Assets' },
+      { id: 'location-listing' as ViewType, icon: MapPin, label: 'Locations' },
+    ]
+  },
+  {
     title: 'MANAGEMENT',
     items: [
       { id: 'building-info' as ViewType, icon: Building2, label: 'Building Info' },
       { id: 'contacts' as ViewType, icon: Users, label: 'Contacts' },
       { id: 'contracts' as ViewType, icon: FileText, label: 'Contracts' },
       { id: 'licenses' as ViewType, icon: Award, label: 'Licenses' },
-      { id: 'asset-listing' as ViewType, icon: Package, label: 'Asset Listing' },
     ]
   },
   {

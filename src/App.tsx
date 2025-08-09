@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from './utils/supabaseClient';
-import { User } from '@supabase/supabase-js';
 
 // Layout and Auth Components
 import Layout from './components/Layout';
@@ -28,6 +28,7 @@ import ElectricityUtility from './components/ElectricityUtility';
 import Reporting from './components/Reporting';
 import StaffManagement from './components/StaffManagement';
 import AssetListing from './components/AssetListing';
+import LocationListing from './components/LocationListing';
 
 import { ViewType } from './types';
 type AppViewType = ViewType;
@@ -39,7 +40,7 @@ const App: React.FC<AppProps> = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [currentView, setCurrentView] = useState<AppViewType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
 
   // Handle authentication state
@@ -121,25 +122,26 @@ const App: React.FC<AppProps> = () => {
       'cleaning': <Cleaning user={user} />,
       'breakdown-history': <BreakdownHistory user={user} onBack={() => setCurrentView('lift-maintenance')} />,
       'staff-management': <StaffManagement user={user} />,
-      'asset-listing': <AssetListing user={user} />
+      'asset-listing': <AssetListing user={user} />,
+      'location-listing': <LocationListing user={user} />,
+      'lift-maintenance': <LiftMaintenance user={user} onViewChange={(view) => setCurrentView(view as ViewType)} />,
+      'building-info': <BuildingInfo user={user} />
     };
 
     // Components that don't need the user prop
     const componentsWithoutUser = {
-      'dashboard': <Dashboard user={user} />,
-      'building-info': <BuildingInfo user={user} />,
-      'contacts': <Contacts user={user} />,
-      'contracts': <Contracts user={user} />,
-      'licenses': <Licenses user={user} />,
-      'amenities': <Amenities user={user} />,
-      'packages': <Packages user={user} />,
-      'guests': <Guests user={user} />,
-      'move-requests': <MoveRequests user={user} />,
-      'lift-maintenance': <LiftMaintenance user={user} onViewChange={(view) => setCurrentView(view as ViewType)} />,
-      'system-settings': <SystemSettings user={user} />,
-      'water-utility': <WaterUtility user={user} />,
-      'electricity-utility': <ElectricityUtility user={user} />,
-      'reporting': <Reporting user={user} />
+      'dashboard': <Dashboard />,
+      'contacts': <Contacts />,
+      'contracts': <Contracts />,
+      'licenses': <Licenses />,
+      'amenities': <Amenities />,
+      'packages': <Packages />,
+      'guests': <Guests />,
+      'move-requests': <MoveRequests />,
+      'system-settings': <SystemSettings />,
+      'water-utility': <WaterUtility />,
+      'electricity-utility': <ElectricityUtility />,
+      'reporting': <Reporting />
     };
 
     // Check if the current view is in the componentsWithUser object
