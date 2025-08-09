@@ -36,6 +36,7 @@ interface Asset {
 const AssetListing: React.FC<AssetListingProps> = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
+  const [locations, setLocations] = useState<Array<{id: string, location_id: string, name: string, block: string, floor: string, room: string}>>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(null);
@@ -74,6 +75,24 @@ const AssetListing: React.FC<AssetListingProps> = () => {
     } catch (error: any) {
       console.error('Failed to load asset types:', error);
       setErrorMsg(`Failed to load asset types: ${error.message}`);
+    }
+  }, []);
+
+  // Fetch locations from the database
+  const fetchLocations = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, location_id, name, block, floor, room')
+        .order('block')
+        .order('floor')
+        .order('room');
+      
+      if (error) throw error;
+      setLocations(data || []);
+    } catch (error: any) {
+      console.error('Failed to load locations:', error);
+      setErrorMsg(`Failed to load locations: ${error.message}`);
     }
   }, []);
 
@@ -123,7 +142,8 @@ const AssetListing: React.FC<AssetListingProps> = () => {
   useEffect(() => {
     fetchAssetTypes();
     fetchAssets();
-  }, [fetchAssetTypes, fetchAssets]);
+    fetchLocations();
+  }, [fetchAssetTypes, fetchAssets, fetchLocations]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -432,16 +452,22 @@ const AssetListing: React.FC<AssetListingProps> = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Location ID
+                    Location
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="location_id"
                     value={formData.location_id || ''}
                     onChange={handleInputChange}
                     disabled={modalType === 'view'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">Select a location</option>
+                    {locations.map(location => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} (Block: {location.block}, Floor: {location.floor}, Room: {location.room}) - {location.location_id}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
