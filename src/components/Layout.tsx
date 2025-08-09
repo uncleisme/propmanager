@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Building2, Users, FileText, Award, BarChart3, LogOut,
   Menu, X, MapPin, Package, UserCheck, Truck, Settings, User as UserIcon,
-  Shield, Sparkles, Home, ArrowUpDown, UserCog
+  Shield, Sparkles, Home, ArrowUpDown, UserCog, Wrench
 } from 'lucide-react';
 import { ViewType } from '../types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -28,6 +28,7 @@ const menuSections = [
     items: [
       { id: 'asset-listing' as ViewType, icon: Package, label: 'Assets' },
       { id: 'location-listing' as ViewType, icon: MapPin, label: 'Locations' },
+      { id: 'work-orders' as ViewType, icon: Wrench, label: 'Work Orders' },
     ]
   },
   {
