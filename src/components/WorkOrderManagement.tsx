@@ -101,46 +101,45 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-8 py-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="px-8 py-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-semibold text-xs">
                   {workOrder.work_type.charAt(0)}
                 </span>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-gray-900">
                   {workOrder.work_order_id}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   Created {new Date(workOrder.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className={`px-3 py-1 text-xs rounded-full font-medium border ${getWorkTypeColor(workOrder.work_type)}`}>
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <span className={`px-2 py-1 text-xs rounded-full font-medium border ${getWorkTypeColor(workOrder.work_type)}`}>
                 {workOrder.work_type}
               </span>
-              <span className={`px-3 py-1 text-xs rounded-full font-medium border ${getStatusColor(workOrder.status)}`}>
+              <span className={`px-2 py-1 text-xs rounded-full font-medium border ${getStatusColor(workOrder.status)}`}>
                 {workOrder.status}
               </span>
-              <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+              <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                 workOrder.priority === 'High' ? 'bg-red-100 text-red-800 border border-red-200' :
                 workOrder.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
                 'bg-green-100 text-green-800 border border-green-200'
               }`}>
-                {workOrder.priority} Priority
+                {workOrder.priority}
               </span>
             </div>
-          </div>
-          <div className="flex flex-col gap-2 ml-6">
-            {/* Action Buttons Row */}
-            <div className="flex gap-2 justify-end">
+            {/* Action Buttons Row - Now below tags */}
+            <div className="flex gap-2 mb-2">
+              {/* Start button - always available */}
               <button
                 onClick={() => handleStatusChange('In Progress')}
-                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${
                   workOrder.status === 'In Progress' 
                     ? 'bg-yellow-600 text-white' 
                     : 'bg-gray-200 text-gray-700 hover:bg-yellow-100'
@@ -148,42 +147,62 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
               >
                 Start
               </button>
+              
+              {/* Review button - disabled for completed tab, enabled for active tab, disabled for review tab */}
               <button
                 onClick={() => handleStatusChange('Review')}
-                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${
                   workOrder.status === 'Review' 
                     ? 'bg-purple-600 text-white' 
                     : 'bg-gray-200 text-gray-700 hover:bg-purple-100'
-                } ${(photos.length === 0 && selectedFiles.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={photos.length === 0 && selectedFiles.length === 0}
+                } ${(
+                  (photos.length === 0 && selectedFiles.length === 0) || 
+                  workOrder.status === 'Done' || 
+                  workOrder.status === 'Review'
+                ) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={(
+                  (photos.length === 0 && selectedFiles.length === 0) || 
+                  workOrder.status === 'Done' || 
+                  workOrder.status === 'Review'
+                )}
               >
                 Review
               </button>
+              
+              {/* Done button - disabled for active tab and completed tab, enabled for review tab */}
               <button
                 onClick={() => handleStatusChange('Done')}
-                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${
                   workOrder.status === 'Done' 
                     ? 'bg-green-600 text-white' 
                     : 'bg-gray-200 text-gray-700 hover:bg-green-100'
-                }`}
+                } ${(
+                  workOrder.status === 'Active' || 
+                  workOrder.status === 'Done'
+                ) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={(
+                  workOrder.status === 'Active' || 
+                  workOrder.status === 'Done'
+                )}
               >
                 Done
               </button>
-            </div>
-            {/* Edit/History Buttons Row */}
-            <div className="flex gap-2 justify-end">
+              
+              {/* Edit button - next to Done button */}
               <button
                 onClick={() => onEdit(workOrder)}
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
               >
-                <Edit size={12} />
+                <Edit size={10} />
                 Edit
               </button>
+              
+              {/* History button - next to Edit button */}
               <button
                 onClick={() => onHistory(workOrder)}
-                className="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center gap-1"
               >
-                <Clock size={12} />
+                <Clock size={10} />
                 History
               </button>
             </div>
@@ -192,26 +211,26 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-8 space-y-8">
           {/* Title and Description */}
-          <div className="mb-8">
+          <div>
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
                 {workOrder.title}
               </h3>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700 leading-relaxed text-base">{workOrder.description}</p>
+                <p className="text-gray-700 leading-relaxed text-sm">{workOrder.description}</p>
               </div>
             </div>
           </div>
 
           {/* Key Information */}
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <Calendar size={14} className="text-indigo-600" />
+          <div>
+            <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="w-5 h-5 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Calendar size={12} className="text-indigo-600" />
               </div>
               Work Order Details
             </h4>
@@ -291,11 +310,11 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
           </div>
 
           {/* Photo Upload Section */}
-          <div className="mb-8">
+          <div>
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Upload size={14} className="text-indigo-600" />
+              <h4 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-5 h-5 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <Upload size={12} className="text-indigo-600" />
                 </div>
                 Photos
               </h4>
@@ -366,7 +385,7 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
 
           {/* Conditional Fields based on Work Type */}
           {workOrder.work_type === 'Preventive' && (
-            <div className="mb-8">
+            <div>
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
                 <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                   <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
@@ -399,7 +418,7 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
           )}
 
           {workOrder.work_type === 'Job' && (
-            <div className="mb-8">
+            <div>
               <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-6">
                 <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                   <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -438,7 +457,7 @@ const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
           )}
 
           {workOrder.work_type === 'Repair' && (
-            <div className="mb-8">
+            <div>
               <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 p-6">
                 <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                   <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
@@ -1130,38 +1149,6 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openHistoryModal(workOrder);
-                            }}
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                            title="View History"
-                          >
-                            <Clock size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openModal('edit', workOrder);
-                            }}
-                            className="p-1 text-gray-400 hover:text-blue-600"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(workOrder.id);
-                            }}
-                            className="p-1 text-gray-400 hover:text-red-600"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
                       </div>
                     </div>
                   );
@@ -1172,7 +1159,7 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
         </div>
 
         {/* Right Panel - Work Order Details */}
-        <div className="w-3/5 bg-gray-50 flex flex-col">
+        <div className="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden">
           {selectedWorkOrderForPanel ? (
             <WorkOrderDetailPanel 
               workOrder={selectedWorkOrderForPanel}
@@ -1711,3 +1698,4 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
 };
 
 export default WorkOrderManagement;
+      
