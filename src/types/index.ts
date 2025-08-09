@@ -320,4 +320,52 @@ export interface StaffAttendance {
 
 
 
-export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management' | 'asset-listing' | 'location-listing';
+export interface WorkOrder {
+  id: string;
+  work_order_id: string; // system-generated
+  work_type: 'Preventive' | 'Complaint' | 'Job' | 'Repair';
+  asset_id: string;
+  location_id: string;
+  status: 'Active' | 'In Progress' | 'Review' | 'Done';
+  priority: 'High' | 'Medium' | 'Low';
+  title: string;
+  description: string;
+  created_date: string;
+  due_date: string;
+  requested_by: string; // user id
+  assigned_to: string; // user id
+  
+  // Preventive-specific fields
+  recurrence_rule?: string; // RRULE format
+  recurrence_start_date?: string;
+  recurrence_end_date?: string;
+  next_scheduled_date?: string;
+  
+  // Job-specific fields
+  job_type?: 'Cleaning' | 'Maintenance' | 'Repair';
+  service_provider_id?: string;
+  contact_person?: string;
+  contact_number?: string;
+  contact_email?: string;
+  reference_work_order_id?: string; // reference to complaint work order
+  
+  // Repair-specific fields
+  unit_number?: string;
+  repair_contact_person?: string;
+  repair_contact_number?: string;
+  repair_contact_email?: string;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkOrderHistory {
+  id: string;
+  work_order_id: string;
+  action: string;
+  description: string;
+  performed_by: string;
+  performed_at: string;
+}
+
+export type ViewType = 'dashboard' | 'building-info' | 'contacts' | 'contracts' | 'licenses' | 'amenities' | 'packages' | 'guests' | 'move-requests' | 'user-settings' | 'system-settings' | 'utilities' | 'water-utility' | 'electricity-utility' | 'reporting' | 'security' | 'cleaning' | 'lift-maintenance' | 'breakdown-history' | 'staff-management' | 'asset-listing' | 'location-listing' | 'work-orders';
