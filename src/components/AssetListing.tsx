@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search } from "lucide-react";
+import { User } from '@supabase/supabase-js';
 
-interface AssetListingProps {}
+interface AssetListingProps {
+  user: User | null;
+}
 
 interface AssetType {
   id: string;
@@ -49,7 +52,7 @@ const AssetListing: React.FC<AssetListingProps> = () => {
     model_number: '',
     serial_number: '',
     installation_date: new Date().toISOString().split('T')[0],
-    status: 'Active' as const,
+    status: 'Active' as 'Active' | 'Inactive' | 'Decommissioned',
   });
 
   // Fetch asset types from the database

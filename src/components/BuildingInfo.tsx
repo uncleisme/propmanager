@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Edit, Save, X, Plus, Trash2, MapPin, Users, Shield, DollarSign } from 'lucide-react';
 import { BuildingInfo } from '../types';
 import { supabase } from '../utils/supabaseClient';
-import { User } from '@supabase/supabase-js';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface DashboardProps {
-  user: User | null;
+  user: SupabaseUser | null;
 }
 
 const BuildingInfoComponent: React.FC<DashboardProps> = ({user}) => {
