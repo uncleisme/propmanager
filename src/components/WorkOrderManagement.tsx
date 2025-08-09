@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Eye, Edit, Trash2, Plus, X, Search, Calendar, Clock, User, AlertTriangle } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, X, Search, Calendar, Clock, User, AlertTriangle, PlusCircle, Upload } from "lucide-react";
 import { User as AuthUser } from '@supabase/supabase-js';
 import { WorkOrder, WorkOrderHistory, Profile, Contact } from '../types';
 
@@ -22,6 +22,464 @@ interface Location {
   floor: string;
   room: string;
 }
+
+interface WorkOrderDetailPanelProps {
+  workOrder: WorkOrder;
+  assets: Asset[];
+  locations: Location[];
+  profiles: Profile[];
+  onEdit: (workOrder: WorkOrder) => void;
+  onHistory: (workOrder: WorkOrder) => void;
+  onStatusChange: (workOrderId: string, newStatus: string) => void;
+  onPhotosChange: (workOrderId: string, files: File[]) => void;
+  photos: { url: string; name: string }[];
+}
+
+// WorkOrderDetailPanel Component
+const WorkOrderDetailPanel: React.FC<WorkOrderDetailPanelProps> = ({
+  workOrder,
+  assets,
+  locations,
+  profiles,
+  onEdit,
+  onHistory,
+  onStatusChange,
+  onPhotosChange,
+  photos = []
+}) => {
+  const asset = assets.find(a => a.id === workOrder.asset_id);
+  const location = locations.find(l => l.id === workOrder.location_id);
+  const assignedProfile = profiles.find(p => p.id === workOrder.assigned_to);
+  const requestedByProfile = profiles.find(p => p.id === workOrder.requested_by);
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...filesArray]);
+      onPhotosChange(workOrder.id, [...selectedFiles, ...filesArray]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const newFiles = [...selectedFiles];
+    newFiles.splice(index, 1);
+    setSelectedFiles(newFiles);
+    onPhotosChange(workOrder.id, newFiles);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus === 'Review' && (photos.length === 0 && selectedFiles.length === 0)) {
+      alert('Please add at least one photo before marking as Review');
+      return;
+    }
+    onStatusChange(workOrder.id, newStatus);
+  };
+
+  const getWorkTypeColor = (workType: string) => {
+    switch (workType) {
+      case 'Preventive': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Complaint': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Job': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Repair': return 'bg-orange-100 text-orange-800 border-orange-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'In Progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Review': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Done': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="px-8 py-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-semibold text-sm">
+                  {workOrder.work_type.charAt(0)}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {workOrder.work_order_id}
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Created {new Date(workOrder.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={`px-3 py-1 text-xs rounded-full font-medium border ${getWorkTypeColor(workOrder.work_type)}`}>
+                {workOrder.work_type}
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full font-medium border ${getStatusColor(workOrder.status)}`}>
+                {workOrder.status}
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                workOrder.priority === 'High' ? 'bg-red-100 text-red-800 border border-red-200' :
+                workOrder.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                'bg-green-100 text-green-800 border border-green-200'
+              }`}>
+                {workOrder.priority} Priority
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 ml-6">
+            {/* Action Buttons Row */}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => handleStatusChange('In Progress')}
+                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                  workOrder.status === 'In Progress' 
+                    ? 'bg-yellow-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-yellow-100'
+                }`}
+              >
+                Start
+              </button>
+              <button
+                onClick={() => handleStatusChange('Review')}
+                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                  workOrder.status === 'Review' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-purple-100'
+                } ${(photos.length === 0 && selectedFiles.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={photos.length === 0 && selectedFiles.length === 0}
+              >
+                Review
+              </button>
+              <button
+                onClick={() => handleStatusChange('Done')}
+                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                  workOrder.status === 'Done' 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-green-100'
+                }`}
+              >
+                Done
+              </button>
+            </div>
+            {/* Edit/History Buttons Row */}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => onEdit(workOrder)}
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+              >
+                <Edit size={12} />
+                Edit
+              </button>
+              <button
+                onClick={() => onHistory(workOrder)}
+                className="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center gap-1"
+              >
+                <Clock size={12} />
+                History
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-8">
+          {/* Title and Description */}
+          <div className="mb-8">
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                {workOrder.title}
+              </h3>
+              <div className="prose prose-gray max-w-none">
+                <p className="text-gray-700 leading-relaxed text-base">{workOrder.description}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Information */}
+          <div className="mb-8">
+            <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Calendar size={14} className="text-indigo-600" />
+              </div>
+              Work Order Details
+            </h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <h5 className="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wide">Asset & Location</h5>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-600 font-semibold text-xs">A</span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Asset</label>
+                      <p className="text-gray-900 font-medium">{asset?.asset_name || 'Unknown Asset'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-green-600 font-semibold text-xs">L</span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Location</label>
+                      <p className="text-gray-900 font-medium">
+                        {location ? `${location.block}-${location.floor}-${location.room}` : 'Unknown Location'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Calendar size={14} className="text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Due Date</label>
+                      <p className="text-gray-900 font-medium">{new Date(workOrder.due_date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <h5 className="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wide">People & Timeline</h5>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User size={14} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Requested By</label>
+                      <p className="text-gray-900 font-medium">{requestedByProfile?.full_name || 'Unknown User'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User size={14} className="text-orange-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Assigned To</label>
+                      <p className="text-gray-900 font-medium">{assignedProfile?.full_name || 'Unassigned'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Clock size={14} className="text-gray-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Created</label>
+                      <p className="text-gray-900 font-medium">{new Date(workOrder.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Upload Section */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <Upload size={14} className="text-indigo-600" />
+                </div>
+                Photos
+              </h4>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                multiple
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <PlusCircle className="-ml-0.5 mr-2 h-4 w-4" />
+                Add Photos
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Display existing photos */}
+              {photos.map((photo, index) => (
+                <div key={`existing-${index}`} className="relative group">
+                  <img
+                    src={photo.url}
+                    alt={`Work order photo ${index + 1}`}
+                    className="h-24 w-full object-cover rounded-md border border-gray-200"
+                  />
+                  <button
+                    onClick={() => removePhoto(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove photo"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              
+              {/* Display newly selected files */}
+              {selectedFiles.map((file, index) => (
+                <div key={`new-${index}`} className="relative group">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`New photo ${index + 1}`}
+                    className="h-24 w-full object-cover rounded-md border border-gray-200"
+                  />
+                  <button
+                    onClick={() => removePhoto(photos.length + index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove photo"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              
+              {/* Show message if no photos */}
+              {photos.length === 0 && selectedFiles.length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  <Upload size={48} className="mx-auto mb-2 text-gray-300" />
+                  <p>No photos uploaded yet</p>
+                  <p className="text-sm">Photos are required before marking as Review</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Conditional Fields based on Work Type */}
+          {workOrder.work_type === 'Preventive' && (
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">P</span>
+                  </div>
+                  Preventive Maintenance Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {workOrder.recurrence_rule && (
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <label className="block text-sm font-semibold text-green-700 mb-2">Recurrence Pattern</label>
+                      <p className="text-gray-900 font-medium">{workOrder.recurrence_rule}</p>
+                    </div>
+                  )}
+                  {workOrder.recurrence_start_date && (
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <label className="block text-sm font-semibold text-green-700 mb-2">Start Date</label>
+                      <p className="text-gray-900 font-medium">{new Date(workOrder.recurrence_start_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {workOrder.recurrence_end_date && (
+                    <div className="bg-white rounded-lg p-4 border border-green-100">
+                      <label className="block text-sm font-semibold text-green-700 mb-2">End Date</label>
+                      <p className="text-gray-900 font-medium">{new Date(workOrder.recurrence_end_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {workOrder.work_type === 'Job' && (
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">J</span>
+                  </div>
+                  Job Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {workOrder.job_type && (
+                    <div className="bg-white rounded-lg p-4 border border-blue-100">
+                      <label className="block text-sm font-semibold text-blue-700 mb-2">Job Type</label>
+                      <p className="text-gray-900 font-medium">{workOrder.job_type}</p>
+                    </div>
+                  )}
+                  {workOrder.contact_person && (
+                    <div className="bg-white rounded-lg p-4 border border-blue-100">
+                      <label className="block text-sm font-semibold text-blue-700 mb-2">Contact Person</label>
+                      <p className="text-gray-900 font-medium">{workOrder.contact_person}</p>
+                    </div>
+                  )}
+                  {workOrder.contact_number && (
+                    <div className="bg-white rounded-lg p-4 border border-blue-100">
+                      <label className="block text-sm font-semibold text-blue-700 mb-2">Contact Number</label>
+                      <p className="text-gray-900 font-medium">{workOrder.contact_number}</p>
+                    </div>
+                  )}
+                  {workOrder.contact_email && (
+                    <div className="bg-white rounded-lg p-4 border border-blue-100">
+                      <label className="block text-sm font-semibold text-blue-700 mb-2">Contact Email</label>
+                      <p className="text-gray-900 font-medium">{workOrder.contact_email}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {workOrder.work_type === 'Repair' && (
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">R</span>
+                  </div>
+                  Repair Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {workOrder.unit_number && (
+                    <div className="bg-white rounded-lg p-4 border border-orange-100">
+                      <label className="block text-sm font-semibold text-orange-700 mb-2">Unit Number</label>
+                      <p className="text-gray-900 font-medium">{workOrder.unit_number}</p>
+                    </div>
+                  )}
+                  {workOrder.repair_contact_person && (
+                    <div className="bg-white rounded-lg p-4 border border-orange-100">
+                      <label className="block text-sm font-semibold text-orange-700 mb-2">Contact Person</label>
+                      <p className="text-gray-900 font-medium">{workOrder.repair_contact_person}</p>
+                    </div>
+                  )}
+                  {workOrder.repair_contact_number && (
+                    <div className="bg-white rounded-lg p-4 border border-orange-100">
+                      <label className="block text-sm font-semibold text-orange-700 mb-2">Contact Number</label>
+                      <p className="text-gray-900 font-medium">{workOrder.repair_contact_number}</p>
+                    </div>
+                  )}
+                  {workOrder.repair_contact_email && (
+                    <div className="bg-white rounded-lg p-4 border border-orange-100">
+                      <label className="block text-sm font-semibold text-orange-700 mb-2">Contact Email</label>
+                      <p className="text-gray-900 font-medium">{workOrder.repair_contact_email}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
   // Core state
@@ -45,6 +503,12 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  
+  // Panel state for two-column layout
+  const [selectedWorkOrderForPanel, setSelectedWorkOrderForPanel] = useState<WorkOrder | null>(null);
+  
+  // Photo state
+  const [workOrderPhotos, setWorkOrderPhotos] = useState<Record<string, { url: string; name: string }[]>>({});
   
   // History modal state
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -383,6 +847,66 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
     fetchWorkOrderHistory(workOrder.id);
   };
 
+  // Handle work order selection for right panel
+  const handleWorkOrderSelect = (workOrder: WorkOrder) => {
+    setSelectedWorkOrderForPanel(workOrder);
+  };
+
+  // Handle status change
+  const handleStatusChangeMain = async (workOrderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('work_orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', workOrderId);
+
+      if (error) throw error;
+
+      // Refresh work orders
+      fetchWorkOrders();
+      
+      // Update selected work order if it's the one being changed
+      if (selectedWorkOrderForPanel?.id === workOrderId) {
+        setSelectedWorkOrderForPanel({
+          ...selectedWorkOrderForPanel,
+          status: newStatus
+        });
+      }
+      
+      // Show success message
+      alert(`Work order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating work order status:', error);
+      alert('Failed to update work order status');
+    }
+  };
+
+  // Handle photo uploads
+  const handlePhotosChangeMain = async (workOrderId: string, files: File[]) => {
+    // In a real app, you would upload these files to storage
+    // For now, we'll just store them in state
+    const newPhotos = files.map(file => ({
+      url: URL.createObjectURL(file),
+      name: file.name
+    }));
+    
+    setWorkOrderPhotos(prev => ({
+      ...prev,
+      [workOrderId]: newPhotos
+    }));
+  };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(workOrderPhotos).forEach(photos => {
+        photos.forEach(photo => {
+          URL.revokeObjectURL(photo.url);
+        });
+      });
+    };
+  }, [workOrderPhotos]);
+
   // Open modal for adding/editing/viewing
   const openModal = (type: "add" | "edit" | "view", workOrder: WorkOrder | null = null) => {
     setModalType(type);
@@ -445,9 +969,9 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
   const filteredWorkOrders = getFilteredWorkOrders();
 
   return (
-    <div className="p-6">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center p-6 border-b bg-white">
         <h1 className="text-2xl font-bold">Work Order Management</h1>
         <button
           onClick={() => openModal("add")}
@@ -458,199 +982,238 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
         </button>
       </div>
 
-      {/* Due Soon Notifications */}
-      {workOrders.filter(wo => isDueSoon(wo.due_date)).length > 0 && (
-        <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-md">
-          <div className="flex items-center">
-            <AlertTriangle className="text-yellow-500 mr-2" size={20} />
-            <span className="font-medium text-yellow-800">
-              {workOrders.filter(wo => isDueSoon(wo.due_date)).length} work order(s) due within 3 days
-            </span>
+      {/* Two-Panel Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Panel - Work Order List */}
+        <div className="w-2/5 border-r bg-white flex flex-col overflow-hidden">
+          {/* Left Panel Header with Search and Filters */}
+          <div className="p-4 border-b flex-shrink-0">
+            {/* Due Soon Notifications */}
+            {workOrders.filter(wo => isDueSoon(wo.due_date)).length > 0 && (
+              <div className="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 rounded-md">
+                <div className="flex items-center">
+                  <AlertTriangle className="text-yellow-500 mr-2" size={16} />
+                  <span className="text-sm font-medium text-yellow-800">
+                    {workOrders.filter(wo => isDueSoon(wo.due_date)).length} work order(s) due within 3 days
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Search and Filters */}
+            <div className="flex flex-col gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search work orders..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 pr-4 py-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <select
+                  value={filterWorkType}
+                  onChange={(e) => setFilterWorkType(e.target.value)}
+                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
+                >
+                  <option value="">All Types</option>
+                  <option value="Preventive">Preventive</option>
+                  <option value="Complaint">Complaint</option>
+                  <option value="Job">Job</option>
+                  <option value="Repair">Repair</option>
+                </select>
+                
+                <select
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
+                >
+                  <option value="">All Priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b">
+            <nav className="-mb-px flex">
+              {[
+                { key: 'active', label: 'Active', count: workOrders.filter(wo => wo.status === 'Active' || wo.status === 'In Progress').length },
+                { key: 'review', label: 'Review', count: workOrders.filter(wo => wo.status === 'Review').length },
+                { key: 'completed', label: 'Completed', count: workOrders.filter(wo => wo.status === 'Done').length }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  className={`py-2 px-4 text-sm font-medium border-b-2 ${
+                    activeTab === tab.key
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Work Order List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredWorkOrders.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                <p>No work orders found.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {filteredWorkOrders.map((workOrder) => {
+                  const asset = assets.find(a => a.id === workOrder.asset_id);
+                  const location = locations.find(l => l.id === workOrder.location_id);
+                  const assignedProfile = profiles.find(p => p.id === workOrder.assigned_to);
+                  
+                  return (
+                    <div
+                      key={workOrder.id}
+                      onClick={() => handleWorkOrderSelect(workOrder)}
+                      className={`p-4 cursor-pointer hover:bg-gray-50 ${
+                        selectedWorkOrderForPanel?.id === workOrder.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-gray-900 truncate">
+                              {workOrder.work_order_id}
+                            </span>
+                            <span className={`px-2 py-1 text-xs rounded-full border ${
+                              workOrder.work_type === 'Preventive' ? 'bg-green-100 text-green-800 border-green-200' :
+                              workOrder.work_type === 'Complaint' ? 'bg-red-100 text-red-800 border-red-200' :
+                              workOrder.work_type === 'Job' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                              'bg-orange-100 text-orange-800 border-orange-200'
+                            }`}>
+                              {workOrder.work_type}
+                            </span>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              workOrder.priority === 'High' ? 'bg-red-100 text-red-800' :
+                              workOrder.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {workOrder.priority}
+                            </span>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              workOrder.status === 'Active' ? 'bg-blue-100 text-blue-800' :
+                              workOrder.status === 'In Progress' ? 'bg-purple-100 text-purple-800' :
+                              workOrder.status === 'Review' ? 'bg-orange-100 text-orange-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {workOrder.status}
+                            </span>
+                            {isNewWorkOrder(workOrder.created_at) && (
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">
+                                NEW
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 mb-1 truncate">
+                            {workOrder.title}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>Asset: {asset?.asset_name || 'Unknown'}</span>
+                            <span>Due: {new Date(workOrder.due_date).toLocaleDateString()}</span>
+                            {isDueSoon(workOrder.due_date) && (
+                              <span className="text-red-600 font-medium">Due Soon!</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openHistoryModal(workOrder);
+                            }}
+                            className="p-1 text-gray-400 hover:text-gray-600"
+                            title="View History"
+                          >
+                            <Clock size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openModal('edit', workOrder);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(workOrder.id);
+                            }}
+                            className="p-1 text-gray-400 hover:text-red-600"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Search and Filters */}
-      <div className="mb-6 flex flex-wrap gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search work orders..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 w-64 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        
-        <select
-          value={filterWorkType}
-          onChange={(e) => setFilterWorkType(e.target.value)}
-          className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Work Types</option>
-          <option value="Preventive">Preventive</option>
-          <option value="Complaint">Complaint</option>
-          <option value="Job">Job</option>
-          <option value="Repair">Repair</option>
-        </select>
-
-        <select
-          value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value)}
-          className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Priorities</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { key: 'active', label: 'Active', count: workOrders.filter(wo => wo.status === 'Active' || wo.status === 'In Progress').length },
-              { key: 'review', label: 'For Review', count: workOrders.filter(wo => wo.status === 'Review').length },
-              { key: 'completed', label: 'Completed', count: workOrders.filter(wo => wo.status === 'Done').length }
-            ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Error message */}
-      {errorMsg && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-          {errorMsg}
-        </div>
-      )}
-
-      {/* Loading state */}
-      {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {/* Work Orders Grid */}
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWorkOrders.length > 0 ? (
-            filteredWorkOrders.map((workOrder) => (
-              <div key={workOrder.id} className="bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{workOrder.title}</h3>
-                        {isNewWorkOrder(workOrder.created_date) && (
-                          <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">{workOrder.work_order_id}</p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      workOrder.priority === 'High' 
-                        ? 'bg-red-100 text-red-800'
-                        : workOrder.priority === 'Medium'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {workOrder.priority}
-                    </span>
+        {/* Right Panel - Work Order Details */}
+        <div className="w-3/5 bg-gray-50 flex flex-col">
+          {selectedWorkOrderForPanel ? (
+            <WorkOrderDetailPanel 
+              workOrder={selectedWorkOrderForPanel}
+              assets={assets}
+              locations={locations}
+              profiles={profiles}
+              onEdit={(workOrder) => openModal('edit', workOrder)}
+              onHistory={(workOrder) => openHistoryModal(workOrder)}
+              onStatusChange={handleStatusChangeMain}
+              onPhotosChange={handlePhotosChangeMain}
+              photos={workOrderPhotos[selectedWorkOrderForPanel.id] || []}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="text-center p-12">
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="text-4xl">📋</div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Select a Work Order</h3>
+                <p className="text-gray-600 mb-6 max-w-sm">Click on any work order from the list to view its detailed information, including description, timeline, and specific requirements.</p>
+                <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Active</span>
                   </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar size={16} className="mr-2" />
-                      Due: {new Date(workOrder.due_date).toLocaleDateString()}
-                      {isDueSoon(workOrder.due_date) && (
-                        <AlertTriangle size={16} className="ml-2 text-yellow-500" />
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span>Review</span>
                   </div>
-
-                  <div className="flex justify-between items-center mb-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      workOrder.status === 'Active' 
-                        ? 'bg-blue-100 text-blue-800'
-                        : workOrder.status === 'In Progress'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : workOrder.status === 'Review'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {workOrder.status}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {workOrder.work_type}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {workOrder.description}
-                  </p>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => openModal("view", workOrder)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button
-                        onClick={() => openModal("edit", workOrder)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Edit"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        className="text-green-600 hover:text-green-900"
-                        title="History"
-                        onClick={() => openHistoryModal(workOrder)}
-                      >
-                        <Clock size={18} />
-                      </button>
-                      <button
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                        onClick={() => handleDelete(workOrder.id)}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                    <span>Completed</span>
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">No work orders found.</p>
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Add/Edit/View Modal */}
+
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
