@@ -1,0 +1,96 @@
+/* Typography Styles */
+
+/* Base Typography */
+body {
+  @apply font-sans text-base text-body leading-relaxed;
+}
+
+/* Headers */
+h1 {
+  @apply text-h1 font-bold text-black;
+}
+
+h2 {
+  @apply text-h2 font-semibold text-black;
+}
+
+h3 {
+  @apply text-h3 font-semibold text-gray-900;
+}
+
+/* Body Text */
+p {
+  @apply mb-4 text-base;
+}
+
+/* Links */
+a {
+  @apply text-link no-underline hover:underline;
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center justify-center rounded px-4 py-2 text-button font-semibold uppercase tracking-wide transition-colors;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-blue-700;
+}
+
+.btn-secondary {
+  @apply border border-gray-400 bg-white text-gray-900 hover:bg-gray-50;
+}
+
+/* Tables */
+table {
+  @apply w-full border-collapse;
+}
+
+th {
+  @apply bg-gray-100 px-4 py-2 text-left text-table-header font-semibold uppercase tracking-wider;
+}
+
+td {
+  @apply border px-4 py-2 text-table-data;
+}
+
+/* Forms */
+label {
+  @apply mb-1 block text-sm font-medium text-gray-900;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+  @apply w-full rounded border border-gray-300 px-3 py-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary;
+}
+
+/* Helper Text */
+.helper-text {
+  @apply mt-1 text-xs;
+  color: #888888; /* Using direct color value instead of @apply text-muted */
+}
+
+.error-text {
+  @apply mt-1 text-xs;
+  color: #D32F2F; /* Using direct color value instead of @apply text-error */
+}
+
+/* Utility Classes */
+.text-muted {
+  color: #888888;
+}
+
+.text-error {
+  color: #D32F2F;
+}
+
+.text-success {
+  color: #388E3C;
+}
