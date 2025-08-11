@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification System Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Notification System Test</h1>
+        
+        <div class="mb-8 p-4 bg-blue-50 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-800">Test Instructions</h2>
+            <ol class="list-decimal list-inside space-y-2 text-blue-700">
+                <li>Open your browser's developer console (F12)</li>
+                <li>Enter your User ID below</li>
+                <li>Click "Create Test Notification" to create a notification</li>
+                <li>Click "Fetch Notifications" to retrieve all notifications</li>
+                <li>Check the console for detailed output</li>
+            </ol>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h2 class="text-lg font-semibold mb-4">Create Test Notification</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <input 
+                            type="text" 
+                            id="userId" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md" 
+                            placeholder="Enter your user ID"
+                        >
+                    </div>
+                    <button 
+                        id="createNotification" 
+                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        Create Test Notification
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h2 class="text-lg font-semibold mb-4">Fetch Notifications</h2>
+                <div class="space-y-4">
+                    <button 
+                        id="fetchNotifications" 
+                        class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                        Fetch Notifications
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 bg-gray-50 rounded-lg">
+            <h2 class="text-lg font-semibold mb-4">Console Output</h2>
+            <p class="text-gray-600">Check your browser's developer console (F12) for detailed output of all operations.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the test functions
+        import { testCreateNotification, testFetchNotifications } from '../src/utils/testNotifications.ts';
+        
+        // Get DOM elements
+        const userIdInput = document.getElementById('userId');
+        const createBtn = document.getElementById('createNotification');
+        const fetchBtn = document.getElementById('fetchNotifications');
+        
+        // Event listeners
+        createBtn?.addEventListener('click', async () => {
+            const userId = userIdInput?.value;
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+            
+            console.log('Creating notification for user:', userId);
+            await testCreateNotification(userId);
+        });
+        
+        fetchBtn?.addEventListener('click', async () => {
+            const userId = userIdInput?.value;
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+            
+            console.log('Fetching notifications for user:', userId);
+            await testFetchNotifications(userId);
+        });
+    </script>
+</body>
+</html>

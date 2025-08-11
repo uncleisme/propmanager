@@ -1,91 +1,130 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRealtimeNotifications, fetchNotifications, markAsRead as markAsReadApi, deleteNotification as deleteNotificationApi } from '../utils/notifications';
 
-type Notification = {
+interface Notification {
   id: string;
-  subject: string;
+  user_id: string;
+  module: string;
+  action: string;
+  entity_id: string;
   message: string;
-  timestamp: Date;
-  isRead: boolean;
-};
+  created_at: string;
+  is_read: boolean;
+  recipients: string[];
+}
 
-type NotificationContextType = {
+interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
+  markAsRead: (id: string) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
   isOpen: boolean;
-  toggleDropdown: () => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  deleteNotification: (id: string) => void;
-  deleteAllNotifications: () => void;
-  addNotification: (notification: Omit<Notification, 'id' | 'isRead' | 'timestamp'>) => void;
-};
+  setIsOpen: (isOpen: boolean) => void;
+}
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function useNotification() {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error('useNotification must be used within a NotificationProvider');
+  }
+  return context;
+};
+
+interface NotificationProviderProps {
+  children: React.ReactNode;
+  userId: string | null;
+}
+
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({ 
+  children, 
+  userId 
+}) => {
+  console.log('🔔 NotificationProvider rendered with userId:', userId);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
+  // Fetch notifications
+  const refreshNotifications = useCallback(async () => {
+    if (!userId) {
+      console.log('🔔 No userId provided, skipping notification fetch');
+      return;
+    }
+    
+    console.log('🔔 Fetching notifications for userId:', userId);
+    const { data, error } = await fetchNotifications(userId);
+    if (error) {
+      console.error('🔔 Error fetching notifications:', error);
+      return;
+    }
+    
+    console.log('🔔 Fetched notifications:', data);
+    setNotifications(data || []);
+  }, [userId]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
+  // Set up real-time notifications
+  useEffect(() => {
+    if (!userId) {
+      console.log('🔔 No userId for real-time notifications');
+      return;
+    }
+    
+    console.log('🔔 Setting up real-time notifications for userId:', userId);
+    const unsubscribe = useRealtimeNotifications(userId, (newNotification) => {
+      console.log('🔔 New real-time notification received:', newNotification);
+      setNotifications(prev => [newNotification, ...prev]);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userId]);
+
+  // Refresh notifications when userId changes
+  useEffect(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
+
+  // Mark a notification as read
+  const markAsRead = async (id: string) => {
+    await markAsReadApi(id);
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
     );
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, isRead: true }))
-    );
-  };
-
-  const deleteNotification = (id: string) => {
+  // Delete a notification
+  const deleteNotification = async (id: string) => {
+    await deleteNotificationApi(id);
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const deleteAllNotifications = () => {
-    setNotifications([]);
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    // In a real implementation, you would mark all as read in the database
+    // For now, we'll just update the local state
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
   };
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'isRead' | 'timestamp'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date(),
-      isRead: false,
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
+  const value = {
+    notifications,
+    unreadCount,
+    markAsRead,
+    deleteNotification,
+    markAllAsRead,
+    refreshNotifications,
+    isOpen,
+    setIsOpen
   };
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        isOpen,
-        toggleDropdown,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        deleteAllNotifications,
-        addNotification,
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );
-};
-
-export const useNotifications = () => {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return context;
 };

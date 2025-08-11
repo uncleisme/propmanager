@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Eye, Edit, Trash2, Plus, X, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import Papa from 'papaparse';
+
 import { User } from '@supabase/supabase-js';
+import { createContact } from "../utils/createContact";
 
 interface DashboardProps {
   user: User | null;
@@ -30,8 +31,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalContacts, setTotalContacts] = useState(0);
-  const [importing, setImporting] = useState(false);
-  const [showImportInstructions, setShowImportInstructions] = useState(false);
+
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -60,6 +60,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
     const { data, error, count } = await supabase
       .from("contacts")
       .select("*", { count: "exact" })
+      .order("createdAt", { ascending: false })
       .range(from, to);
 
     if (!error && data) {
@@ -137,6 +138,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         setErrorMsg(error.message);
       } else {
         console.log('Contact deleted successfully');
+        setShowModal(false);
         fetchContacts();
       }
     }
@@ -172,8 +174,12 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
       console.log('Contact data to save:', contactData);
 
       if (modalType === "add") {
-        console.log('Adding new contact');
-        const { data, error } = await supabase.from("contacts").insert([contactData]).select();
+        if (!user) {
+          setErrorMsg('User not authenticated');
+          return;
+        }
+        
+        const { data, error } = await createContact(user.id, contactData);
         if (error) {
           console.error('Add error:', error);
           setErrorMsg(`Failed to add contact: ${error.message}`);
@@ -181,7 +187,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         }
         console.log('Contact added successfully:', data);
         setShowModal(false);
-        fetchContacts();
+        setCurrentPage(1); // Reset to first page, useEffect will fetch contacts
       } else if (modalType === "edit" && selectedContact) {
         console.log('Updating contact with ID:', selectedContact.id);
         console.log('Contact data to update:', contactData);
@@ -213,7 +219,7 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
         }
         console.log('Contact updated successfully:', data);
         setShowModal(false);
-        fetchContacts();
+        fetchContacts(); // Keep for updates, as page doesn't change
       }
     } catch (error) {
       console.error('Unexpected error:', error);
