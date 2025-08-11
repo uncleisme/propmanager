@@ -1,16 +1,40 @@
 import React from 'react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { supabase } from '../../utils/supabaseClient';
+import { fetchNotifications, markAsRead } from '../../utils/notifications';
 
-const NotificationDropdown: React.FC = () => {
-  const { 
-    notifications, 
-    unreadCount, 
-    isOpen, 
-    markAsRead, 
-    deleteNotification,
-    markAllAsRead,
-    deleteAllNotifications,
-  } = useNotifications();
+const NotificationDropdown: React.FC<{ 
+  userId: string, 
+  isOpen: boolean, 
+  notifications: any[], 
+  setNotifications: (notifications: any[]) => void,
+  unreadCount: number,
+  markAllAsRead: () => void
+}> = ({ userId, isOpen, notifications, setNotifications, unreadCount, markAllAsRead }) => {
+  // Load notifications when dropdown opens
+  React.useEffect(() => {
+    if (isOpen && userId) {
+      loadNotifications();
+    }
+  }, [isOpen, userId]);
+
+  const loadNotifications = async () => {
+    if (!userId) return;
+    
+    const { data, error } = await fetchNotifications(userId);
+    if (error) {
+      console.error('Error fetching notifications:', error);
+      return;
+    }
+    
+    setNotifications(data || []);
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    await markAsRead(id);
+    setNotifications(notifications.map(n => 
+      n.id === id ? { ...n, is_read: true } : n
+    ));
+  };
 
   if (!isOpen) return null;
 
@@ -40,35 +64,29 @@ const NotificationDropdown: React.FC = () => {
             {notifications.map((notification) => (
               <li 
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50' : ''}`}
+                className={`p-4 hover:bg-gray-50 ${!notification.is_read ? 'bg-blue-50' : ''}`}
               >
                 <div className="flex justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {notification.subject}
+                      {notification.module} {notification.action}
                     </p>
                     <p className="text-sm text-gray-500">
                       {notification.message}
                     </p>
                     <p className="mt-1 text-xs text-gray-400">
-                      {new Date(notification.timestamp).toLocaleTimeString()}
+                      {new Date(notification.created_at).toLocaleString()}
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    {!notification.isRead && (
+                    {!notification.is_read && (
                       <button
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => handleMarkAsRead(notification.id)}
                         className="text-xs text-blue-600 hover:text-blue-800"
                       >
                         Mark as read
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteNotification(notification.id)}
-                      className="text-xs text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
               </li>
@@ -76,17 +94,6 @@ const NotificationDropdown: React.FC = () => {
           </ul>
         )}
       </div>
-
-      {notifications.length > 0 && (
-        <div className="p-2 bg-gray-50 border-t border-gray-200 text-right">
-          <button
-            onClick={deleteAllNotifications}
-            className="text-xs text-red-600 hover:text-red-800"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
     </div>
   );
 };

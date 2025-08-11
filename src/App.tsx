@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from './utils/supabaseClient';
-import { NotificationProvider } from './contexts/NotificationContext';
 
 // Layout and Auth Components
 import Layout from './components/Layout';
@@ -31,6 +30,7 @@ import StaffManagement from './components/StaffManagement';
 import AssetListing from './components/AssetListing';
 import LocationListing from './components/LocationListing';
 import WorkOrderManagement from './components/WorkOrderManagement';
+import NotificationVerification from './components/NotificationVerification';
 
 import { ViewType } from './types';
 type AppViewType = ViewType;
@@ -128,23 +128,24 @@ const App: React.FC<AppProps> = () => {
       'location-listing': <LocationListing user={user} />,
       'work-orders': <WorkOrderManagement user={user} />,
       'lift-maintenance': <LiftMaintenance user={user} onViewChange={(view) => setCurrentView(view as ViewType)} />,
-      'building-info': <BuildingInfo user={user} />
+      'building-info': <BuildingInfo user={user} />,
+      'contacts': <Contacts user={user} />,
+      'contracts': <Contracts user={user} />,
+      'licenses': <Licenses user={user} />,
+      'amenities': <Amenities user={user} />,
+      'guests': <Guests user={user} />
     };
 
     // Components that don't need the user prop
     const componentsWithoutUser = {
       'dashboard': <Dashboard user={user} />,
-      'contacts': <Contacts />,
-      'contracts': <Contracts />,
-      'licenses': <Licenses />,
-      'amenities': <Amenities />,
       'packages': <Packages />,
-      'guests': <Guests />,
       'move-requests': <MoveRequests />,
       'system-settings': <SystemSettings />,
       'water-utility': <WaterUtility />,
       'electricity-utility': <ElectricityUtility />,
-      'reporting': <Reporting />
+      'reporting': <Reporting />,
+      'notification-verification': <NotificationVerification />
     };
 
     // Check if the current view is in the componentsWithUser object
@@ -182,8 +183,8 @@ const App: React.FC<AppProps> = () => {
 
   // Render main app layout
   return (
-    <NotificationProvider>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      {authenticated && user ? (
         <Layout
           currentView={currentView}
           onViewChange={setCurrentView}
@@ -192,8 +193,10 @@ const App: React.FC<AppProps> = () => {
         >
           {renderCurrentView()}
         </Layout>
-      </div>
-    </NotificationProvider>
+      ) : (
+        renderCurrentView()
+      )}
+    </div>
   );
 };
 

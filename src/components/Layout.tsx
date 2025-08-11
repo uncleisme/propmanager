@@ -293,7 +293,7 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
             <div className="relative">
-              <NotificationContainer />
+              {user && <NotificationContainer userId={user.id} />}
             </div>
             
             {/* Profile Dropdown */}
