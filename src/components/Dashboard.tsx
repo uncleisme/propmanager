@@ -1,19 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Award, UserCheck, Truck, Building2, Box, BarChart3, Droplet, Zap, ChevronDown, ChevronRight, Plus, TrendingUp } from 'lucide-react';
+import { FileText, Award, UserCheck, Building2, Box, BarChart3, Droplet, Zap, ChevronDown, ChevronRight, Plus, TrendingUp } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { getDaysUntilExpiration, getStatusColor, formatDate } from '../utils/dateUtils';
-import { BuildingInfo, Contract, License, Package, Guest, MoveRequest } from '../types';
+import { BuildingInfo, Contract, License, Package, Guest } from '../types';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-interface DashboardProps {}
+interface DashboardProps {
+  user: SupabaseUser | null;
+}
 
-const Dashboard: React.FC<DashboardProps> = () => {
+const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
-  const [moveRequests, setMoveRequests] = useState<MoveRequest[]>([]);
+  // Loading state
   const [loading, setLoading] = useState(true);
+  
+  // Use useEffect to log the user prop when it changes
+  useEffect(() => {
+    if (user) {
+      console.log('Dashboard initialized for user:', user.email);
+    }
+  }, [user]);
   const [utilities, setUtilities] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
   const [utilitiesPrev, setUtilitiesPrev] = useState<{ water: number; electricity: number }>({ water: 0, electricity: 0 });
 
@@ -54,15 +64,13 @@ const Dashboard: React.FC<DashboardProps> = () => {
           { data: contractsData },
           { data: licensesData },
           { data: packagesData },
-          { data: guestsData },
-          { data: moveRequestsData }
+          { data: guestsData }
         ] = await Promise.all([
           supabase.from('buildingInfo').select('*').limit(1).single(),
           supabase.from('contracts').select('*'),
           supabase.from('licenses').select('*'),
           supabase.from('packages').select('*'),
-          supabase.from('guests').select('*'),
-          supabase.from('moveRequests').select('*')
+          supabase.from('guests').select('*')
         ]);
         
         setBuildingInfo(buildingData);
@@ -70,7 +78,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
         setLicenses(licensesData || []);
         setPackages(packagesData || []);
         setGuests(guestsData || []);
-        setMoveRequests(moveRequestsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -78,9 +85,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
       // Fetch utilities for current and previous month
       const now = new Date();
       const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const prevMonthStr = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
       const monthDateStr = `${monthStr}-01`;
-      const prevMonthDateStr = `${prevMonthStr}-01`;
+      const prevMonthDateStr = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}-01`;
       
       const { data: waterData } = await supabase
         .from('utilities_consumption')
@@ -131,8 +137,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
   }
 
   const now = new Date();
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+  // Previous month calculation for future use
+  // const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
   const waterTrend = percentChange(utilities.water, utilitiesPrev.water);
   const elecTrend = percentChange(utilities.electricity, utilitiesPrev.electricity);
