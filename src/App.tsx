@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from './utils/supabaseClient';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 // Layout and Auth Components
 import Layout from './components/Layout';
@@ -132,7 +133,7 @@ const App: React.FC<AppProps> = () => {
 
     // Components that don't need the user prop
     const componentsWithoutUser = {
-      'dashboard': <Dashboard />,
+      'dashboard': <Dashboard user={user} />,
       'contacts': <Contacts />,
       'contracts': <Contracts />,
       'licenses': <Licenses />,
@@ -156,8 +157,8 @@ const App: React.FC<AppProps> = () => {
       return componentsWithoutUser[currentView as keyof typeof componentsWithoutUser];
     }
 
-    // Default to dashboard
-    return <Dashboard />;
+    // Default to dashboard with user prop
+    return <Dashboard user={user} />;
   }, [currentView, user]);
 
 
@@ -181,14 +182,18 @@ const App: React.FC<AppProps> = () => {
 
   // Render main app layout
   return (
-    <Layout
-      currentView={currentView}
-      onViewChange={setCurrentView}
-      onLogout={handleLogout}
-      user={user}
-    >
-      {renderCurrentView()}
-    </Layout>
+    <NotificationProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Layout
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onLogout={handleLogout}
+          user={user}
+        >
+          {renderCurrentView()}
+        </Layout>
+      </div>
+    </NotificationProvider>
   );
 };
 

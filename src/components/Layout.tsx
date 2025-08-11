@@ -7,6 +7,7 @@ import {
 import { ViewType } from '../types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabaseClient';
+import NotificationContainer from './notifications/NotificationContainer';
 
 interface LayoutProps {
   currentView: ViewType;
@@ -289,24 +290,32 @@ const Layout: React.FC<LayoutProps> = ({
             </button>
             <span className="font-semibold text-lg text-gray-800">Property Management System</span>
           </div>
-          <div className="relative hidden md:flex" ref={profileDropdownRef}>
-            <button
-              className="flex items-center focus:outline-none"
-              onClick={() => setProfileDropdownOpen((open) => !open)}
-              aria-label="Open profile menu"
-            >
-              {contactPhoto ? (
-                <img
-                  src={contactPhoto}
-                  alt="User Avatar"
-                  className="h-10 w-10 rounded-full object-cover bg-gray-300 border border-gray-200"
-                />
-              ) : (
-                <span className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center border border-gray-200">
-                  <UserIcon className="w-5 h-5 text-gray-600" />
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-4">
+            {/* Notification Bell */}
+            <div className="relative">
+              <NotificationContainer />
+            </div>
+            
+            {/* Profile Dropdown */}
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                className="flex items-center focus:outline-none"
+                onClick={() => setProfileDropdownOpen((open) => !open)}
+                aria-label="Open profile menu"
+              >
+                {contactPhoto ? (
+                  <img
+                    src={contactPhoto}
+                    alt="User Avatar"
+                    className="h-10 w-10 rounded-full object-cover bg-gray-300 border border-gray-200"
+                  />
+                ) : (
+                  <span className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center border border-gray-200">
+                    <UserIcon className="w-5 h-5 text-gray-600" />
+                  </span>
+                )}
+              </button>
+            </div>
             {profileDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-100">
                 <button
