@@ -232,50 +232,50 @@ const Contacts: React.FC<DashboardProps> = ({ user }) => {
           console.error('Error checking existing contact:', checkError);
           setErrorMsg(`Failed to verify contact exists: ${checkError.message}`);
           return;
-        }
-        
-        console.log('Existing contact found:', existingContact);
-        
-        const { data, error } = await supabase
-          .from("contacts")
-          .update({ ...contactData })
-          .eq("id", selectedContact.id)
-          .select();
-        if (error) {
-          console.error('Update error:', error);
-          setErrorMsg(`Failed to update contact: ${error.message}`);
-          return;
-        }
-        console.log('Contact updated successfully:', data);
-        
-        // Create notification for contact update
-        if (user) {
-          const message = `Contact "${contactData.name}" has been updated in the system.`;
-          const recipients = [user.id]; // In production, you'd determine recipients based on roles
-          
-          try {
-            await createNotification(
-              user.id,
-              'contact',
-              'updated',
-              selectedContact.id.toString(),
-              message,
-              recipients
-            );
-            console.log('🔔 Contact update notification created successfully');
-          } catch (notificationError) {
-            console.error('🔔 Error creating contact update notification:', notificationError);
-          }
-        }
-        
-        setShowModal(false);
-        fetchContacts(); // Keep for updates, as page doesn't change
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setErrorMsg(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+    
+    console.log('Existing contact found:', existingContact);
+    
+    const { data, error } = await supabase
+      .from("contacts")
+      .update({ ...contactData })
+      .eq("id", selectedContact.id)
+      .select();
+    if (error) {
+      console.error('Update error:', error);
+      setErrorMsg(`Failed to update contact: ${error.message}`);
+      return;
+    }
+    console.log('Contact updated successfully:', data);
+    
+    // Create notification for contact update
+    if (user) {
+      const message = `Contact "${contactData.name}" has been updated in the system.`;
+      const recipients = [user.id]; // In production, you'd determine recipients based on roles
+      
+      try {
+        await createNotification(
+          user.id,
+          'contact',
+          'updated',
+          selectedContact.id.toString(),
+          message,
+          recipients
+        );
+        console.log('🔔 Contact update notification created successfully');
+      } catch (notificationError) {
+        console.error('🔔 Error creating contact update notification:', notificationError);
+      }
+    }
+    
+    setShowModal(false);
+    fetchContacts(); // Keep for updates, as page doesn't change
+  }
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    setErrorMsg(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
 
   // Filter contacts by search
   const filteredContacts = contacts.filter(
