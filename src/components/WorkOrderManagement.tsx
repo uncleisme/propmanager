@@ -3,6 +3,7 @@ import { supabase } from "../utils/supabaseClient";
 import { Edit, Plus, X, Search, Calendar, Clock, User, AlertTriangle, PlusCircle, Upload, Trash2 } from "lucide-react";
 import { User as AuthUser } from '@supabase/supabase-js';
 import { WorkOrder, WorkOrderHistory, Profile, Contact } from '../types';
+import { createNotification } from "../utils/notifications";
 
 interface WorkOrderManagementProps {
   user: AuthUser | null;
@@ -780,14 +781,32 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
         
         if (idError) throw idError;
         
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('work_orders')
           .insert([{
             ...workOrderData,
             work_order_id: workOrderIdData
-          }]);
+          }])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Create notification for work order creation
+        try {
+          await createNotification(
+            user.id,
+            'Work Orders',
+            'created',
+            insertedData.id,
+            `Work order "${workOrderIdData}" has been created`,
+            [user.id]
+          );
+          console.log('Work order creation notification created successfully');
+        } catch (notificationError) {
+          console.error('Error creating work order creation notification:', notificationError);
+        }
+
         alert('Work order created successfully!');
       } else if (modalType === 'edit' && selectedWorkOrder) {
         const { error } = await supabase
@@ -796,6 +815,22 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
           .eq('id', selectedWorkOrder.id);
 
         if (error) throw error;
+
+        // Create notification for work order update
+        try {
+          await createNotification(
+            user.id,
+            'Work Orders',
+            'updated',
+            selectedWorkOrder.id,
+            `Work order "${selectedWorkOrder.work_order_id}" has been updated`,
+            [user.id]
+          );
+          console.log('Work order update notification created successfully');
+        } catch (notificationError) {
+          console.error('Error creating work order update notification:', notificationError);
+        }
+
         alert('Work order updated successfully!');
       }
 
@@ -825,12 +860,39 @@ const WorkOrderManagement: React.FC<WorkOrderManagementProps> = ({ user }) => {
 
     setLoading(true);
     try {
+      // Get work order details before deletion for notification
+      const { data: workOrderData, error: fetchError } = await supabase
+        .from('work_orders')
+        .select('work_order_id, title')
+        .eq('id', workOrderId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('work_orders')
         .delete()
         .eq('id', workOrderId);
 
       if (error) throw error;
+
+      // Create notification for work order deletion
+      if (user) {
+        try {
+          await createNotification(
+            user.id,
+            'Work Orders',
+            'deleted',
+            workOrderId,
+            `Work order "${workOrderData.work_order_id}" has been deleted`,
+            [user.id]
+          );
+          console.log('Work order deletion notification created successfully');
+        } catch (notificationError) {
+          console.error('Error creating work order deletion notification:', notificationError);
+        }
+      }
+
       alert('Work order deleted successfully!');
       fetchWorkOrders();
     } catch (error) {
