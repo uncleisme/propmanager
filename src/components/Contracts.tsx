@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { Contract, Contact } from "../types";
 import { formatDate, getDaysUntilExpiration, getStatusColor, getStatusText } from "../utils/dateUtils";
-
+import { createNotification } from "../utils/notifications";
+import { User } from '@supabase/supabase-js';
 
 interface DashboardProps {
   user: User | null;
@@ -99,10 +100,39 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
   const handleDelete = async (id: string) => {
     setErrorMsg("");
     if (window.confirm("Delete this contract?")) {
+      // Get contract details before deletion for notification
+      const { data: contractData, error: fetchError } = await supabase
+        .from("contracts")
+        .select("title")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        setErrorMsg(fetchError.message);
+        return;
+      }
+
       const { error } = await supabase.from("contracts").delete().eq("id", id);
       if (error) {
         setErrorMsg(error.message);
       } else {
+        // Create notification for contract deletion
+        if (user && contractData) {
+          try {
+            await createNotification(
+              user.id,
+              'Contracts',
+              'deleted',
+              id,
+              `Contract "${contractData.title}" has been deleted`,
+              [user.id]
+            );
+            console.log('Contract deletion notification created successfully');
+          } catch (notificationError) {
+            console.error('Error creating contract deletion notification:', notificationError);
+          }
+        }
+
         fetchContracts(); // Re-fetch to update the list
       }
     }
@@ -129,13 +159,49 @@ const Contracts: React.FC<DashboardProps> = ({ user }) => {
       if (modalType === "add") {
         const { data, error } = await supabase.from("contracts").insert([contractData]).select();
         if (error) throw error;
-        if (data) setContracts((prev) => [data[0], ...prev]);
+        if (data) {
+          setContracts((prev) => [data[0], ...prev]);
+          
+          // Create notification for contract creation
+          if (user) {
+            try {
+              await createNotification(
+                user.id,
+                'Contracts',
+                'created',
+                data[0].id,
+                `Contract "${contractData.title}" has been created`,
+                [user.id]
+              );
+              console.log('Contract creation notification created successfully');
+            } catch (notificationError) {
+              console.error('Error creating contract creation notification:', notificationError);
+            }
+          }
+        }
       } else if (modalType === "edit" && selectedContract) {
         const { error } = await supabase
           .from("contracts")
           .update(contractData)
           .eq("id", selectedContract.id);
         if (error) throw error;
+
+        // Create notification for contract update
+        if (user) {
+          try {
+            await createNotification(
+              user.id,
+              'Contracts',
+              'updated',
+              selectedContract.id,
+              `Contract "${contractData.title}" has been updated`,
+              [user.id]
+            );
+            console.log('Contract update notification created successfully');
+          } catch (notificationError) {
+            console.error('Error creating contract update notification:', notificationError);
+          }
+        }
       }
       setShowModal(false);
       fetchContracts(); // Re-fetch to ensure data is up-to-date and sorted
